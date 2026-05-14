@@ -63,5 +63,10 @@
     "json-schema",
     "validator",
     "ajv"
-  ]
+  ],
+  "pnpm": {
+    "overrides": {
+      "fast-json-patch@<3.1.1": ">=3.1.1"
+    }
+  }
 }
