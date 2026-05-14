@@ -1,7 +1,7 @@
 # slack-block-kit-validator
 
 [![CI](https://github.com/TightknitAI/slack-block-kit-validator/actions/workflows/ci.yml/badge.svg)](https://github.com/TightknitAI/slack-block-kit-validator/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/slack-block-kit-validator.svg)](https://www.npmjs.com/package/slack-block-kit-validator)
+[![npm version](https://img.shields.io/npm/v/@tightknit/slack-block-kit-validator.svg)](https://www.npmjs.com/package/@tightknit/slack-block-kit-validator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 JSON Schema (draft 2020-12) and validation helpers for Slack Block Kit JSON. Catches invalid block payloads before Slack silently swallows them.
@@ -15,7 +15,7 @@ This package compiles every rule in <https://docs.slack.dev/reference/block-kit>
 ## Install
 
 ```sh
-pnpm add slack-block-kit-validator
+pnpm add @tightknit/slack-block-kit-validator
 ```
 
 Node 20+. No runtime peer dependencies.
@@ -23,7 +23,7 @@ Node 20+. No runtime peer dependencies.
 ## Quick start
 
 ```ts
-import { validateBlockKit } from "slack-block-kit-validator";
+import { validateBlockKit } from "@tightknit/slack-block-kit-validator";
 
 const blocks = [
   { type: "section", text: { type: "mrkdwn", text: "Hello *world*" } },
@@ -80,7 +80,7 @@ import {
   checkSingleTableBlock,
   checkFocusOnLoadUniqueness,
   checkSurfaceCompatibility,
-} from "slack-block-kit-validator";
+} from "@tightknit/slack-block-kit-validator";
 ```
 
 ### Using the raw JSON Schema
@@ -88,14 +88,14 @@ import {
 Consuming from another validator, another language, or an OpenAPI spec:
 
 ```ts
-import { slackBlockKitSchema } from "slack-block-kit-validator";
+import { slackBlockKitSchema } from "@tightknit/slack-block-kit-validator";
 
 // With Ajv in a custom config
 const ajv = new Ajv2020({ strict: false, allErrors: true });
 const validate = ajv.compile(slackBlockKitSchema);
 ```
 
-The schema uses `$defs` for every block, element, composition object, rich-text leaf, and view envelope, so non-JS consumers can also import the JSON (`slack-block-kit-validator/schema.json`) and pick the subset they need.
+The schema uses `$defs` for every block, element, composition object, rich-text leaf, and view envelope, so non-JS consumers can also import the JSON (`@tightknit/slack-block-kit-validator/schema.json`) and pick the subset they need.
 
 ## API reference
 
@@ -161,7 +161,7 @@ Ajv v8 + ajv-formats weigh ~50–60 KB gzipped, which is fine for Node test runs
 
 ```sh
 pnpm dlx ajv compile --spec=draft2020 --strict=false -c ajv-formats \
-  -s node_modules/slack-block-kit-validator/dist/slack-block-kit.schema.json \
+  -s node_modules/@tightknit/slack-block-kit-validator/dist/slack-block-kit.schema.json \
   -o standalone-validator.js
 ```
 
