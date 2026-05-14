@@ -1,0 +1,1605 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tightknit.com/schemas/slack-block-kit.schema.json",
+  "title": "Slack Block Kit",
+  "description": "JSON Schema (draft 2020-12) for Slack Block Kit payloads. Validates a top-level array of blocks. Individual block, element, and composition object schemas are exposed via $defs for re-use. Compiled from https://docs.slack.dev/reference/block-kit (fetched 2026-04-16). Surface restrictions (messages vs modals vs home) and payload-level rules (e.g. cumulative 12k char markdown limit, single-table-per-message) are documented in $defs descriptions but not enforced at the per-block level.",
+  "type": "array",
+  "minItems": 1,
+  "maxItems": 100,
+  "items": { "$ref": "#/$defs/block" },
+
+  "$defs": {
+    "action_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "description": "An identifier for the interactive element. Should be unique among all action_ids used in a single view/message."
+    },
+
+    "block_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "description": "A unique identifier for a block. Should be unique within a single message or view."
+    },
+
+    "plain_text_object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "plain_text" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 3000 },
+        "emoji": { "type": "boolean" }
+      }
+    },
+
+    "mrkdwn_text_object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "mrkdwn" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 3000 },
+        "verbatim": { "type": "boolean" }
+      }
+    },
+
+    "text_object": {
+      "description": "A text object — either plain_text or mrkdwn.",
+      "oneOf": [{ "$ref": "#/$defs/plain_text_object" }, { "$ref": "#/$defs/mrkdwn_text_object" }]
+    },
+
+    "confirm_object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "text", "confirm", "deny"],
+      "properties": {
+        "title": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 100 } } }]
+        },
+        "text": {
+          "description": "Per Slack docs examples, this field accepts plain_text OR mrkdwn. Prose on the docs page says plain_text, but the example payload uses mrkdwn.",
+          "allOf": [{ "$ref": "#/$defs/text_object" }, { "properties": { "text": { "maxLength": 300 } } }]
+        },
+        "confirm": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 30 } } }]
+        },
+        "deny": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 30 } } }]
+        },
+        "style": { "enum": ["primary", "danger"] }
+      }
+    },
+
+    "option_object_plain_text": {
+      "description": "Option object used in select / multi-select menus. text and description must be plain_text. url is not allowed here (overflow only).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "value"],
+      "properties": {
+        "text": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "value": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "description": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        }
+      }
+    },
+
+    "option_object_overflow": {
+      "description": "Option object used in overflow menus. Adds optional url field.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "value"],
+      "properties": {
+        "text": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "value": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "description": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "url": { "type": "string", "format": "uri", "maxLength": 3000 }
+      }
+    },
+
+    "option_object_radio_or_checkbox": {
+      "description": "Option object used in radio_buttons and checkboxes elements. text and description may be plain_text or mrkdwn.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "value"],
+      "properties": {
+        "text": {
+          "oneOf": [
+            {
+              "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+            },
+            {
+              "allOf": [{ "$ref": "#/$defs/mrkdwn_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+            }
+          ]
+        },
+        "value": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "description": {
+          "oneOf": [
+            {
+              "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+            },
+            {
+              "allOf": [{ "$ref": "#/$defs/mrkdwn_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+            }
+          ]
+        }
+      }
+    },
+
+    "option_group_object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "options"],
+      "properties": {
+        "label": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/option_object_plain_text" }
+        }
+      }
+    },
+
+    "slack_file_object": {
+      "description": "Reference to a Slack file. Exactly one of url or id must be provided. Supported file types: png, jpg, jpeg, gif.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "id": { "type": "string", "minLength": 1 }
+      },
+      "oneOf": [
+        { "required": ["url"], "not": { "required": ["id"] } },
+        { "required": ["id"], "not": { "required": ["url"] } }
+      ]
+    },
+
+    "dispatch_action_config_object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger_actions_on"],
+      "properties": {
+        "trigger_actions_on": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "enum": ["on_enter_pressed", "on_character_entered"] }
+        }
+      }
+    },
+
+    "conversation_filter_object": {
+      "description": "Filter object for conversations_select / multi_conversations_select. At least one of include / exclude_external_shared_channels / exclude_bot_users must be present.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "include": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["im", "mpim", "private", "public"] }
+        },
+        "exclude_external_shared_channels": { "type": "boolean" },
+        "exclude_bot_users": { "type": "boolean" }
+      }
+    },
+
+    "trigger_object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url"],
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "customizable_input_parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "value"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "value": {}
+            }
+          }
+        }
+      }
+    },
+
+    "workflow_object": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger"],
+      "properties": {
+        "trigger": { "$ref": "#/$defs/trigger_object" }
+      }
+    },
+
+    "placeholder_object": {
+      "description": "Reusable placeholder text object (plain_text only, max 150 chars).",
+      "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
+    },
+
+    "button_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "button" },
+        "text": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "url": { "type": "string", "format": "uri", "maxLength": 3000 },
+        "value": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "style": { "enum": ["primary", "danger"] },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "accessibility_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 75
+        }
+      }
+    },
+
+    "icon_button_element": {
+      "description": "Icon button — only valid inside a context_actions block.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "icon", "text"],
+      "properties": {
+        "type": { "const": "icon_button" },
+        "icon": { "enum": ["trash"] },
+        "text": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "value": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "accessibility_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 75
+        },
+        "visible_to_user_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[UW][A-Z0-9]+$" }
+        }
+      }
+    },
+
+    "checkboxes_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "options"],
+      "properties": {
+        "type": { "const": "checkboxes" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/option_object_radio_or_checkbox" }
+        },
+        "initial_options": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/option_object_radio_or_checkbox" }
+        },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "focus_on_load": { "type": "boolean" }
+      }
+    },
+
+    "datepicker_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "datepicker" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_date": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"
+        },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "datetimepicker_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "datetimepicker" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_date_time": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9999999999
+        },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "focus_on_load": { "type": "boolean" }
+      }
+    },
+
+    "timepicker_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "timepicker" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_time": {
+          "type": "string",
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+        },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" },
+        "timezone": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "email_input_element": {
+      "description": "Must be used inside an input block.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "email_text_input" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_value": { "type": "string" },
+        "dispatch_action_config": {
+          "$ref": "#/$defs/dispatch_action_config_object"
+        },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "url_input_element": {
+      "description": "Must be used inside an input block.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "url_text_input" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_value": { "type": "string" },
+        "dispatch_action_config": {
+          "$ref": "#/$defs/dispatch_action_config_object"
+        },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "number_input_element": {
+      "description": "Must be used inside an input block. min_value must not exceed max_value.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "is_decimal_allowed"],
+      "properties": {
+        "type": { "const": "number_input" },
+        "is_decimal_allowed": { "type": "boolean" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_value": {
+          "type": "string",
+          "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+        },
+        "min_value": { "type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$" },
+        "max_value": { "type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$" },
+        "dispatch_action_config": {
+          "$ref": "#/$defs/dispatch_action_config_object"
+        },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "plain_text_input_element": {
+      "description": "Must be used inside an input block.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "plain_text_input" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_value": { "type": "string" },
+        "multiline": { "type": "boolean" },
+        "min_length": { "type": "integer", "minimum": 0, "maximum": 3000 },
+        "max_length": { "type": "integer", "minimum": 1, "maximum": 3000 },
+        "dispatch_action_config": {
+          "$ref": "#/$defs/dispatch_action_config_object"
+        },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "radio_buttons_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "options"],
+      "properties": {
+        "type": { "const": "radio_buttons" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/option_object_radio_or_checkbox" }
+        },
+        "initial_option": { "$ref": "#/$defs/option_object_radio_or_checkbox" },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "focus_on_load": { "type": "boolean" }
+      }
+    },
+
+    "feedback_button_subobject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "value"],
+      "properties": {
+        "text": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "value": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "accessibility_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 75
+        }
+      }
+    },
+
+    "feedback_buttons_element": {
+      "description": "Must be used inside a context_actions block.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "positive_button", "negative_button"],
+      "properties": {
+        "type": { "const": "feedback_buttons" },
+        "positive_button": { "$ref": "#/$defs/feedback_button_subobject" },
+        "negative_button": { "$ref": "#/$defs/feedback_button_subobject" },
+        "action_id": { "$ref": "#/$defs/action_id" }
+      }
+    },
+
+    "workflow_button_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text", "workflow", "action_id"],
+      "properties": {
+        "type": { "const": "workflow_button" },
+        "text": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "workflow": { "$ref": "#/$defs/workflow_object" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "style": { "enum": ["primary", "danger"] },
+        "accessibility_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 75
+        }
+      }
+    },
+
+    "static_select_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "oneOf": [
+        { "required": ["options"], "not": { "required": ["option_groups"] } },
+        { "required": ["option_groups"], "not": { "required": ["options"] } }
+      ],
+      "properties": {
+        "type": { "const": "static_select" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/option_object_plain_text" }
+        },
+        "option_groups": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/option_group_object" }
+        },
+        "initial_option": { "$ref": "#/$defs/option_object_plain_text" },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "external_select_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "external_select" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_option": { "$ref": "#/$defs/option_object_plain_text" },
+        "min_query_length": { "type": "integer", "minimum": 0 },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "users_select_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "users_select" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_user": { "type": "string", "pattern": "^[UW][A-Z0-9]+$" },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "conversations_select_element": {
+      "description": "response_url_enabled is only valid when used inside an input block within a modal.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "conversations_select" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_conversation": { "type": "string", "minLength": 1 },
+        "default_to_current_conversation": { "type": "boolean" },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "response_url_enabled": { "type": "boolean" },
+        "filter": { "$ref": "#/$defs/conversation_filter_object" },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "channels_select_element": {
+      "description": "response_url_enabled is only valid when used inside an input block within a modal.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "channels_select" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_channel": { "type": "string", "pattern": "^[CG][A-Z0-9]+$" },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "response_url_enabled": { "type": "boolean" },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "multi_static_select_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "oneOf": [
+        { "required": ["options"], "not": { "required": ["option_groups"] } },
+        { "required": ["option_groups"], "not": { "required": ["options"] } }
+      ],
+      "properties": {
+        "type": { "const": "multi_static_select" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/option_object_plain_text" }
+        },
+        "option_groups": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/option_group_object" }
+        },
+        "initial_options": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/option_object_plain_text" }
+        },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "max_selected_items": { "type": "integer", "minimum": 1 },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "multi_external_select_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "multi_external_select" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "min_query_length": { "type": "integer", "minimum": 0 },
+        "initial_options": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/option_object_plain_text" }
+        },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "max_selected_items": { "type": "integer", "minimum": 1 },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "multi_users_select_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "multi_users_select" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_users": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^[UW][A-Z0-9]+$" }
+        },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "max_selected_items": { "type": "integer", "minimum": 1 },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "multi_conversations_select_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "multi_conversations_select" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_conversations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "default_to_current_conversation": { "type": "boolean" },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "max_selected_items": { "type": "integer", "minimum": 1 },
+        "filter": { "$ref": "#/$defs/conversation_filter_object" },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "multi_channels_select_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "multi_channels_select" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_channels": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^[CG][A-Z0-9]+$" }
+        },
+        "confirm": { "$ref": "#/$defs/confirm_object" },
+        "max_selected_items": { "type": "integer", "minimum": 1 },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "overflow_element": {
+      "description": "Must be used inside a section or actions block. Up to 5 options.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "options"],
+      "properties": {
+        "type": { "const": "overflow" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": { "$ref": "#/$defs/option_object_overflow" }
+        },
+        "confirm": { "$ref": "#/$defs/confirm_object" }
+      }
+    },
+
+    "rich_text_input_element": {
+      "description": "Must be used inside an input block.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "action_id"],
+      "properties": {
+        "type": { "const": "rich_text_input" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "initial_value": { "$ref": "#/$defs/rich_text_block" },
+        "dispatch_action_config": {
+          "$ref": "#/$defs/dispatch_action_config_object"
+        },
+        "focus_on_load": { "type": "boolean" },
+        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+      }
+    },
+
+    "file_input_element": {
+      "description": "Must be used inside an input block in modals only. Requires files:read OAuth scope. 10MB per-file limit (not enforceable in JSON Schema).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "file_input" },
+        "action_id": { "$ref": "#/$defs/action_id" },
+        "filetypes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "max_files": { "type": "integer", "minimum": 1, "maximum": 10 }
+      }
+    },
+
+    "image_element": {
+      "description": "Must be used inside a section or context block. Either image_url or slack_file is required.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "alt_text"],
+      "oneOf": [
+        { "required": ["image_url"], "not": { "required": ["slack_file"] } },
+        { "required": ["slack_file"], "not": { "required": ["image_url"] } }
+      ],
+      "properties": {
+        "type": { "const": "image" },
+        "alt_text": { "type": "string", "minLength": 1 },
+        "image_url": { "type": "string", "format": "uri", "maxLength": 3000 },
+        "slack_file": { "$ref": "#/$defs/slack_file_object" }
+      }
+    },
+
+    "url_source_element": {
+      "description": "URL source element — only valid inside a task_card block's sources array.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "url", "text"],
+      "properties": {
+        "type": { "const": "url" },
+        "url": { "type": "string", "format": "uri" },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "actions_block_element": {
+      "description": "Elements allowed inside an actions block.",
+      "oneOf": [
+        { "$ref": "#/$defs/button_element" },
+        { "$ref": "#/$defs/checkboxes_element" },
+        { "$ref": "#/$defs/datepicker_element" },
+        { "$ref": "#/$defs/datetimepicker_element" },
+        { "$ref": "#/$defs/timepicker_element" },
+        { "$ref": "#/$defs/overflow_element" },
+        { "$ref": "#/$defs/radio_buttons_element" },
+        { "$ref": "#/$defs/static_select_element" },
+        { "$ref": "#/$defs/external_select_element" },
+        { "$ref": "#/$defs/users_select_element" },
+        { "$ref": "#/$defs/conversations_select_element" },
+        { "$ref": "#/$defs/channels_select_element" },
+        { "$ref": "#/$defs/multi_static_select_element" },
+        { "$ref": "#/$defs/multi_external_select_element" },
+        { "$ref": "#/$defs/multi_users_select_element" },
+        { "$ref": "#/$defs/multi_conversations_select_element" },
+        { "$ref": "#/$defs/multi_channels_select_element" },
+        { "$ref": "#/$defs/workflow_button_element" }
+      ]
+    },
+
+    "section_accessory_element": {
+      "description": "Elements that may appear as the accessory of a section block. datetimepicker is intentionally excluded — docs say it 'must be used inside the actions block or input block'.",
+      "oneOf": [
+        { "$ref": "#/$defs/button_element" },
+        { "$ref": "#/$defs/checkboxes_element" },
+        { "$ref": "#/$defs/datepicker_element" },
+        { "$ref": "#/$defs/timepicker_element" },
+        { "$ref": "#/$defs/image_element" },
+        { "$ref": "#/$defs/overflow_element" },
+        { "$ref": "#/$defs/radio_buttons_element" },
+        { "$ref": "#/$defs/static_select_element" },
+        { "$ref": "#/$defs/external_select_element" },
+        { "$ref": "#/$defs/users_select_element" },
+        { "$ref": "#/$defs/conversations_select_element" },
+        { "$ref": "#/$defs/channels_select_element" },
+        { "$ref": "#/$defs/multi_static_select_element" },
+        { "$ref": "#/$defs/multi_external_select_element" },
+        { "$ref": "#/$defs/multi_users_select_element" },
+        { "$ref": "#/$defs/multi_conversations_select_element" },
+        { "$ref": "#/$defs/multi_channels_select_element" },
+        { "$ref": "#/$defs/workflow_button_element" }
+      ]
+    },
+
+    "input_block_element": {
+      "description": "Elements that may appear as the element of an input block.",
+      "oneOf": [
+        { "$ref": "#/$defs/plain_text_input_element" },
+        { "$ref": "#/$defs/email_input_element" },
+        { "$ref": "#/$defs/url_input_element" },
+        { "$ref": "#/$defs/number_input_element" },
+        { "$ref": "#/$defs/checkboxes_element" },
+        { "$ref": "#/$defs/radio_buttons_element" },
+        { "$ref": "#/$defs/datepicker_element" },
+        { "$ref": "#/$defs/datetimepicker_element" },
+        { "$ref": "#/$defs/timepicker_element" },
+        { "$ref": "#/$defs/static_select_element" },
+        { "$ref": "#/$defs/external_select_element" },
+        { "$ref": "#/$defs/users_select_element" },
+        { "$ref": "#/$defs/conversations_select_element" },
+        { "$ref": "#/$defs/channels_select_element" },
+        { "$ref": "#/$defs/multi_static_select_element" },
+        { "$ref": "#/$defs/multi_external_select_element" },
+        { "$ref": "#/$defs/multi_users_select_element" },
+        { "$ref": "#/$defs/multi_conversations_select_element" },
+        { "$ref": "#/$defs/multi_channels_select_element" },
+        { "$ref": "#/$defs/rich_text_input_element" },
+        { "$ref": "#/$defs/file_input_element" }
+      ]
+    },
+
+    "context_block_element": {
+      "description": "Elements allowed inside a context block.",
+      "oneOf": [{ "$ref": "#/$defs/image_element" }, { "$ref": "#/$defs/text_object" }]
+    },
+
+    "context_actions_block_element": {
+      "description": "Elements allowed inside a context_actions block.",
+      "oneOf": [{ "$ref": "#/$defs/feedback_buttons_element" }, { "$ref": "#/$defs/icon_button_element" }]
+    },
+
+    "rich_text_style_object": {
+      "description": "Style flags for rich-text leaf elements. Slack docs disagree on which flags are allowed per leaf type; this is the union of all flags documented.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "bold": { "type": "boolean" },
+        "italic": { "type": "boolean" },
+        "strike": { "type": "boolean" },
+        "underline": { "type": "boolean" },
+        "code": { "type": "boolean" },
+        "highlight": { "type": "boolean" },
+        "client_highlight": { "type": "boolean" },
+        "unlink": { "type": "boolean" }
+      }
+    },
+
+    "rich_text_text_leaf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "text" },
+        "text": { "type": "string" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_link_leaf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "url"],
+      "properties": {
+        "type": { "const": "link" },
+        "url": { "type": "string", "format": "uri" },
+        "text": { "type": "string" },
+        "unsafe": { "type": "boolean" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_user_leaf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "user_id"],
+      "properties": {
+        "type": { "const": "user" },
+        "user_id": { "type": "string", "pattern": "^[UW][A-Z0-9]+$" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_usergroup_leaf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "usergroup_id"],
+      "properties": {
+        "type": { "const": "usergroup" },
+        "usergroup_id": { "type": "string", "pattern": "^S[A-Z0-9]+$" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_channel_leaf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "channel_id"],
+      "properties": {
+        "type": { "const": "channel" },
+        "channel_id": { "type": "string", "pattern": "^[CG][A-Z0-9]+$" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_emoji_leaf": {
+      "description": "Slack's official docs (rich-text-block reference) only list type/name/unicode, but the API silently accepts a `style` object on emoji leaves. We allow it to match observed behavior.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "name"],
+      "properties": {
+        "type": { "const": "emoji" },
+        "name": { "type": "string", "minLength": 1 },
+        "skin_tone": { "type": "integer", "minimum": 1, "maximum": 6 },
+        "unicode": { "type": "string", "minLength": 1 },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_team_leaf": {
+      "description": "Whole-team mention (e.g. <!T12345>) — referenced by team_id.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "team_id"],
+      "properties": {
+        "type": { "const": "team" },
+        "team_id": { "type": "string", "pattern": "^T[A-Z0-9]+$" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_broadcast_leaf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "range"],
+      "properties": {
+        "type": { "const": "broadcast" },
+        "range": { "enum": ["here", "channel", "everyone"] },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_color_leaf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "const": "color" },
+        "value": { "type": "string", "pattern": "^#?[0-9a-fA-F]{6}$" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_date_leaf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "timestamp", "format"],
+      "properties": {
+        "type": { "const": "date" },
+        "timestamp": { "type": "integer", "minimum": 0 },
+        "format": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "format": "uri" },
+        "fallback": { "type": "string" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_leaf": {
+      "description": "Any of the 10 rich-text leaf element kinds.",
+      "oneOf": [
+        { "$ref": "#/$defs/rich_text_text_leaf" },
+        { "$ref": "#/$defs/rich_text_link_leaf" },
+        { "$ref": "#/$defs/rich_text_user_leaf" },
+        { "$ref": "#/$defs/rich_text_usergroup_leaf" },
+        { "$ref": "#/$defs/rich_text_team_leaf" },
+        { "$ref": "#/$defs/rich_text_channel_leaf" },
+        { "$ref": "#/$defs/rich_text_emoji_leaf" },
+        { "$ref": "#/$defs/rich_text_broadcast_leaf" },
+        { "$ref": "#/$defs/rich_text_color_leaf" },
+        { "$ref": "#/$defs/rich_text_date_leaf" }
+      ]
+    },
+
+    "rich_text_section_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "elements"],
+      "properties": {
+        "type": { "const": "rich_text_section" },
+        "elements": {
+          "description": "Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/rich_text_leaf" }
+        }
+      }
+    },
+
+    "rich_text_list_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "style", "elements"],
+      "properties": {
+        "type": { "const": "rich_text_list" },
+        "style": { "enum": ["bullet", "ordered"] },
+        "elements": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/rich_text_section_element" }
+        },
+        "indent": { "type": "integer", "minimum": 0 },
+        "offset": { "type": "integer", "minimum": 0 },
+        "border": { "type": "integer", "enum": [0, 1] }
+      }
+    },
+
+    "rich_text_preformatted_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "elements"],
+      "properties": {
+        "type": { "const": "rich_text_preformatted" },
+        "elements": {
+          "description": "Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/rich_text_leaf" }
+        },
+        "border": { "type": "integer", "enum": [0, 1] },
+        "language": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "rich_text_quote_element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "elements"],
+      "properties": {
+        "type": { "const": "rich_text_quote" },
+        "elements": {
+          "description": "Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/rich_text_leaf" }
+        },
+        "border": { "type": "integer", "enum": [0, 1] }
+      }
+    },
+
+    "rich_text_container_element": {
+      "description": "Any of the 4 rich-text container kinds usable inside a rich_text block's elements array.",
+      "oneOf": [
+        { "$ref": "#/$defs/rich_text_section_element" },
+        { "$ref": "#/$defs/rich_text_list_element" },
+        { "$ref": "#/$defs/rich_text_preformatted_element" },
+        { "$ref": "#/$defs/rich_text_quote_element" }
+      ]
+    },
+
+    "actions_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "elements"],
+      "properties": {
+        "type": { "const": "actions" },
+        "elements": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 25,
+          "items": { "$ref": "#/$defs/actions_block_element" }
+        },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "alert_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "alert" },
+        "text": { "$ref": "#/$defs/text_object" },
+        "level": { "enum": ["default", "info", "warning", "error", "success"] },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "card_block": {
+      "description": "At least one of hero_image, title, actions, or body is required.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "anyOf": [
+        { "required": ["hero_image"] },
+        { "required": ["title"] },
+        { "required": ["actions"] },
+        { "required": ["body"] }
+      ],
+      "properties": {
+        "type": { "const": "card" },
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "hero_image": { "$ref": "#/$defs/image_element" },
+        "icon": { "$ref": "#/$defs/image_element" },
+        "title": {
+          "allOf": [{ "$ref": "#/$defs/text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
+        },
+        "subtitle": {
+          "allOf": [{ "$ref": "#/$defs/text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
+        },
+        "body": {
+          "allOf": [{ "$ref": "#/$defs/text_object" }, { "properties": { "text": { "maxLength": 200 } } }]
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/button_element" }
+        }
+      }
+    },
+
+    "carousel_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "elements"],
+      "properties": {
+        "type": { "const": "carousel" },
+        "elements": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/card_block" }
+        },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "context_actions_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "elements"],
+      "properties": {
+        "type": { "const": "context_actions" },
+        "elements": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": { "$ref": "#/$defs/context_actions_block_element" }
+        },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "context_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "elements"],
+      "properties": {
+        "type": { "const": "context" },
+        "elements": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/context_block_element" }
+        },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "divider_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "divider" },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "file_block": {
+      "description": "Cannot be added to app surfaces directly; surfaces only when retrieving messages that contain remote files.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "external_id", "source"],
+      "properties": {
+        "type": { "const": "file" },
+        "external_id": { "type": "string", "minLength": 1 },
+        "source": { "const": "remote" },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "header_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "header" },
+        "text": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
+        },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "image_block": {
+      "description": "Either image_url or slack_file is required (not both).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "alt_text"],
+      "oneOf": [
+        { "required": ["image_url"], "not": { "required": ["slack_file"] } },
+        { "required": ["slack_file"], "not": { "required": ["image_url"] } }
+      ],
+      "properties": {
+        "type": { "const": "image" },
+        "alt_text": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "image_url": { "type": "string", "format": "uri", "maxLength": 3000 },
+        "slack_file": { "$ref": "#/$defs/slack_file_object" },
+        "title": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 2000 } } }]
+        },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "input_block": {
+      "description": "If element is a file_input, dispatch_action must not be true.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "label", "element"],
+      "properties": {
+        "type": { "const": "input" },
+        "label": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 2000 } } }]
+        },
+        "element": { "$ref": "#/$defs/input_block_element" },
+        "dispatch_action": { "type": "boolean" },
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "hint": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 2000 } } }]
+        },
+        "optional": { "type": "boolean" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "element": {
+                "properties": { "type": { "const": "file_input" } },
+                "required": ["type"]
+              }
+            },
+            "required": ["element"]
+          },
+          "then": {
+            "properties": { "dispatch_action": { "const": false } }
+          }
+        }
+      ]
+    },
+
+    "markdown_block": {
+      "description": "block_id is ignored on markdown blocks. Cumulative 12,000-char limit across all markdown blocks in one payload is a payload-level rule, not enforced here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "markdown" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 12000 },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "task_card_inline_object": {
+      "description": "A task card as it appears inline within a plan_block tasks array — the docs' example omits the type discriminator.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "title"],
+      "properties": {
+        "type": { "const": "task_card" },
+        "task_id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "details": { "$ref": "#/$defs/rich_text_block" },
+        "output": { "$ref": "#/$defs/rich_text_block" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/url_source_element" }
+        },
+        "status": { "enum": ["pending", "in_progress", "complete", "error"] },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "plan_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "title"],
+      "properties": {
+        "type": { "const": "plan" },
+        "title": {
+          "oneOf": [{ "type": "string", "minLength": 1 }, { "$ref": "#/$defs/plain_text_object" }]
+        },
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "tasks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/task_card_inline_object" }
+        }
+      }
+    },
+
+    "rich_text_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "elements"],
+      "properties": {
+        "type": { "const": "rich_text" },
+        "elements": {
+          "description": "Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/rich_text_container_element" }
+        },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "section_block": {
+      "description": "Must have text or fields (or both).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "anyOf": [{ "required": ["text"] }, { "required": ["fields"] }],
+      "properties": {
+        "type": { "const": "section" },
+        "text": { "$ref": "#/$defs/text_object" },
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "allOf": [{ "$ref": "#/$defs/text_object" }, { "properties": { "text": { "maxLength": 2000 } } }]
+          }
+        },
+        "accessory": { "$ref": "#/$defs/section_accessory_element" },
+        "expand": { "type": "boolean" }
+      }
+    },
+
+    "table_cell": {
+      "description": "A cell inside a table_block row. Either raw_text or rich_text.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "text"],
+          "properties": {
+            "type": { "const": "raw_text" },
+            "text": { "type": "string" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "elements"],
+          "properties": {
+            "type": { "const": "rich_text" },
+            "elements": {
+              "description": "Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).",
+              "type": "array",
+              "items": { "$ref": "#/$defs/rich_text_container_element" }
+            }
+          }
+        }
+      ]
+    },
+
+    "table_column_setting": {
+      "description": "Per-column settings inside table_block.column_settings. May be null to skip.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "align": { "enum": ["left", "center", "right"] },
+            "is_wrapped": { "type": "boolean" }
+          }
+        }
+      ]
+    },
+
+    "table_block": {
+      "description": "One table per message (server-enforced via invalid_attachments / only_one_table_allowed). Up to 100 rows, up to 20 cells per row.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "rows"],
+      "properties": {
+        "type": { "const": "table" },
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": { "$ref": "#/$defs/table_cell" }
+          }
+        },
+        "column_settings": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/table_column_setting" }
+        }
+      }
+    },
+
+    "task_card_block": {
+      "description": "Standalone task_card block (also embeddable inline within plan_block).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "task_id", "title"],
+      "properties": {
+        "type": { "const": "task_card" },
+        "task_id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "details": { "$ref": "#/$defs/rich_text_block" },
+        "output": { "$ref": "#/$defs/rich_text_block" },
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/url_source_element" }
+        },
+        "status": { "enum": ["pending", "in_progress", "complete", "error"] },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "video_block": {
+      "description": "Requires links.embed:write OAuth scope. video_url must be in app's unfurl domains, HTTPS, embeddable, return 2xx, not point to Slack-related domains.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "alt_text", "title", "thumbnail_url", "video_url"],
+      "properties": {
+        "type": { "const": "video" },
+        "alt_text": { "type": "string", "minLength": 1 },
+        "title": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 199 } } }]
+        },
+        "thumbnail_url": { "type": "string", "format": "uri" },
+        "video_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "author_name": { "type": "string", "maxLength": 49 },
+        "description": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 199 } } }]
+        },
+        "provider_icon_url": { "type": "string", "format": "uri" },
+        "provider_name": { "type": "string", "minLength": 1 },
+        "title_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
+    "block": {
+      "description": "Discriminated union of every Block Kit block type.",
+      "oneOf": [
+        { "$ref": "#/$defs/actions_block" },
+        { "$ref": "#/$defs/alert_block" },
+        { "$ref": "#/$defs/card_block" },
+        { "$ref": "#/$defs/carousel_block" },
+        { "$ref": "#/$defs/context_actions_block" },
+        { "$ref": "#/$defs/context_block" },
+        { "$ref": "#/$defs/divider_block" },
+        { "$ref": "#/$defs/file_block" },
+        { "$ref": "#/$defs/header_block" },
+        { "$ref": "#/$defs/image_block" },
+        { "$ref": "#/$defs/input_block" },
+        { "$ref": "#/$defs/markdown_block" },
+        { "$ref": "#/$defs/plan_block" },
+        { "$ref": "#/$defs/rich_text_block" },
+        { "$ref": "#/$defs/section_block" },
+        { "$ref": "#/$defs/table_block" },
+        { "$ref": "#/$defs/task_card_block" },
+        { "$ref": "#/$defs/video_block" }
+      ]
+    },
+
+    "modal_view": {
+      "description": "Modal view surface (views.open / views.push / views.update payload). title/submit/close text capped at 24 chars. When blocks contain any input block, submit is required (per docs).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "title", "blocks"],
+      "properties": {
+        "type": { "const": "modal" },
+        "title": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 24 } } }]
+        },
+        "blocks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/block" }
+        },
+        "close": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 24 } } }]
+        },
+        "submit": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 24 } } }]
+        },
+        "private_metadata": { "type": "string", "maxLength": 3000 },
+        "callback_id": { "type": "string", "maxLength": 255 },
+        "clear_on_close": { "type": "boolean" },
+        "notify_on_close": { "type": "boolean" },
+        "external_id": { "type": "string", "maxLength": 255 },
+        "submit_disabled": { "type": "boolean" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "blocks": {
+                "contains": {
+                  "type": "object",
+                  "properties": { "type": { "const": "input" } },
+                  "required": ["type"]
+                }
+              }
+            }
+          },
+          "then": { "required": ["submit"] }
+        }
+      ]
+    },
+
+    "home_view": {
+      "description": "Home tab view surface (views.publish payload).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "blocks"],
+      "properties": {
+        "type": { "const": "home" },
+        "blocks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/block" }
+        },
+        "private_metadata": { "type": "string", "maxLength": 3000 },
+        "callback_id": { "type": "string", "maxLength": 255 },
+        "external_id": { "type": "string", "maxLength": 255 }
+      }
+    }
+  }
+}

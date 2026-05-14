@@ -1,0 +1,67 @@
+{
+  "name": "slack-block-kit-validator",
+  "version": "0.1.0-alpha.0",
+  "description": "JSON Schema (draft 2020-12) and validation helpers for Slack Block Kit payloads.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./schema.json": "./dist/slack-block-kit.schema.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc && cp src/slack-block-kit.schema.json dist/slack-block-kit.schema.json",
+    "build:clean": "rm -rf dist && pnpm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
+    "format": "biome format --write .",
+    "validate-schema": "ajv compile --spec=draft2020 --strict=false -c ajv-formats -s src/slack-block-kit.schema.json",
+    "compile:standalone": "mkdir -p dist && ajv compile --spec=draft2020 --strict=false -c ajv-formats -s src/slack-block-kit.schema.json -o dist/standalone-validator.js",
+    "prepare": "lefthook install",
+    "prepublishOnly": "pnpm run build:clean && pnpm test"
+  },
+  "dependencies": {
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.11",
+    "@vitest/coverage-v8": "^4.1.4",
+    "ajv-cli": "^5.0.0",
+    "lefthook": "^2.1.5",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TightknitAI/slack-block-kit-validator.git"
+  },
+  "homepage": "https://github.com/TightknitAI/slack-block-kit-validator",
+  "bugs": {
+    "url": "https://github.com/TightknitAI/slack-block-kit-validator/issues"
+  },
+  "author": "Tightknit <https://tightknit.ai>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.32.1",
+  "keywords": [
+    "slack",
+    "block-kit",
+    "json-schema",
+    "validator",
+    "ajv"
+  ]
+}
