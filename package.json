@@ -59,9 +59,20 @@
   "packageManager": "pnpm@10.32.1",
   "keywords": [
     "slack",
+    "slack-api",
+    "slack-block-kit",
     "block-kit",
+    "blockkit",
+    "slack-blocks",
+    "slack-message",
+    "slack-modal",
     "json-schema",
+    "jsonschema",
+    "json-schema-validator",
     "validator",
-    "ajv"
+    "validation",
+    "ajv",
+    "typescript",
+    "schema"
   ]
 }
