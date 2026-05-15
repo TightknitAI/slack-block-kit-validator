@@ -1,4 +1,4 @@
-import type { Surface } from "./check-surface-compatibility";
+import type { Surface } from "./check-surface-compatibility.js";
 
 type SelectLike = { type?: string; response_url_enabled?: boolean };
 type BlockLike = {
