@@ -1,14 +1,14 @@
-import Ajv2020, { type ErrorObject, type ValidateFunction } from "ajv/dist/2020";
+import Ajv2020, { type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
-import { checkCardActionsMax } from "./helpers/check-card-actions-max";
-import { checkCumulativeMarkdownLength } from "./helpers/check-cumulative-markdown-length";
-import { checkFocusOnLoadUniqueness } from "./helpers/check-focus-on-load-uniqueness";
-import { checkNumberInputBounds } from "./helpers/check-number-input-bounds";
-import { checkResponseUrlEnabledContext } from "./helpers/check-response-url-enabled-context";
-import { checkSingleTableBlock } from "./helpers/check-single-table-block";
-import { checkSurfaceCompatibility, type Surface } from "./helpers/check-surface-compatibility";
-import { findDuplicateBlockIds } from "./helpers/find-duplicate-block-ids";
-import schema from "./slack-block-kit.schema.json";
+import { checkCardActionsMax } from "./helpers/check-card-actions-max.js";
+import { checkCumulativeMarkdownLength } from "./helpers/check-cumulative-markdown-length.js";
+import { checkFocusOnLoadUniqueness } from "./helpers/check-focus-on-load-uniqueness.js";
+import { checkNumberInputBounds } from "./helpers/check-number-input-bounds.js";
+import { checkResponseUrlEnabledContext } from "./helpers/check-response-url-enabled-context.js";
+import { checkSingleTableBlock } from "./helpers/check-single-table-block.js";
+import { checkSurfaceCompatibility, type Surface } from "./helpers/check-surface-compatibility.js";
+import { findDuplicateBlockIds } from "./helpers/find-duplicate-block-ids.js";
+import schema from "./slack-block-kit.schema.json" with { type: "json" };
 
 /**
  * Result of a Block Kit validation.
