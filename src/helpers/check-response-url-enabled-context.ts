@@ -31,6 +31,11 @@ export function checkResponseUrlEnabledContext(blocks: readonly BlockLike[], sur
   const errors: string[] = [];
 
   blocks.forEach((block, i) => {
+    // Normalization can leave `null` in array slots (matching JSON.stringify
+    // semantics) — guard before any property access.
+    if (block == null) {
+      return;
+    }
     // Section accessory — never a valid host.
     if (hasResponseUrlEnabled(block.accessory)) {
       errors.push(
