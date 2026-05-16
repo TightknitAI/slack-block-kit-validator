@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/TightknitAI/slack-block-kit-validator/actions/workflows/ci.yml/badge.svg)](https://github.com/TightknitAI/slack-block-kit-validator/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/@tightknitai/slack-block-kit-validator.svg)](https://www.npmjs.com/package/@tightknitai/slack-block-kit-validator)
+[![bundle size](https://img.shields.io/bundlejs/size/@tightknitai/slack-block-kit-validator)](https://bundlejs.com/?q=%40tightknitai%2Fslack-block-kit-validator)
+[![JSON Schema](https://img.shields.io/badge/JSON%20Schema-2020--12-blue)](https://json-schema.org/draft/2020-12/release-notes)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 JSON Schema (draft 2020-12) and validation helpers for Slack Block Kit JSON. Catches invalid block payloads before Slack silently swallows them.
