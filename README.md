@@ -1,6 +1,7 @@
 # slack-block-kit-validator
 
 [![CI](https://github.com/TightknitAI/slack-block-kit-validator/actions/workflows/ci.yml/badge.svg)](https://github.com/TightknitAI/slack-block-kit-validator/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/TightknitAI/slack-block-kit-validator/branch/main/graph/badge.svg)](https://codecov.io/gh/TightknitAI/slack-block-kit-validator)
 [![npm version](https://img.shields.io/npm/v/@tightknitai/slack-block-kit-validator.svg)](https://www.npmjs.com/package/@tightknitai/slack-block-kit-validator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 

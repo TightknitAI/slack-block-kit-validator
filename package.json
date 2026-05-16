@@ -1,14 +1,14 @@
 {
   "name": "@tightknitai/slack-block-kit-validator",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.1-alpha.1",
   "description": "JSON Schema (draft 2020-12) and validation helpers for Slack Block Kit payloads.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./helpers": {
       "import": "./dist/helpers.js",
@@ -83,10 +83,21 @@
   "packageManager": "pnpm@10.32.1",
   "keywords": [
     "slack",
+    "slack-api",
+    "slack-block-kit",
     "block-kit",
+    "blockkit",
+    "slack-blocks",
+    "slack-message",
+    "slack-modal",
     "json-schema",
+    "jsonschema",
+    "json-schema-validator",
     "validator",
-    "ajv"
+    "validation",
+    "ajv",
+    "typescript",
+    "schema"
   ],
   "pnpm": {
     "overrides": {
