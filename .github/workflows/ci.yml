@@ -37,16 +37,87 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm run typecheck
 
+  generated-types-fresh:
+    # Catches schema edits where contributors forget to re-run generate:types.
+    # The generated file is committed (so consumers can grep types in the
+    # repo); this job makes sure that committed copy still matches the schema.
+    name: Generated types in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+      - run: pnpm run generate:types
+      - run: |
+          # Treat both modified-tracked and untracked-but-expected-to-be-tracked
+          # as failures. `git ls-files --error-unmatch` returns nonzero when
+          # the file isn't tracked; `git diff --quiet` checks the tracked diff.
+          if ! git ls-files --error-unmatch src/types.generated.ts >/dev/null 2>&1; then
+            echo "::error::src/types.generated.ts is not committed. Run 'pnpm run generate:types' and commit the result."
+            exit 1
+          fi
+          if ! git diff --quiet src/types.generated.ts; then
+            echo "::error::src/types.generated.ts is stale. Run 'pnpm run generate:types' and commit the result."
+            git --no-pager diff src/types.generated.ts | head -50
+            exit 1
+          fi
+
   test:
     name: Test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 5
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [20, 22]
+        node-version: [20, 22, 24]
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup
         with:
           node-version: ${{ matrix.node-version }}
-      - run: pnpm test
+      - run: pnpm run test:coverage
+      - name: Upload coverage to Codecov
+        if: matrix.node-version == 22
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+  test-bun:
+    name: Test (Bun)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+      - uses: oven-sh/setup-bun@v2
+      - run: bun --bun run vitest run
+
+  test-deno:
+    name: Smoke (Deno)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+      - run: pnpm run build
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v2.x
+      # Deno can consume the published ESM build directly. We're not running
+      # the full vitest suite — just confirming the artifacts load + validate.
+      - run: deno run --allow-read scripts/smoke-deno.ts
+
+  smoke-workers:
+    name: Smoke (Cloudflare Workers build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+      - run: pnpm run build
+      # Bundle the standalone validator with esbuild in worker mode. If any
+      # Node-only API or require() sneaks in, this fails — protecting the
+      # README's "works in a Worker" claim.
+      - run: pnpm exec esbuild --bundle --format=esm --platform=neutral --target=es2022 --outfile=/tmp/worker.js scripts/smoke-worker.ts
