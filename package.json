@@ -37,6 +37,7 @@
     "compile:standalone": "tsx scripts/build-standalone.ts",
     "build": "pnpm run generate:types && tsc && cp src/slack-block-kit.schema.json dist/slack-block-kit.schema.json && pnpm run compile:standalone",
     "build:clean": "rm -rf dist && pnpm run build",
+    "build:demo": "cd demo && pnpm install --frozen-lockfile && pnpm run build",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "vitest run",
     "test:watch": "vitest",

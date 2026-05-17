@@ -38,16 +38,22 @@ Deployed via the Cloudflare Workers Builds GitHub integration — no CI workflow
 in this repo. Cloudflare watches the repo and rebuilds on every push to `main`.
 
 The project is configured as a **Worker with static assets**, not classic
-Pages. `wrangler.jsonc` in this directory declares the asset directory and
-SPA fallback; the build settings in the Cloudflare dashboard just need to
-point at this directory:
+Pages. `wrangler.jsonc` lives at the **repo root** (not in `demo/`) so CF
+Workers Builds can find it without any "Root directory" override; it points
+its `assets.directory` at `./demo/dist`.
+
+The actual demo build runs via `pnpm run build:demo` (defined at the repo
+root), which CDs into `demo/`, installs with `--frozen-lockfile`, and runs
+Vite.
+
+Cloudflare dashboard settings:
 
 | Setting | Value |
 |---|---|
 | Production branch | `main` |
-| Root directory | `demo` |
-| Build command | `pnpm install && pnpm build` |
-| Deploy command | (auto — reads `wrangler.jsonc`) |
+| Root directory | (leave blank — repo root) |
+| Build command | `pnpm run build:demo` |
+| Deploy command | `npx wrangler versions upload` (default — reads `wrangler.jsonc`) |
 | Node version | `20` (env var `NODE_VERSION=20`) |
 
 Custom domain `slack-block-kit-validator.tightknit.dev` is mapped under the
