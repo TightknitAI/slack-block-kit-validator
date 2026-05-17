@@ -6,3 +6,7 @@ coverage/
 .env.*
 .DS_Store
 *.log
+
+# Demo build output
+demo/dist/
+demo/.vite/
