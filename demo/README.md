@@ -34,19 +34,21 @@ Output goes to `demo/dist/`.
 
 ## Deploy
 
-Deployed via the Cloudflare Pages GitHub integration — no CI workflow in this
-repo. Cloudflare watches the repo and rebuilds on every push to `main`.
+Deployed via the Cloudflare Workers Builds GitHub integration — no CI workflow
+in this repo. Cloudflare watches the repo and rebuilds on every push to `main`.
 
-Cloudflare Pages project settings:
+The project is configured as a **Worker with static assets**, not classic
+Pages. `wrangler.jsonc` in this directory declares the asset directory and
+SPA fallback; the build settings in the Cloudflare dashboard just need to
+point at this directory:
 
 | Setting | Value |
 |---|---|
 | Production branch | `main` |
 | Root directory | `demo` |
 | Build command | `pnpm install && pnpm build` |
-| Build output directory | `dist` (resolves to `demo/dist`) |
+| Deploy command | (auto — reads `wrangler.jsonc`) |
 | Node version | `20` (env var `NODE_VERSION=20`) |
-| Package manager | pnpm (auto-detected from `packageManager` field) |
 
-Custom domain `slack-block-kit-validator.tightknit.dev` is mapped in the
-project's **Custom domains** tab.
+Custom domain `slack-block-kit-validator.tightknit.dev` is mapped under the
+Worker's **Domains & Routes** settings.

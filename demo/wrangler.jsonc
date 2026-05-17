@@ -1,0 +1,19 @@
+{
+  // Cloudflare Workers with static assets — serves the Vite build output as a
+  // pure-static Worker (no server code). The CF Pages GitHub integration
+  // points at this directory as the project root and runs `pnpm install &&
+  // pnpm build` before invoking wrangler with this config.
+  //
+  // Docs: https://developers.cloudflare.com/workers/static-assets/
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
+  "name": "slack-block-kit-validator",
+  "compatibility_date": "2026-05-17",
+  "assets": {
+    // Relative to this file. Vite emits the bundle here during `pnpm build`.
+    "directory": "./dist",
+    // The demo is a single page with no client-side routing, but treating
+    // unknown paths as SPA fallback (serve index.html, 200) is friendlier
+    // than a hard 404 — and harmless given there's only one route.
+    "not_found_handling": "single-page-application"
+  }
+}
