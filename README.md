@@ -1,7 +1,10 @@
 # slack-block-kit-validator
 
 [![CI](https://github.com/TightknitAI/slack-block-kit-validator/actions/workflows/ci.yml/badge.svg)](https://github.com/TightknitAI/slack-block-kit-validator/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/TightknitAI/slack-block-kit-validator/branch/main/graph/badge.svg)](https://codecov.io/gh/TightknitAI/slack-block-kit-validator)
 [![npm version](https://img.shields.io/npm/v/@tightknitai/slack-block-kit-validator.svg)](https://www.npmjs.com/package/@tightknitai/slack-block-kit-validator)
+[![bundle size](https://img.shields.io/bundlejs/size/@tightknitai/slack-block-kit-validator)](https://bundlejs.com/?q=%40tightknitai%2Fslack-block-kit-validator)
+[![JSON Schema](https://img.shields.io/badge/JSON%20Schema-2020--12-blue)](https://json-schema.org/draft/2020-12/release-notes)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 JSON Schema (draft 2020-12) and validation helpers for Slack Block Kit JSON. Catches invalid block payloads before Slack silently swallows them.
@@ -157,15 +160,30 @@ Server-side rules that need app-config context or deep equality checks the schem
 
 `validateBlockKit` strips properties whose value is `undefined` before running Ajv. `JSON.stringify` drops these before the payload reaches Slack, so common builder patterns like `value: foo ?? undefined` are no-ops on the wire but would otherwise trip the schema's `additionalProperties: false`. Explicit `null` values are preserved — they survive `JSON.stringify` and may legitimately fail the schema.
 
+## Entry points
+
+The package ships several entry points so you only pay for what you use:
+
+| Entry | Pulls Ajv? | Use when |
+|---|---|---|
+| `@tightknitai/slack-block-kit-validator` | yes | The full wrapper. `validateBlockKit`, helpers, schema, types. |
+| `@tightknitai/slack-block-kit-validator/helpers` | no | Just the pure helpers — compose with Zod, TypeBox, your own validator. |
+| `@tightknitai/slack-block-kit-validator/schema` | no | Just `slackBlockKitSchema` as a JS module. |
+| `@tightknitai/slack-block-kit-validator/schema.json` | no | The raw JSON Schema file (for non-JS consumers). |
+| `@tightknitai/slack-block-kit-validator/standalone` | no — precompiled | Self-contained validators for environments where Ajv is too heavy (Cloudflare Workers, Deno deploy). Exports `validateBlocks`, `validateModal`, `validateHome`. |
+| `@tightknitai/slack-block-kit-validator/types` | no — types only | TypeScript types generated from the schema. `Block`, `SectionBlock`, `ModalView`, etc. |
+
+```ts
+// Worker-friendly: no Ajv at runtime
+import { validateBlocks } from "@tightknitai/slack-block-kit-validator/standalone";
+
+// Types straight from the schema (always in sync with what the validator accepts)
+import type { Block, SectionBlock } from "@tightknitai/slack-block-kit-validator/types";
+```
+
 ## Runtime & bundle considerations
 
-Ajv v8 + ajv-formats weigh ~50–60 KB gzipped, which is fine for Node test runs but noticeable in a Cloudflare Worker bundle. If you want runtime validation inside a Worker, use the package's `compile:standalone` script to emit a self-contained validator that doesn't import Ajv at runtime:
-
-```sh
-pnpm dlx ajv compile --spec=draft2020 --strict=false -c ajv-formats \
-  -s node_modules/@tightknitai/slack-block-kit-validator/dist/slack-block-kit.schema.json \
-  -o standalone-validator.js
-```
+The wrapper entry pulls in Ajv v8 + ajv-formats. The standalone entry has no runtime dependencies (its Ajv usage is fully inlined at build time) but is larger as a single bundle.
 
 For most apps the recommended pattern is **validate in tests only** — use `validateBlockKit` in unit tests next to your block builders, and let CI catch regressions before they hit production.
 
