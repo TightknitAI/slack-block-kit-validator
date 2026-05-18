@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Paste Slack Block Kit JSON, see errors Slack silently swallows. Live demo of @tightknitai/slack-block-kit-validator."
+    />
+    <meta property="og:title" content="Slack Block Kit Validator — live demo" />
+    <meta
+      property="og:description"
+      content="Paste Slack Block Kit JSON, see errors Slack silently swallows."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://slack-block-kit-validator.tightknit.dev/" />
+    <title>Slack Block Kit Validator — live demo</title>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__brand">
+        <span class="logo" aria-hidden="true"></span>
+        <div>
+          <h1>Slack Block Kit Validator</h1>
+          <p class="topbar__tagline">
+            Paste Block Kit JSON, see the errors Slack silently swallows.
+          </p>
+        </div>
+      </div>
+      <nav class="topbar__links">
+        <a
+          href="https://github.com/TightknitAI/slack-block-kit-validator"
+          target="_blank"
+          rel="noopener noreferrer"
+          >GitHub</a
+        >
+        <a
+          href="https://www.npmjs.com/package/@tightknitai/slack-block-kit-validator"
+          target="_blank"
+          rel="noopener noreferrer"
+          >npm</a
+        >
+        <a
+          href="https://docs.slack.dev/reference/block-kit"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Slack docs</a
+        >
+      </nav>
+    </header>
+
+    <section class="controls" aria-label="Validation options">
+      <div class="controls__group">
+        <label class="control-label" for="target-select">Target</label>
+        <select id="target-select" class="control-select" autocomplete="off">
+          <option value="blocks">blocks (array)</option>
+          <option value="modal">modal view envelope</option>
+          <option value="home">home view envelope</option>
+        </select>
+      </div>
+      <div class="controls__group" id="surface-group">
+        <label class="control-label" for="surface-select">Surface</label>
+        <select id="surface-select" class="control-select" autocomplete="off">
+          <option value="">— (no surface check)</option>
+          <option value="message">message</option>
+          <option value="modal">modal</option>
+          <option value="home">home</option>
+        </select>
+      </div>
+      <div class="controls__group controls__presets">
+        <span class="control-label">Presets</span>
+        <div id="preset-chips" class="chips"></div>
+      </div>
+    </section>
+
+    <main class="workspace">
+      <section class="pane pane--editor" aria-label="Block Kit JSON input">
+        <header class="pane__header">
+          <h2>Input</h2>
+          <span id="parse-status" class="badge badge--neutral">JSON ok</span>
+        </header>
+        <div id="editor" class="editor"></div>
+      </section>
+
+      <section class="pane pane--results" aria-label="Validation results">
+        <header class="pane__header">
+          <h2>Result</h2>
+          <span id="result-badge" class="badge">—</span>
+        </header>
+        <div id="results" class="results">
+          <p class="results__empty">Edit the JSON to see validation output.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        Runs entirely in your browser — no payload leaves this page.
+        <a
+          href="https://github.com/TightknitAI/slack-block-kit-validator#runtime--bundle-considerations"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Why you probably want this in tests, not production →</a
+        >
+      </p>
+      <p class="footer__credit">
+        Maintained by <a href="https://tightknit.ai" target="_blank" rel="noopener noreferrer">Tightknit</a>.
+      </p>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

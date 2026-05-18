@@ -36,7 +36,9 @@
     "generate:types": "tsx scripts/generate-types.ts",
     "compile:standalone": "tsx scripts/build-standalone.ts",
     "build": "pnpm run generate:types && tsc && cp src/slack-block-kit.schema.json dist/slack-block-kit.schema.json && pnpm run compile:standalone",
+    "postbuild": "[ \"$SKIP_DEMO_BUILD\" = \"1\" ] || pnpm run build:demo",
     "build:clean": "rm -rf dist && pnpm run build",
+    "build:demo": "cd demo && pnpm install --frozen-lockfile && pnpm run build",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -47,7 +49,7 @@
     "format": "biome format --write .",
     "validate-schema": "ajv compile --spec=draft2020 --strict=false -c ajv-formats -s src/slack-block-kit.schema.json",
     "prepare": "lefthook install",
-    "prepublishOnly": "pnpm run build:clean && pnpm test"
+    "prepublishOnly": "SKIP_DEMO_BUILD=1 pnpm run build:clean && pnpm test"
   },
   "dependencies": {
     "ajv": "^8.18.0",
@@ -102,6 +104,10 @@
   "pnpm": {
     "overrides": {
       "fast-json-patch@<3.1.1": ">=3.1.1"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "lefthook"
+    ]
   }
 }

@@ -9,6 +9,8 @@
 
 JSON Schema (draft 2020-12) and validation helpers for Slack Block Kit JSON. Catches invalid block payloads before Slack silently swallows them.
 
+**Try it live:** <https://slack-block-kit-validator.tightknit.dev> — paste any payload, see every error in your browser.
+
 ## Why this exists
 
 Slack's API returns `200 OK` when you send malformed Block Kit JSON — the metadata is dropped and the message renders as plain text (or a modal opens blank). The only way to find out is to eyeball a real Slack channel. Slack hasn't open-sourced their validator.
