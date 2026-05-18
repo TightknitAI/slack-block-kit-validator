@@ -1,35 +1,55 @@
 {
   "name": "@tightknitai/slack-block-kit-validator",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.1-alpha.1",
   "description": "JSON Schema (draft 2020-12) and validation helpers for Slack Block Kit payloads.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
-    "./schema.json": "./dist/slack-block-kit.schema.json"
+    "./helpers": {
+      "import": "./dist/helpers.js",
+      "types": "./dist/helpers.d.ts"
+    },
+    "./schema": {
+      "import": "./dist/schema.js",
+      "types": "./dist/schema.d.ts"
+    },
+    "./schema.json": "./dist/slack-block-kit.schema.json",
+    "./standalone": {
+      "import": "./dist/standalone-validator.js",
+      "types": "./dist/standalone-validator.d.ts"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    }
   },
   "files": [
     "dist"
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsc && cp src/slack-block-kit.schema.json dist/slack-block-kit.schema.json",
+    "generate:types": "tsx scripts/generate-types.ts",
+    "compile:standalone": "tsx scripts/build-standalone.ts",
+    "build": "pnpm run generate:types && tsc && cp src/slack-block-kit.schema.json dist/slack-block-kit.schema.json && pnpm run compile:standalone",
+    "postbuild": "[ \"$SKIP_DEMO_BUILD\" = \"1\" ] || pnpm run build:demo",
     "build:clean": "rm -rf dist && pnpm run build",
-    "typecheck": "tsc --noEmit",
+    "build:demo": "cd demo && pnpm install --frozen-lockfile && pnpm run build",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "bench": "tsx bench/index.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --fix .",
     "format": "biome format --write .",
     "validate-schema": "ajv compile --spec=draft2020 --strict=false -c ajv-formats -s src/slack-block-kit.schema.json",
-    "compile:standalone": "mkdir -p dist && ajv compile --spec=draft2020 --strict=false -c ajv-formats -s src/slack-block-kit.schema.json -o dist/standalone-validator.js",
     "prepare": "lefthook install",
-    "prepublishOnly": "pnpm run build:clean && pnpm test"
+    "prepublishOnly": "SKIP_DEMO_BUILD=1 pnpm run build:clean && pnpm test"
   },
   "dependencies": {
     "ajv": "^8.18.0",
@@ -37,9 +57,15 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.11",
+    "@types/node": "^25.8.0",
     "@vitest/coverage-v8": "^4.1.4",
     "ajv-cli": "^5.0.0",
+    "esbuild": "^0.28.0",
+    "fast-check": "^4.8.0",
+    "json-schema-to-typescript": "^15.0.4",
     "lefthook": "^2.1.5",
+    "tinybench": "^6.0.2",
+    "tsx": "^4.22.0",
     "typescript": "^5.9.0",
     "vitest": "^4.1.4"
   },
@@ -59,14 +85,29 @@
   "packageManager": "pnpm@10.32.1",
   "keywords": [
     "slack",
+    "slack-api",
+    "slack-block-kit",
     "block-kit",
+    "blockkit",
+    "slack-blocks",
+    "slack-message",
+    "slack-modal",
     "json-schema",
+    "jsonschema",
+    "json-schema-validator",
     "validator",
-    "ajv"
+    "validation",
+    "ajv",
+    "typescript",
+    "schema"
   ],
   "pnpm": {
     "overrides": {
       "fast-json-patch@<3.1.1": ">=3.1.1"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "lefthook"
+    ]
   }
 }
