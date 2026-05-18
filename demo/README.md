@@ -44,15 +44,19 @@ its `assets.directory` at `./demo/dist`.
 
 The actual demo build runs via `pnpm run build:demo` (defined at the repo
 root), which CDs into `demo/`, installs with `--frozen-lockfile`, and runs
-Vite.
+Vite. To avoid asking the Cloudflare dashboard for a custom build command,
+the repo-root `build` script has a `postbuild` hook that automatically
+chains into `build:demo`, so the default `pnpm run build` produces both
+the lib artifacts and `demo/dist/`. (`SKIP_DEMO_BUILD=1` short-circuits
+the postbuild — used by `prepublishOnly` so npm publish stays fast.)
 
-Cloudflare dashboard settings:
+Cloudflare dashboard settings — all CF auto-detected defaults work:
 
 | Setting | Value |
 |---|---|
 | Production branch | `main` |
 | Root directory | (leave blank — repo root) |
-| Build command | `pnpm run build:demo` |
+| Build command | `pnpm run build` (auto-detected default) |
 | Deploy command | `npx wrangler versions upload` (default — reads `wrangler.jsonc`) |
 | Node version | `20` (env var `NODE_VERSION=20`) |
 
