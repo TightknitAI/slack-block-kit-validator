@@ -1,0 +1,21 @@
+{
+  // Cloudflare Workers with static assets — serves the demo's Vite build as
+  // a pure-static Worker (no server code). This config lives at the repo
+  // root so the Cloudflare Workers Builds GitHub integration can deploy
+  // without any "Root directory" override in the dashboard. The actual
+  // build happens via `pnpm run build:demo`, which CDs into `demo/` and
+  // runs the Vite build there.
+  //
+  // Docs: https://developers.cloudflare.com/workers/static-assets/
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
+  "name": "slack-block-kit-validator",
+  "compatibility_date": "2026-05-17",
+  "assets": {
+    // Relative to this file. `pnpm run build:demo` emits the bundle here.
+    "directory": "./demo/dist",
+    // The demo is a single page with no client-side routing, but treating
+    // unknown paths as SPA fallback (serve index.html, 200) is friendlier
+    // than a hard 404 — and harmless given there's only one route.
+    "not_found_handling": "single-page-application"
+  }
+}

@@ -1,5 +1,6 @@
-import Ajv2020, { type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
+import Ajv2020, { type ValidateFunction } from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
+import { type FocusValidators, formatAjvErrors } from "./format-ajv-errors.js";
 import { checkCardActionsMax } from "./helpers/check-card-actions-max.js";
 import { checkCumulativeMarkdownLength } from "./helpers/check-cumulative-markdown-length.js";
 import { checkFocusOnLoadUniqueness } from "./helpers/check-focus-on-load-uniqueness.js";
@@ -47,10 +48,38 @@ const validators = {
   home: compile("home_view"),
 } as const;
 
-const formatAjvError = (err: ErrorObject): string => {
-  const path = err.instancePath || "(root)";
-  return `${path} ${err.message ?? "failed validation"}`;
+/**
+ * Per-block-type validators used when a payload fails the top-level oneOf so
+ * we can re-validate a single block against just its declared `type`'s schema
+ * branch. This is how `formatAjvErrors` collapses ~80 lines of "doesn't match
+ * any of the 18 block kinds" cascade down to the actual reason a section
+ * block was malformed. Built from the same `$defs` as the union itself; kept
+ * in sync as new block kinds are added there.
+ */
+const BLOCK_TYPE_TO_DEF: Readonly<Record<string, string>> = {
+  actions: "actions_block",
+  alert: "alert_block",
+  card: "card_block",
+  carousel: "carousel_block",
+  context: "context_block",
+  context_actions: "context_actions_block",
+  divider: "divider_block",
+  file: "file_block",
+  header: "header_block",
+  image: "image_block",
+  input: "input_block",
+  markdown: "markdown_block",
+  plan: "plan_block",
+  rich_text: "rich_text_block",
+  section: "section_block",
+  table: "table_block",
+  task_card: "task_card_block",
+  video: "video_block",
 };
+
+const focusValidators: FocusValidators = new Map(
+  Object.entries(BLOCK_TYPE_TO_DEF).map(([type, def]) => [type, compile(def)] as const),
+);
 
 const resolveSurface = (target: ValidationTarget, surface: Surface | undefined): Surface | undefined => {
   if (target === "modal") {
@@ -152,9 +181,7 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
 
   const validator = validators[target];
   if (!validator(normalizedInput)) {
-    for (const err of validator.errors ?? []) {
-      errors.push(formatAjvError(err));
-    }
+    errors.push(...formatAjvErrors(validator.errors ?? [], normalizedInput, target, focusValidators));
   }
 
   const blocks = extractBlocks(normalizedInput, target) as readonly {
