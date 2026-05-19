@@ -53,7 +53,7 @@ When `target` is `modal` or `home`, the surface-compatibility check is enforced 
 
 ```ts
 validateBlockKit(blocks, { surface: "message" });
-// rejects input blocks, table on non-message surfaces, etc.
+// rejects alert/file on messages, markdown/table on modals, etc.
 ```
 
 ### Example output
@@ -122,7 +122,7 @@ The schema uses `$defs` for every block, element, composition object, rich-text 
 | `checkCumulativeMarkdownLength` | `(blocks) => string[]` | Sum of all `markdown` block text > 12,000 chars. |
 | `checkSingleTableBlock` | `(blocks) => string[]` | More than one `table` block per payload. |
 | `checkFocusOnLoadUniqueness` | `(blocks) => string[]` | More than one element with `focus_on_load: true` in a view (walks nested elements + accessories). |
-| `checkSurfaceCompatibility` | `(blocks, surface) => string[]` | Blocks not allowed on the target surface (e.g. `input` on message, `video` on modal, `file_input` outside modals). |
+| `checkSurfaceCompatibility` | `(blocks, surface) => string[]` | Blocks not allowed on the target surface (e.g. `alert` on message, `markdown` on modal, `file_input` outside modals). |
 | `checkCardActionsMax` | `(blocks) => string[]` | More than `CARD_ACTIONS_MAX` action buttons on a card block. |
 | `checkNumberInputBounds` | `(blocks) => string[]` | `number_input` element with `min_value > max_value`. |
 | `checkResponseUrlEnabledContext` | `(blocks, surface?) => string[]` | `response_url_enabled` set in contexts that don't support it. |

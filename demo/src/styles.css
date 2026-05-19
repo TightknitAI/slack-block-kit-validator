@@ -31,7 +31,6 @@
   --error-msg: #ffc4cf;
   --chip-invalid-text: #ffb1bf;
   --code-bg: rgba(255, 255, 255, 0.05);
-  --logo-frame: #0f1115;
   --topbar-gradient-top: #0f1116;
 
   /* CodeMirror */
@@ -69,7 +68,6 @@
   --error-msg: #832135;
   --chip-invalid-text: #a52340;
   --code-bg: rgba(0, 0, 0, 0.05);
-  --logo-frame: #ffffff;
   --topbar-gradient-top: #ffffff;
 
   /* CodeMirror */
@@ -159,14 +157,6 @@ code {
 .logo {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
-  background:
-    linear-gradient(135deg, #36c5f0 0%, #36c5f0 50%, transparent 50%) top left / 50% 50% no-repeat,
-    linear-gradient(135deg, #2eb67d 0%, #2eb67d 50%, transparent 50%) top right / 50% 50% no-repeat,
-    linear-gradient(135deg, #ecb22e 0%, #ecb22e 50%, transparent 50%) bottom left / 50% 50% no-repeat,
-    linear-gradient(135deg, #e01e5a 0%, #e01e5a 50%, transparent 50%) bottom right / 50% 50% no-repeat,
-    var(--logo-frame);
-  box-shadow: inset 0 0 0 1px var(--border);
   flex-shrink: 0;
 }
 
