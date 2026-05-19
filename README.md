@@ -17,6 +17,8 @@ Slack's API returns `200 OK` when you send malformed Block Kit JSON — the meta
 
 This package compiles every rule in <https://docs.slack.dev/reference/block-kit> into a single JSON Schema, plus a handful of helpers for the cross-payload rules JSON Schema can't express (duplicate `block_id`, cumulative markdown length, one-table-per-message, `focus_on_load` uniqueness, surface compatibility).
 
+> Prefer an API call or an MCP server over an npm install? The repo also ships a Cloudflare Worker that exposes this package as a public, rate-limited HTTP endpoint plus a remote MCP server — see [`worker/`](./worker).
+
 ## Install
 
 ```sh
@@ -186,6 +188,17 @@ import type { Block, SectionBlock } from "@tightknitai/slack-block-kit-validator
 The wrapper entry pulls in Ajv v8 + ajv-formats. The standalone entry has no runtime dependencies (its Ajv usage is fully inlined at build time) but is larger as a single bundle.
 
 For most apps the recommended pattern is **validate in tests only** — use `validateBlockKit` in unit tests next to your block builders, and let CI catch regressions before they hit production.
+
+## Hosted API & MCP
+
+For when you'd rather call an endpoint than install the package:
+
+- **`POST /v1/validate`** — JSON in / JSON out. Same return shape as `validateBlockKit`. OpenAPI 3.1 spec at `/openapi.json`.
+- **Remote MCP server** — exposes a `validate_block_kit` tool over Streamable HTTP (`/mcp`) and SSE (`/sse`). Connects to Claude Code, Claude Desktop, and other MCP clients.
+
+Hosted on Cloudflare Workers, rate-limited per IP via the Workers Rate Limiting binding. Source in [`worker/`](./worker); deployment + MCP client setup in [`worker/README.md`](./worker/README.md). For the interactive UI, the [live playground](https://slack-block-kit-validator.tightknit.dev) covers that.
+
+The published npm package is unaffected by the worker — install it directly for production / high-volume use to skip the network hop entirely.
 
 ## Contributing
 

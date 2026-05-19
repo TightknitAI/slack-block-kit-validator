@@ -20,6 +20,6 @@
     "lineWidth": 120
   },
   "files": {
-    "includes": ["src/**", "test/**", "*.ts", "*.json"]
+    "includes": ["src/**", "test/**", "worker/src/**", "worker/*.json", "*.ts", "*.json"]
   }
 }
