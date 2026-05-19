@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.3-alpha.1...slack-block-kit-validator-v0.1.4-alpha.1) (2026-05-19)
+
+
+### Features
+
+* add Cloudflare Worker hosting validator as public API + MCP server ([#24](https://github.com/TightknitAI/slack-block-kit-validator/issues/24)) ([8cdad20](https://github.com/TightknitAI/slack-block-kit-validator/commit/8cdad2040dc7f0bd39cf91d9e29a2f0a0224db74))
+
 ## [0.1.3-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.2-alpha.1...slack-block-kit-validator-v0.1.3-alpha.1) (2026-05-19)
 
 
