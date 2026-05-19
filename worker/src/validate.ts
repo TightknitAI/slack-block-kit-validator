@@ -2,6 +2,8 @@ import { type Surface, type ValidationTarget, validateBlockKit } from "@tightkni
 import type { Env } from "./types.js";
 
 const MAX_BODY_BYTES = 256 * 1024; // 256 KB. Slack's largest legal payloads stay well below this.
+const MAX_ERRORS_RETURNED = 200; // Cap response size for pathological payloads that fail every rule.
+
 const VALID_TARGETS: readonly ValidationTarget[] = ["blocks", "modal", "home"];
 const VALID_SURFACES: readonly Surface[] = ["message", "modal", "home"];
 
@@ -37,6 +39,21 @@ const jsonResponse = (
       ...bonusHeaders,
       ...extraHeaders,
     },
+  });
+
+/**
+ * `JSON.parse` reviver that drops keys known to be prototype-pollution
+ * vectors. Modern V8 already treats `__proto__` in JSON as a plain string
+ * property (not a `[[Prototype]]` write), so this is defense-in-depth on top
+ * of the validator's own stripUndefined walker — but cheap, and protects
+ * against any downstream code that reads these keys.
+ */
+const safeJsonParse = (raw: string): unknown =>
+  JSON.parse(raw, (key, value) => {
+    if (key === "__proto__" || key === "constructor" || key === "prototype") {
+      return undefined;
+    }
+    return value;
   });
 
 /**
@@ -110,7 +127,7 @@ const readBoundedJson = async (
   }
 
   try {
-    return { ok: true, value: JSON.parse(raw) };
+    return { ok: true, value: safeJsonParse(raw) };
   } catch (e) {
     return {
       ok: false,
@@ -119,6 +136,19 @@ const readBoundedJson = async (
       message: `Body is not valid JSON: ${e instanceof Error ? e.message : "parse error"}.`,
     };
   }
+};
+
+/**
+ * Returns `true` when the Content-Type header is missing or names something
+ * other than `application/json` (with optional parameters like `; charset=…`).
+ * Requiring this turns the endpoint into a non-simple CORS request — even
+ * without auth, that's a small CSRF-defense bonus against form-submission
+ * cross-origin POSTs.
+ */
+const isWrongContentType = (request: Request): boolean => {
+  const ct = request.headers.get("content-type");
+  if (!ct) return true;
+  return !ct.trim().toLowerCase().startsWith("application/json");
 };
 
 /**
@@ -135,6 +165,18 @@ export async function handleValidate(
     return jsonResponse(405, { error: "method_not_allowed", message: "Use POST." }, env, extraHeaders, {
       Allow: "POST, OPTIONS",
     });
+  }
+
+  if (isWrongContentType(request)) {
+    return jsonResponse(
+      415,
+      {
+        error: "unsupported_media_type",
+        message: "Request must use Content-Type: application/json.",
+      },
+      env,
+      extraHeaders,
+    );
   }
 
   const parsed = await readBoundedJson(request);
@@ -182,7 +224,24 @@ export async function handleValidate(
 
   const result = validateBlockKit(body.input, { target: body.target, surface: body.surface });
 
-  return jsonResponse(200, { valid: result.valid, errors: result.errors }, env, extraHeaders, {
-    "X-Powered-By": `@tightknitai/slack-block-kit-validator (${env.PROVIDER_URL})`,
-  });
+  // Cap response size. A pathological payload that fails every rule can
+  // produce thousands of error strings; clients only need a representative
+  // sample to start debugging.
+  const total = result.errors.length;
+  const truncated = total > MAX_ERRORS_RETURNED;
+  const errors = truncated ? result.errors.slice(0, MAX_ERRORS_RETURNED) : result.errors;
+
+  return jsonResponse(
+    200,
+    {
+      valid: result.valid,
+      errors,
+      ...(truncated ? { errors_truncated: true, total_errors: total } : {}),
+    },
+    env,
+    extraHeaders,
+    {
+      "X-Powered-By": `@tightknitai/slack-block-kit-validator (${env.PROVIDER_URL})`,
+    },
+  );
 }

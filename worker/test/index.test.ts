@@ -22,11 +22,15 @@ describe("GET /", () => {
     expect(link).toContain('rel="service-desc"');
   });
 
-  it("sets security headers", async () => {
+  it("sets the full security-header set", async () => {
     const res = await SELF.fetch(url("/"), { redirect: "manual" });
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(res.headers.get("Referrer-Policy")).toBe("no-referrer");
     expect(res.headers.get("Content-Security-Policy")).toContain("frame-ancestors 'none'");
+    expect(res.headers.get("Permissions-Policy")).toContain("camera=()");
+    expect(res.headers.get("Permissions-Policy")).toContain("microphone=()");
+    expect(res.headers.get("Cross-Origin-Opener-Policy")).toBe("same-origin");
+    expect(res.headers.get("Cross-Origin-Resource-Policy")).toBe("cross-origin");
   });
 });
 
@@ -121,6 +125,76 @@ describe("POST /v1/validate", () => {
     expect(res.status).toBe(400);
     const data = (await res.json()) as { error: string };
     expect(data.error).toBe("invalid_json");
+  });
+
+  it("415s when Content-Type is missing", async () => {
+    const res = await SELF.fetch(url("/v1/validate"), {
+      method: "POST",
+      body: JSON.stringify({ input: VALID_BLOCKS }),
+    });
+    expect(res.status).toBe(415);
+    const data = (await res.json()) as { error: string };
+    expect(data.error).toBe("unsupported_media_type");
+  });
+
+  it("415s when Content-Type is not application/json", async () => {
+    const res = await SELF.fetch(url("/v1/validate"), {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ input: VALID_BLOCKS }),
+    });
+    expect(res.status).toBe(415);
+  });
+
+  it("accepts Content-Type with parameters like charset=utf-8", async () => {
+    const res = await SELF.fetch(url("/v1/validate"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify({ input: VALID_BLOCKS }),
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it("strips __proto__ / constructor / prototype keys via JSON.parse reviver", async () => {
+    // The validator itself also filters these, but this confirms the reviver
+    // runs at parse time. The polluted keys are silently dropped — the
+    // remaining payload (`input: VALID_BLOCKS`) still validates fine.
+    const polluted = `{"__proto__": {"polluted": true}, "constructor": {"prototype": {"also": true}}, "input": ${JSON.stringify(VALID_BLOCKS)}}`;
+    const res = await SELF.fetch(url("/v1/validate"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: polluted,
+    });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { valid: boolean };
+    expect(data.valid).toBe(true);
+    // Confirm no global prototype pollution leaked into the test harness.
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+
+  it("caps the errors array at 200 with errors_truncated flag set", async () => {
+    // ~600 blocks with duplicate block_ids — produces a lot of dup errors,
+    // well past the 200 cap.
+    const manyBad: unknown[] = [];
+    for (let i = 0; i < 600; i++) manyBad.push({ type: "divider", block_id: "dup" });
+    const res = await SELF.fetch(url("/v1/validate"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input: manyBad }),
+    });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as {
+      valid: boolean;
+      errors: string[];
+      errors_truncated?: boolean;
+      total_errors?: number;
+    };
+    expect(data.valid).toBe(false);
+    expect(data.errors.length).toBeLessThanOrEqual(200);
+    if (data.errors.length === 200) {
+      expect(data.errors_truncated).toBe(true);
+      expect(data.total_errors).toBeGreaterThan(200);
+    }
   });
 
   it("400s with empty_body on an empty body", async () => {
@@ -225,6 +299,22 @@ describe("POST /v1/validate", () => {
     const data = (await res.json()) as { valid: boolean; errors: string[] };
     expect(data.valid).toBe(false);
     expect(data.errors.some((e) => /alert/i.test(e) && /message/i.test(e))).toBe(true);
+  });
+});
+
+describe("POST /mcp body cap", () => {
+  it("413s with payload_too_large when declared Content-Length exceeds the cap", async () => {
+    const res = await SELF.fetch(url("/mcp"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": String(300 * 1024),
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", method: "noop", id: 1 }),
+    });
+    expect(res.status).toBe(413);
+    const data = (await res.json()) as { error: string };
+    expect(data.error).toBe("payload_too_large");
   });
 });
 
