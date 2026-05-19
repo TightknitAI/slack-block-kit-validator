@@ -1,12 +1,17 @@
 import "./styles.css";
-import type { Surface, ValidationTarget } from "@tightknitai/slack-block-kit-validator";
+import type { Surface } from "@tightknitai/slack-block-kit-validator";
 import { createEditor, type EditorHandle } from "./editor.ts";
-import { defaultPresetId, presets, type Preset } from "./presets.ts";
+import {
+  defaultSurface,
+  presets,
+  surfaceToTarget,
+  type Preset,
+} from "./presets.ts";
 import { run, type RunResult } from "./validator.ts";
 
 const DEBOUNCE_MS = 180;
 
-// ---------- DOM lookup helpers ----------
+// ---------- DOM lookup ----------
 
 function el<T extends HTMLElement>(selector: string): T {
   const node = document.querySelector<T>(selector);
@@ -20,33 +25,39 @@ const editorMount = el<HTMLDivElement>("#editor");
 const resultsEl = el<HTMLDivElement>("#results");
 const parseStatusEl = el<HTMLSpanElement>("#parse-status");
 const resultBadgeEl = el<HTMLSpanElement>("#result-badge");
-const targetSelect = el<HTMLSelectElement>("#target-select");
-const surfaceSelect = el<HTMLSelectElement>("#surface-select");
-const surfaceGroup = el<HTMLDivElement>("#surface-group");
+const tabsContainer = el<HTMLDivElement>("#surface-tabs");
+const aboutEl = el<HTMLParagraphElement>("#surface-about");
 const chipsEl = el<HTMLDivElement>("#preset-chips");
+const presetBlurbEl = el<HTMLParagraphElement>("#preset-blurb");
+const themeToggleBtn = el<HTMLButtonElement>("#theme-toggle");
+
+const tabButtons = Array.from(
+  tabsContainer.querySelectorAll<HTMLButtonElement>(".surface-tab"),
+);
 
 // ---------- State ----------
 
-let activePresetId: string | null = defaultPresetId;
+let activeSurface: Surface = defaultSurface;
+let activePresetId: string | null = null;
 let debounceHandle: number | null = null;
+// Suppresses the "manual edit" path during programmatic preset loads — the
+// CodeMirror updateListener fires synchronously inside setDoc, which would
+// otherwise wipe activePresetId before the chip can render as pressed.
+let applyingPreset = false;
 
-function getTarget(): ValidationTarget {
-  const value = targetSelect.value;
-  if (value === "blocks" || value === "modal" || value === "home") {
-    return value;
-  }
-  return "blocks";
-}
+const ABOUT_COPY: Record<Surface, string> = {
+  message: `Validates as a bare <code>blocks</code> array with <code>surface: "message"</code>.`,
+  modal: `Validates as a <code>modal_view</code> envelope: <code>{ type: "modal", title, blocks, ... }</code>.`,
+  home: `Validates as a <code>home_view</code> envelope: <code>{ type: "home", blocks }</code>.`,
+};
 
-function getSurface(): Surface | undefined {
-  const value = surfaceSelect.value;
-  if (value === "message" || value === "modal" || value === "home") {
-    return value;
-  }
-  return undefined;
-}
+const DEFAULT_BLURB: Record<Surface, string> = {
+  message: "Renders in a Slack channel or DM. Try the chips above for real-world patterns.",
+  modal: "Opened via <code>views.open</code> from a slash command, button, or shortcut.",
+  home: "Published to a user's app home tab via <code>views.publish</code>.",
+};
 
-// ---------- Rendering ----------
+// ---------- Validation ----------
 
 function setBadge(node: HTMLElement, text: string, kind: "neutral" | "ok" | "err" | "warn"): void {
   node.textContent = text;
@@ -113,14 +124,13 @@ function renderResult(result: RunResult): void {
   resultsEl.appendChild(list);
 }
 
-function syncSurfaceGroupVisibility(): void {
-  // Surface is auto-derived for modal/home targets, so only show it for blocks.
-  surfaceGroup.style.display = getTarget() === "blocks" ? "" : "none";
-}
-
 function validateNow(editor: EditorHandle): void {
   const raw = editor.getDoc();
-  const result = run(raw, { target: getTarget(), surface: getSurface() });
+  const target = surfaceToTarget[activeSurface];
+  // For modal/home targets, the validator derives surface from the envelope.
+  // For message, pass surface explicitly so cross-surface rules fire.
+  const surface = target === "blocks" ? activeSurface : undefined;
+  const result = run(raw, { target, surface });
   renderResult(result);
 }
 
@@ -134,74 +144,163 @@ function scheduleValidate(editor: EditorHandle): void {
   }, DEBOUNCE_MS);
 }
 
+// ---------- Surface tabs ----------
+
+function setActiveSurface(surface: Surface, editor: EditorHandle): void {
+  if (surface === activeSurface) {
+    return;
+  }
+  activeSurface = surface;
+
+  for (const tab of tabButtons) {
+    tab.setAttribute(
+      "aria-selected",
+      String(tab.dataset.surface === surface),
+    );
+  }
+
+  aboutEl.innerHTML = ABOUT_COPY[surface];
+
+  renderChips(editor);
+
+  // Auto-load the first valid preset for the new surface so the editor never
+  // sits with a payload that doesn't match the active tab.
+  const firstValid =
+    presets.find((p) => p.surface === surface && p.tone === "valid") ??
+    presets.find((p) => p.surface === surface);
+  if (firstValid) {
+    applyPreset(firstValid, editor);
+  } else {
+    setBlurb(DEFAULT_BLURB[surface]);
+    validateNow(editor);
+  }
+}
+
 // ---------- Preset chips ----------
 
-function renderPresetChips(onSelect: (preset: Preset) => void): void {
+function setBlurb(html: string): void {
+  presetBlurbEl.innerHTML = html;
+}
+
+function renderChips(editor: EditorHandle): void {
   chipsEl.innerHTML = "";
-  for (const preset of presets) {
+  const list = presets.filter((p) => p.surface === activeSurface);
+  for (const preset of list) {
     const button = document.createElement("button");
     button.className = "chip";
     button.type = "button";
     button.textContent = preset.label;
-    if (preset.tone) {
-      button.dataset.tone = preset.tone;
-    }
+    button.dataset.tone = preset.tone;
+    button.dataset.presetId = preset.id;
+    button.title = preset.blurb;
     button.setAttribute("aria-pressed", String(preset.id === activePresetId));
-    button.addEventListener("click", () => onSelect(preset));
+    button.addEventListener("click", () => applyPreset(preset, editor));
     chipsEl.appendChild(button);
   }
 }
 
 function updateChipPressedState(): void {
   for (const node of chipsEl.querySelectorAll<HTMLButtonElement>(".chip")) {
-    const matches = node.textContent === presets.find((p) => p.id === activePresetId)?.label;
-    node.setAttribute("aria-pressed", String(matches));
+    node.setAttribute(
+      "aria-pressed",
+      String(node.dataset.presetId === activePresetId),
+    );
   }
 }
 
 function applyPreset(preset: Preset, editor: EditorHandle): void {
-  activePresetId = preset.id;
-  targetSelect.value = preset.target;
-  surfaceSelect.value = preset.surface ?? "";
-  syncSurfaceGroupVisibility();
+  applyingPreset = true;
   editor.setDoc(preset.json);
+  applyingPreset = false;
+  activePresetId = preset.id;
+  setBlurb(preset.blurb);
   updateChipPressedState();
   validateNow(editor);
 }
 
 // ---------- Bootstrap ----------
 
-const initialPreset = presets.find((p) => p.id === defaultPresetId) ?? presets[0];
+const initialPreset =
+  presets.find((p) => p.surface === defaultSurface && p.tone === "valid") ??
+  presets[0];
 if (!initialPreset) {
   throw new Error("No presets defined");
 }
 
-targetSelect.value = initialPreset.target;
-surfaceSelect.value = initialPreset.surface ?? "";
-syncSurfaceGroupVisibility();
+activeSurface = initialPreset.surface;
+activePresetId = initialPreset.id;
+
+for (const tab of tabButtons) {
+  tab.setAttribute(
+    "aria-selected",
+    String(tab.dataset.surface === activeSurface),
+  );
+}
+aboutEl.innerHTML = ABOUT_COPY[activeSurface];
+setBlurb(initialPreset.blurb);
 
 const editor = createEditor({
   parent: editorMount,
   initialDoc: initialPreset.json,
   onChange: () => {
-    // Treat manual edits as leaving the preset.
+    if (applyingPreset) {
+      return;
+    }
     if (activePresetId !== null) {
       activePresetId = null;
+      setBlurb(`Modified — running against ${labelFor(activeSurface)}.`);
       updateChipPressedState();
     }
     scheduleValidate(editor);
   },
 });
 
-renderPresetChips((preset) => applyPreset(preset, editor));
+renderChips(editor);
 
-targetSelect.addEventListener("change", () => {
-  syncSurfaceGroupVisibility();
-  validateNow(editor);
-});
-surfaceSelect.addEventListener("change", () => {
-  validateNow(editor);
+for (const tab of tabButtons) {
+  tab.addEventListener("click", () => {
+    const next = tab.dataset.surface as Surface | undefined;
+    if (next === "message" || next === "modal" || next === "home") {
+      setActiveSurface(next, editor);
+    }
+  });
+}
+
+// ---------- Theme toggle ----------
+// The initial theme is applied in index.html before paint to avoid flash.
+// Here we just sync the button label and persist user choice.
+
+const THEME_KEY = "sbkv-theme";
+type Theme = "light" | "dark";
+
+function currentTheme(): Theme {
+  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+}
+
+function syncToggleLabel(): void {
+  const theme = currentTheme();
+  const next = theme === "dark" ? "light" : "dark";
+  themeToggleBtn.setAttribute("aria-label", `Switch to ${next} mode`);
+  themeToggleBtn.title = `Switch to ${next} mode`;
+}
+
+themeToggleBtn.addEventListener("click", () => {
+  const next: Theme = currentTheme() === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try {
+    localStorage.setItem(THEME_KEY, next);
+  } catch {
+    /* ignore — private mode, etc. */
+  }
+  syncToggleLabel();
 });
 
-// Kick off an initial validation pass.
+syncToggleLabel();
+
 validateNow(editor);
+
+function labelFor(surface: Surface): string {
+  if (surface === "message") return "the Message surface";
+  if (surface === "modal") return "the Modal envelope";
+  return "the App Home envelope";
+}
