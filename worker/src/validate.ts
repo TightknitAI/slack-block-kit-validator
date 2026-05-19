@@ -31,14 +31,24 @@ const jsonResponse = (
     status,
     headers: {
       "Content-Type": "application/json",
+      // Error and validation responses are dynamic per-request; we never want
+      // a browser or intermediary cache to serve a stale verdict.
+      "Cache-Control": "no-store",
       ...bonusHeaders,
       ...extraHeaders,
     },
   });
 
 /**
- * Parses the request body with a hard ceiling. Content-Length is advisory
- * (clients can lie), so the check is repeated against the actual decoded text.
+ * Streams the request body and aborts at MAX_BODY_BYTES, so a malicious
+ * client can't force the worker to buffer the platform-cap-sized body
+ * (~100 MB) before the size check. Bytes are tracked on raw chunk
+ * `byteLength`, not decoded character count, so multi-byte UTF-8 can't
+ * sneak past the cap.
+ *
+ * Content-Length is checked first as a fast-path; clients can lie about it
+ * (omit or under-declare), which is why the streaming check is the real
+ * enforcement point.
  */
 const readBoundedJson = async (
   request: Request,
@@ -53,21 +63,42 @@ const readBoundedJson = async (
     };
   }
 
-  let raw: string;
+  if (!request.body) {
+    return {
+      ok: false,
+      status: 400,
+      code: "empty_body",
+      message: "Request body is empty. Send JSON with an `input` field.",
+    };
+  }
+
+  const reader = request.body.getReader();
+  const decoder = new TextDecoder();
+  const parts: string[] = [];
+  let total = 0;
+
   try {
-    raw = await request.text();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_BODY_BYTES) {
+        await reader.cancel("payload_too_large").catch(() => {});
+        return {
+          ok: false,
+          status: 413,
+          code: "payload_too_large",
+          message: `Request body exceeds ${MAX_BODY_BYTES} bytes.`,
+        };
+      }
+      parts.push(decoder.decode(value, { stream: true }));
+    }
+    parts.push(decoder.decode());
   } catch {
     return { ok: false, status: 400, code: "read_error", message: "Could not read request body." };
   }
 
-  if (raw.length > MAX_BODY_BYTES) {
-    return {
-      ok: false,
-      status: 413,
-      code: "payload_too_large",
-      message: `Request body exceeds ${MAX_BODY_BYTES} bytes.`,
-    };
-  }
+  const raw = parts.join("");
 
   if (raw.trim() === "") {
     return {
@@ -152,7 +183,6 @@ export async function handleValidate(
   const result = validateBlockKit(body.input, { target: body.target, surface: body.surface });
 
   return jsonResponse(200, { valid: result.valid, errors: result.errors }, env, extraHeaders, {
-    "Cache-Control": "no-store",
     "X-Powered-By": `@tightknitai/slack-block-kit-validator (${env.PROVIDER_URL})`,
   });
 }

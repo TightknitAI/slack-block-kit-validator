@@ -5,10 +5,13 @@
   "description": "Cloudflare Worker hosting a public, rate-limited Slack Block Kit validation API and MCP server.",
   "type": "module",
   "scripts": {
-    "predev": "pnpm --filter @tightknitai/slack-block-kit-validator build",
+    "predev": "SKIP_DEMO_BUILD=1 pnpm --filter @tightknitai/slack-block-kit-validator build",
     "dev": "wrangler dev",
-    "predeploy": "pnpm --filter @tightknitai/slack-block-kit-validator build",
+    "predeploy": "SKIP_DEMO_BUILD=1 pnpm --filter @tightknitai/slack-block-kit-validator build",
     "deploy": "wrangler deploy",
+    "pretest": "SKIP_DEMO_BUILD=1 pnpm --filter @tightknitai/slack-block-kit-validator build",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "cf-typegen": "wrangler types"
   },
@@ -19,8 +22,10 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.16.7",
     "@cloudflare/workers-types": "^4.20260519.1",
     "typescript": "^5.9.0",
+    "vitest": "^4.1.6",
     "wrangler": "^4.93.0"
   }
 }

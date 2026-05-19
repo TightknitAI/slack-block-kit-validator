@@ -6,7 +6,7 @@ Cloudflare Worker that hosts the validator as a public HTTP API and as a remote 
 
 | Path | Method | Description |
 |---|---|---|
-| `/` | GET | HTML playground (Block Kit Builder-style). State persists in the URL fragment for shareable links. |
+| `/` | GET | 302 to the live demo at <https://slack-block-kit-validator.tightknit.dev>. Includes a `Link: </openapi.json>; rel="service-desc"` header so machine clients discover the spec without parsing HTML. |
 | `/v1/validate` | POST | JSON in / JSON out. See `/openapi.json` for the schema. |
 | `/openapi.json` | GET | OpenAPI 3.1 spec for `/v1/validate`. |
 | `/mcp` | * | MCP Streamable HTTP transport (current standard). |
@@ -67,7 +67,9 @@ pnpm --filter @tightknitai/slack-block-kit-validator-worker dev
 pnpm --filter @tightknitai/slack-block-kit-validator-worker deploy
 ```
 
-By default the worker publishes to `slack-block-kit-validator.<your-cf-subdomain>.workers.dev`. Add `routes` or `custom_domain` to `wrangler.jsonc` to point a real hostname at it.
+By default the worker publishes to `slack-block-kit-validator-api.<your-cf-subdomain>.workers.dev`. Add `routes` or `custom_domain` to `wrangler.jsonc` to point a real hostname at it (e.g. `api.slack-block-kit-validator.tightknit.dev`).
+
+This Worker is intentionally separate from the demo Worker (the root `wrangler.jsonc`, deployed at `slack-block-kit-validator.tightknit.dev`). The demo is a pure static-asset Worker; this one runs server code for the API + MCP.
 
 ## MCP client setup
 

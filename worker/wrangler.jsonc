@@ -1,6 +1,9 @@
 {
   "$schema": "https://unpkg.com/wrangler/config-schema.json",
-  "name": "slack-block-kit-validator",
+  // Distinct name from the root `wrangler.jsonc`, which deploys the demo as a
+  // static-asset Worker at slack-block-kit-validator.tightknit.dev. This one
+  // hosts the API + MCP.
+  "name": "slack-block-kit-validator-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -28,6 +31,9 @@
   "vars": {
     "PROVIDER_NAME": "Tightknit",
     "PROVIDER_URL": "https://tightknit.ai",
-    "REPO_URL": "https://github.com/TightknitAI/slack-block-kit-validator"
+    "REPO_URL": "https://github.com/TightknitAI/slack-block-kit-validator",
+    // Public playground (separate Worker, see root wrangler.jsonc). Root path
+    // `GET /` on the API redirects here so curious humans get the UI.
+    "PLAYGROUND_URL": "https://slack-block-kit-validator.tightknit.dev"
   }
 }

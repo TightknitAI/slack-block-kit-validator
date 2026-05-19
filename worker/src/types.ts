@@ -13,4 +13,5 @@ export interface Env {
   PROVIDER_NAME: string;
   PROVIDER_URL: string;
   REPO_URL: string;
+  PLAYGROUND_URL: string;
 }
