@@ -4,46 +4,44 @@ import { EditorState, type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
 /**
- * Lightweight dark theme tuned for the demo palette. We avoid the
- * one-dark theme dep to keep the bundle small.
+ * Lightweight theme tuned for the demo. Colors are read from CSS custom
+ * properties on `<html>` so light/dark mode are handled by the same instance —
+ * we don't need a Compartment swap or a re-mount.
  */
-const demoTheme = EditorView.theme(
-  {
-    "&": {
-      color: "#e6e8ee",
-      backgroundColor: "transparent",
-      height: "100%",
-    },
-    ".cm-content": {
-      caretColor: "#7aa2ff",
-      padding: "14px 0",
-    },
-    ".cm-cursor": {
-      borderLeftColor: "#7aa2ff",
-    },
-    ".cm-gutters": {
-      backgroundColor: "transparent",
-      color: "#4b525e",
-      border: "none",
-      paddingRight: "8px",
-    },
-    ".cm-activeLineGutter, .cm-activeLine": {
-      backgroundColor: "rgba(91, 141, 239, 0.06)",
-    },
-    "&.cm-focused .cm-selectionBackground, ::selection": {
-      backgroundColor: "rgba(91, 141, 239, 0.25)",
-    },
-    ".cm-line": {
-      padding: "0 14px",
-    },
-    ".cm-tooltip": {
-      backgroundColor: "#1b1e25",
-      border: "1px solid #353a45",
-      color: "#e6e8ee",
-    },
+const demoTheme = EditorView.theme({
+  "&": {
+    color: "var(--text)",
+    backgroundColor: "var(--cm-bg)",
+    height: "100%",
   },
-  { dark: true },
-);
+  ".cm-content": {
+    caretColor: "var(--cm-caret)",
+    padding: "14px 0",
+  },
+  ".cm-cursor": {
+    borderLeftColor: "var(--cm-caret)",
+  },
+  ".cm-gutters": {
+    backgroundColor: "transparent",
+    color: "var(--cm-gutter-text)",
+    border: "none",
+    paddingRight: "8px",
+  },
+  ".cm-activeLineGutter, .cm-activeLine": {
+    backgroundColor: "var(--cm-active-bg)",
+  },
+  "&.cm-focused .cm-selectionBackground, ::selection": {
+    backgroundColor: "var(--cm-selection-bg)",
+  },
+  ".cm-line": {
+    padding: "0 14px",
+  },
+  ".cm-tooltip": {
+    backgroundColor: "var(--cm-tooltip-bg)",
+    border: "1px solid var(--cm-tooltip-border)",
+    color: "var(--text)",
+  },
+});
 
 export interface CreateEditorOptions {
   parent: HTMLElement;
