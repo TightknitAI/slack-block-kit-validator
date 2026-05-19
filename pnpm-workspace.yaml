@@ -1,3 +1,21 @@
 packages:
   - "."
   - "worker"
+
+# Supply-chain hardening. Available since pnpm 10.16 / 10.26 respectively;
+# this repo pins pnpm@10.32.1 in package.json's packageManager.
+#
+# - blockExoticSubdeps: refuse to install transitive deps from URLs, git
+#   refs, or other non-registry sources.
+# - minimumReleaseAge: wait this many minutes after a version is published
+#   before installing it. 1440 = 24 hours — long enough that automated
+#   typosquat / hot-compromise detection has a window to act, short enough
+#   that same-day Cloudflare SDK releases (which this repo pins) still
+#   resolve in CI.
+#
+# `trustPolicy: no-downgrade` would also be ideal but currently rejects
+# widely-used transitive deps like `semver@6.3.1` whose older versions had
+# provenance attestation while the (only) maintained 6.x release does not.
+# Re-enable once the ecosystem catches up — tracked separately.
+blockExoticSubdeps: true
+minimumReleaseAge: 1440
