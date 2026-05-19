@@ -1,0 +1,39 @@
+{
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
+  // Distinct name from the root `wrangler.jsonc`, which deploys the demo as a
+  // static-asset Worker at slack-block-kit-validator.tightknit.dev. This one
+  // hosts the API + MCP.
+  "name": "slack-block-kit-validator-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // McpAgent requires a SQLite-backed Durable Object. The binding name
+  // MCP_OBJECT is the convention the agents SDK looks for.
+  "durable_objects": {
+    "bindings": [{ "class_name": "BlockKitMcp", "name": "MCP_OBJECT" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["BlockKitMcp"] }],
+
+  // Workers Rate Limiting binding (GA). Per-colo counting, fixed window,
+  // intentionally permissive — fine for a public unauthenticated API.
+  // 60 requests per 60 seconds, keyed on client IP in code.
+  "ratelimits": [
+    {
+      "name": "RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 60, "period": 60 }
+    }
+  ],
+
+  "observability": { "enabled": true },
+
+  "vars": {
+    "PROVIDER_NAME": "Tightknit",
+    "PROVIDER_URL": "https://tightknit.ai",
+    "REPO_URL": "https://github.com/TightknitAI/slack-block-kit-validator",
+    // Public playground (separate Worker, see root wrangler.jsonc). Root path
+    // `GET /` on the API redirects here so curious humans get the UI.
+    "PLAYGROUND_URL": "https://slack-block-kit-validator.tightknit.dev"
+  }
+}
