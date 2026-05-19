@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.2-alpha.1...slack-block-kit-validator-v0.1.3-alpha.1) (2026-05-19)
+
+
+### Features
+
+* **demo:** surface tabs, richer examples, light/dark mode ([#21](https://github.com/TightknitAI/slack-block-kit-validator/issues/21)) ([7f721e7](https://github.com/TightknitAI/slack-block-kit-validator/commit/7f721e77be73ac393aa1a5accb378b51bb2ead62))
+
+
+### Bug Fixes
+
+* **demo:** swap hand-rolled SVG icons for Lucide paths ([#23](https://github.com/TightknitAI/slack-block-kit-validator/issues/23)) ([3c70081](https://github.com/TightknitAI/slack-block-kit-validator/commit/3c7008106e5c508bf4829d86675bac4d2327a1de))
+
 ## [0.1.2-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.1-alpha.1...slack-block-kit-validator-v0.1.2-alpha.1) (2026-05-18)
 
 
