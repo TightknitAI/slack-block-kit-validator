@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.6-alpha.1...slack-block-kit-validator-v0.1.7-alpha.1) (2026-05-20)
+
+
+### Bug Fixes
+
+* **ci:** configure npm registry-url so publish can authenticate ([#32](https://github.com/TightknitAI/slack-block-kit-validator/issues/32)) ([58087de](https://github.com/TightknitAI/slack-block-kit-validator/commit/58087de69ad5a0ae53beca1b3f4e5b7947555d32))
+
 ## [0.1.6-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.5-alpha.1...slack-block-kit-validator-v0.1.6-alpha.1) (2026-05-20)
 
 
