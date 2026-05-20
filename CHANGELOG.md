@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.5-alpha.1...slack-block-kit-validator-v0.1.6-alpha.1) (2026-05-20)
+
+
+### Bug Fixes
+
+* **readme:** point Try-it-live links at the working demo URL ([#29](https://github.com/TightknitAI/slack-block-kit-validator/issues/29)) ([22ed35b](https://github.com/TightknitAI/slack-block-kit-validator/commit/22ed35bfb93c5b943463ef4cd9a9fe050c157836))
+
 ## [0.1.5-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.4-alpha.1...slack-block-kit-validator-v0.1.5-alpha.1) (2026-05-20)
 
 
