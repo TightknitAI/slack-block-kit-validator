@@ -47,11 +47,19 @@ jobs:
       - run: pnpm run build:clean
         if: ${{ steps.release.outputs.releases_created }}
 
-      # Trusted Publisher (OIDC) needs npm CLI >= 11.5.1; Node 22 ships with
-      # npm 10.x, and pnpm <11.0.7 does not perform the OIDC exchange. So we
-      # publish with npm from the upgraded CLI instead of `pnpm publish`.
-      - run: npm install -g npm@latest
+      # Trusted Publisher (OIDC) needs npm CLI >= 11.5.1; Node 22 ships
+      # with npm 10.x. Run the modern CLI via `npx` from its separate
+      # cache instead of `npm install -g npm@latest`, which races against
+      # the running npm mid-install ("Cannot find module 'promise-retry'").
+      # npm 11+ also requires an explicit --tag for prereleases.
+      - name: Publish to npm
         if: ${{ steps.release.outputs.releases_created }}
-
-      - run: npm publish --provenance --access public
-        if: ${{ steps.release.outputs.releases_created }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [[ "$version" == *-* ]]; then
+            tag="${version#*-}"
+            tag="${tag%%.*}"
+            npx -y npm@latest publish --provenance --access public --tag "$tag"
+          else
+            npx -y npm@latest publish --provenance --access public
+          fi
