@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.4-alpha.1...slack-block-kit-validator-v0.1.5-alpha.1) (2026-05-20)
+
+
+### Bug Fixes
+
+* **ci:** inline publish into release-please workflow ([#27](https://github.com/TightknitAI/slack-block-kit-validator/issues/27)) ([321ed63](https://github.com/TightknitAI/slack-block-kit-validator/commit/321ed63880291f914b6672d6bb94ae0abacdcd27))
+
 ## [0.1.4-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.3-alpha.1...slack-block-kit-validator-v0.1.4-alpha.1) (2026-05-19)
 
 
