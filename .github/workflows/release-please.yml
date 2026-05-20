@@ -7,12 +7,47 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: googleapis/release-please-action@v5
+        id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      # Publish is inlined here (not a separate workflow on release:created)
+      # because GitHub does not trigger downstream workflows from events
+      # authored by the default GITHUB_TOKEN — release-please-action's
+      # GitHub release never fires release:created, so the previous
+      # publish.yml never ran.
+      #
+      # `releases_created` (plural) is what the action sets in manifest
+      # mode; the singular `release_created` only exists in non-manifest
+      # mode and would silently skip every step here.
+      - uses: actions/checkout@v6
+        if: ${{ steps.release.outputs.releases_created }}
+
+      - uses: ./.github/actions/setup
+        if: ${{ steps.release.outputs.releases_created }}
+
+      - run: pnpm run lint
+        if: ${{ steps.release.outputs.releases_created }}
+
+      - run: pnpm run typecheck
+        if: ${{ steps.release.outputs.releases_created }}
+
+      - run: pnpm test
+        if: ${{ steps.release.outputs.releases_created }}
+
+      - run: pnpm run build:clean
+        if: ${{ steps.release.outputs.releases_created }}
+
+      - run: pnpm publish --provenance --access public --no-git-checks
+        if: ${{ steps.release.outputs.releases_created }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
