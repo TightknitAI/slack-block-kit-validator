@@ -34,6 +34,8 @@ jobs:
 
       - uses: ./.github/actions/setup
         if: ${{ steps.release.outputs.releases_created }}
+        with:
+          registry-url: https://registry.npmjs.org
 
       - run: pnpm run lint
         if: ${{ steps.release.outputs.releases_created }}
