@@ -9,7 +9,7 @@
 
 JSON Schema (draft 2020-12) and validation helpers for Slack Block Kit JSON. Catches invalid block payloads before Slack silently swallows them.
 
-**Try it live:** <https://slack-block-kit-validator.tightknit.dev> — paste any payload, see every error in your browser.
+**Try it live:** <https://block-kit-validator.tightknit.dev> — paste any payload, see every error in your browser.
 
 ## Why this exists
 
@@ -196,7 +196,7 @@ For when you'd rather call an endpoint than install the package:
 - **`POST /v1/validate`** — JSON in / JSON out. Same return shape as `validateBlockKit`. OpenAPI 3.1 spec at `/openapi.json`.
 - **Remote MCP server** — exposes a `validate_block_kit` tool over Streamable HTTP (`/mcp`) and SSE (`/sse`). Connects to Claude Code, Claude Desktop, and other MCP clients.
 
-Hosted on Cloudflare Workers, rate-limited per IP via the Workers Rate Limiting binding. Source in [`worker/`](./worker); deployment + MCP client setup in [`worker/README.md`](./worker/README.md). For the interactive UI, the [live playground](https://slack-block-kit-validator.tightknit.dev) covers that.
+Hosted on Cloudflare Workers, rate-limited per IP via the Workers Rate Limiting binding. Source in [`worker/`](./worker); deployment + MCP client setup in [`worker/README.md`](./worker/README.md). For the interactive UI, the [live playground](https://block-kit-validator.tightknit.dev) covers that.
 
 The published npm package is unaffected by the worker — install it directly for production / high-volume use to skip the network hop entirely.
 
