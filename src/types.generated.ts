@@ -1119,6 +1119,7 @@ export interface HeaderBlock {
   type: "header";
   text: PlainTextObject;
   block_id?: BlockId;
+  level?: number;
 }
 /**
  * If element is a file_input, dispatch_action must not be true.
