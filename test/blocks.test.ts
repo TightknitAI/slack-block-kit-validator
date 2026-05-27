@@ -295,6 +295,30 @@ describe("blocks", () => {
         }),
       ).toBe(false);
     });
+
+    it("accepts level: 1", () => {
+      expect(validate({ type: "header", text: { type: "plain_text", text: "H" }, level: 1 })).toBe(true);
+    });
+
+    it("accepts level: 4", () => {
+      expect(validate({ type: "header", text: { type: "plain_text", text: "H" }, level: 4 })).toBe(true);
+    });
+
+    it("rejects level: 0", () => {
+      expect(validate({ type: "header", text: { type: "plain_text", text: "H" }, level: 0 })).toBe(false);
+    });
+
+    it("rejects level: 5", () => {
+      expect(validate({ type: "header", text: { type: "plain_text", text: "H" }, level: 5 })).toBe(false);
+    });
+
+    it("rejects level as string", () => {
+      expect(validate({ type: "header", text: { type: "plain_text", text: "H" }, level: "2" })).toBe(false);
+    });
+
+    it("rejects non-integer level", () => {
+      expect(validate({ type: "header", text: { type: "plain_text", text: "H" }, level: 2.5 })).toBe(false);
+    });
   });
 
   describe("image_block", () => {

@@ -1242,7 +1242,8 @@
         "text": {
           "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
         },
-        "block_id": { "$ref": "#/$defs/block_id" }
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "level": { "type": "integer", "minimum": 1, "maximum": 4 }
       }
     },
 
