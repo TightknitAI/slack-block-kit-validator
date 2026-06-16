@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.8](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.7...slack-block-kit-validator-v0.1.8) (2026-06-16)
+
+
+### Features
+
+* support the new data_visualization block ([#48](https://github.com/TightknitAI/slack-block-kit-validator/issues/48)) ([88f4d7a](https://github.com/TightknitAI/slack-block-kit-validator/commit/88f4d7ae86e444c16e2fd435349cda2350583ef0))
+
+
+### Bug Fixes
+
+* **ci:** only run publish step on actual release ([#43](https://github.com/TightknitAI/slack-block-kit-validator/issues/43)) ([91db29f](https://github.com/TightknitAI/slack-block-kit-validator/commit/91db29f0a14098e14203f93b429e959963a17200))
+
 ## [0.1.7-alpha.1](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.6-alpha.1...slack-block-kit-validator-v0.1.7-alpha.1) (2026-05-20)
 
 
