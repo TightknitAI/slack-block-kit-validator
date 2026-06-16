@@ -4,6 +4,8 @@
 
 export * from "./helpers/check-card-actions-max.js";
 export * from "./helpers/check-cumulative-markdown-length.js";
+export * from "./helpers/check-data-visualization-consistency.js";
+export * from "./helpers/check-data-visualization-max.js";
 export * from "./helpers/check-focus-on-load-uniqueness.js";
 export * from "./helpers/check-number-input-bounds.js";
 export * from "./helpers/check-response-url-enabled-context.js";

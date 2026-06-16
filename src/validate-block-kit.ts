@@ -3,6 +3,8 @@ import addFormats from "ajv-formats";
 import { type FocusValidators, formatAjvErrors } from "./format-ajv-errors.js";
 import { checkCardActionsMax } from "./helpers/check-card-actions-max.js";
 import { checkCumulativeMarkdownLength } from "./helpers/check-cumulative-markdown-length.js";
+import { checkDataVisualizationConsistency } from "./helpers/check-data-visualization-consistency.js";
+import { checkDataVisualizationMax } from "./helpers/check-data-visualization-max.js";
 import { checkFocusOnLoadUniqueness } from "./helpers/check-focus-on-load-uniqueness.js";
 import { checkNumberInputBounds } from "./helpers/check-number-input-bounds.js";
 import { checkResponseUrlEnabledContext } from "./helpers/check-response-url-enabled-context.js";
@@ -63,6 +65,7 @@ const BLOCK_TYPE_TO_DEF: Readonly<Record<string, string>> = {
   carousel: "carousel_block",
   context: "context_block",
   context_actions: "context_actions_block",
+  data_visualization: "data_visualization_block",
   divider: "divider_block",
   file: "file_block",
   header: "header_block",
@@ -194,6 +197,8 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
   errors.push(...findDuplicateBlockIds(blocks));
   errors.push(...checkCumulativeMarkdownLength(blocks));
   errors.push(...checkSingleTableBlock(blocks));
+  errors.push(...checkDataVisualizationMax(blocks));
+  errors.push(...checkDataVisualizationConsistency(blocks));
   errors.push(...checkCardActionsMax(blocks));
   errors.push(...checkFocusOnLoadUniqueness(blocks));
   errors.push(...checkNumberInputBounds(blocks));

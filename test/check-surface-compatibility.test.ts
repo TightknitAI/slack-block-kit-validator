@@ -38,7 +38,7 @@ describe("checkSurfaceCompatibility", () => {
     expect(checkSurfaceCompatibility([{ type: "alert" }], "modal")).toEqual([]);
   });
 
-  it("rejects non-modal blocks (file, markdown, plan, table, task_card, context_actions) on modal", () => {
+  it("rejects non-modal blocks (file, markdown, plan, table, task_card, context_actions, data_visualization) on modal", () => {
     const blocks = [
       { type: "file" },
       { type: "markdown" },
@@ -46,8 +46,9 @@ describe("checkSurfaceCompatibility", () => {
       { type: "table" },
       { type: "task_card" },
       { type: "context_actions" },
+      { type: "data_visualization" },
     ];
-    expect(checkSurfaceCompatibility(blocks, "modal")).toHaveLength(6);
+    expect(checkSurfaceCompatibility(blocks, "modal")).toHaveLength(7);
   });
 
   it("rejects non-home blocks on home", () => {
@@ -58,17 +59,19 @@ describe("checkSurfaceCompatibility", () => {
       { type: "table" },
       { type: "task_card" },
       { type: "context_actions" },
+      { type: "data_visualization" },
     ];
-    expect(checkSurfaceCompatibility(blocks, "home")).toHaveLength(6);
+    expect(checkSurfaceCompatibility(blocks, "home")).toHaveLength(7);
   });
 
-  it("allows message-specific blocks (markdown, plan, table, task_card, context_actions) on messages", () => {
+  it("allows message-specific blocks (markdown, plan, table, task_card, context_actions, data_visualization) on messages", () => {
     const blocks = [
       { type: "markdown" },
       { type: "plan" },
       { type: "table" },
       { type: "task_card" },
       { type: "context_actions" },
+      { type: "data_visualization" },
     ];
     expect(checkSurfaceCompatibility(blocks, "message")).toEqual([]);
   });

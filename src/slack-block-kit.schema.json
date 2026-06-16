@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://tightknit.com/schemas/slack-block-kit.schema.json",
   "title": "Slack Block Kit",
-  "description": "JSON Schema (draft 2020-12) for Slack Block Kit payloads. Validates a top-level array of blocks. Individual block, element, and composition object schemas are exposed via $defs for re-use. Compiled from https://docs.slack.dev/reference/block-kit (fetched 2026-04-16). Surface restrictions (messages vs modals vs home) and payload-level rules (e.g. cumulative 12k char markdown limit, single-table-per-message) are documented in $defs descriptions but not enforced at the per-block level.",
+  "description": "JSON Schema (draft 2020-12) for Slack Block Kit payloads. Validates a top-level array of blocks. Individual block, element, and composition object schemas are exposed via $defs for re-use. Compiled from https://docs.slack.dev/reference/block-kit (fetched 2026-04-16). Surface restrictions (messages vs modals vs home) and payload-level rules (e.g. cumulative 12k char markdown limit, single-table-per-message, max two data-visualization blocks per message) are documented in $defs descriptions but not enforced at the per-block level.",
   "type": "array",
   "minItems": 1,
   "maxItems": 100,
@@ -1210,6 +1210,109 @@
       }
     },
 
+    "data_visualization_data_point": {
+      "description": "A single point in a chart series: an x-axis label and its numeric value. The label must match one of axis_config.categories (enforced via checkDataVisualizationConsistency). Negative values are permitted — line/bar/area charts render against a zero baseline.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "value"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "value": { "type": "number" }
+      }
+    },
+
+    "data_visualization_series": {
+      "description": "A named series of data points plotted on a line/bar/area chart. The name drives the chart legend and must be unique across all series in the same chart (enforced via checkDataVisualizationConsistency).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "data"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "data": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/data_visualization_data_point" }
+        }
+      }
+    },
+
+    "data_visualization_axis_config": {
+      "description": "Axis configuration for cartesian (line/bar/area) charts. categories define the valid x-axis labels and their left-to-right display order.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["categories"],
+      "properties": {
+        "categories": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 20 }
+        },
+        "x_label": { "type": "string", "maxLength": 50 },
+        "y_label": { "type": "string", "maxLength": 50 }
+      }
+    },
+
+    "data_visualization_segment": {
+      "description": "A single slice of a pie chart. value must be greater than 0; Slack derives the displayed percentage from each segment's value as a share of the total.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "value"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "value": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+
+    "data_visualization_chart": {
+      "description": "The chart rendered by a data_visualization block. line/bar/area charts use series + axis_config; pie charts use segments.",
+      "oneOf": [
+        {
+          "description": "Cartesian chart — line, bar, or area. 1–6 series; axis_config required.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "series", "axis_config"],
+          "properties": {
+            "type": { "enum": ["line", "bar", "area"] },
+            "series": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": { "$ref": "#/$defs/data_visualization_series" }
+            },
+            "axis_config": { "$ref": "#/$defs/data_visualization_axis_config" }
+          }
+        },
+        {
+          "description": "Pie chart. 1–6 segments.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "segments"],
+          "properties": {
+            "type": { "const": "pie" },
+            "segments": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": { "$ref": "#/$defs/data_visualization_segment" }
+            }
+          }
+        }
+      ]
+    },
+
+    "data_visualization_block": {
+      "description": "Renders data as a line, bar, area, or pie chart. Messages only (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "title", "chart"],
+      "properties": {
+        "type": { "const": "data_visualization" },
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 50 },
+        "chart": { "$ref": "#/$defs/data_visualization_chart" }
+      }
+    },
+
     "divider_block": {
       "type": "object",
       "additionalProperties": false,
@@ -1522,6 +1625,7 @@
         { "$ref": "#/$defs/carousel_block" },
         { "$ref": "#/$defs/context_actions_block" },
         { "$ref": "#/$defs/context_block" },
+        { "$ref": "#/$defs/data_visualization_block" },
         { "$ref": "#/$defs/divider_block" },
         { "$ref": "#/$defs/file_block" },
         { "$ref": "#/$defs/header_block" },
