@@ -240,6 +240,254 @@ describe("blocks", () => {
     });
   });
 
+  describe("data_visualization_block", () => {
+    const validate = compileDef("data_visualization_block");
+    const axisConfig = { categories: ["Mon", "Tue"], x_label: "Day", y_label: "Users" };
+    const series = (name: string) => ({
+      name,
+      data: [
+        { label: "Mon", value: 800 },
+        { label: "Tue", value: 920 },
+      ],
+    });
+    // A structurally valid cartesian chart of the given type.
+    const cartesian = (type: string) => ({
+      type: "data_visualization",
+      title: "T",
+      chart: { type, series: [series("Desktop")], axis_config: axisConfig },
+    });
+
+    it("accepts a multi-series line chart with axis_config", () => {
+      expect(
+        validate({
+          type: "data_visualization",
+          block_id: "viz-line-multi",
+          title: "Weekly active users by platform",
+          chart: { type: "line", series: [series("Desktop"), series("Mobile")], axis_config: axisConfig },
+        }),
+      ).toBe(true);
+    });
+
+    it("accepts line, bar, and area charts", () => {
+      for (const type of ["line", "bar", "area"]) {
+        expect(validate(cartesian(type))).toBe(true);
+      }
+    });
+
+    it("accepts negative data-point values (zero-baseline charts)", () => {
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "Net revenue delta",
+          chart: {
+            type: "line",
+            series: [
+              {
+                name: "Delta",
+                data: [
+                  { label: "Mon", value: -120 },
+                  { label: "Tue", value: 80 },
+                ],
+              },
+            ],
+            axis_config: { categories: ["Mon", "Tue"], x_label: "Day", y_label: "Delta ($)" },
+          },
+        }),
+      ).toBe(true);
+    });
+
+    it("accepts a pie chart with segments", () => {
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "Plan distribution by tier",
+          chart: {
+            type: "pie",
+            segments: [
+              { label: "Free", value: 4200 },
+              { label: "Pro", value: 2300 },
+            ],
+          },
+        }),
+      ).toBe(true);
+    });
+
+    it("accepts 6 series and 6 segments (the maxima)", () => {
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: Array.from({ length: 6 }, (_, i) => series(`s${i}`)), axis_config: axisConfig },
+        }),
+      ).toBe(true);
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "pie", segments: Array.from({ length: 6 }, (_, i) => ({ label: `s${i}`, value: 1 })) },
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects missing title", () => {
+      expect(validate({ type: "data_visualization", chart: cartesian("line").chart })).toBe(false);
+    });
+
+    it("rejects title > 50 chars", () => {
+      expect(validate({ ...cartesian("line"), title: "x".repeat(51) })).toBe(false);
+    });
+
+    it("rejects missing chart", () => {
+      expect(validate({ type: "data_visualization", title: "T" })).toBe(false);
+    });
+
+    it("rejects an unknown chart type", () => {
+      expect(
+        validate({ type: "data_visualization", title: "T", chart: { type: "scatter", series: [series("S")] } }),
+      ).toBe(false);
+    });
+
+    it("rejects a cartesian chart without axis_config (required)", () => {
+      expect(validate({ type: "data_visualization", title: "T", chart: { type: "line", series: [series("S")] } })).toBe(
+        false,
+      );
+    });
+
+    it("rejects axis_config without categories", () => {
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "line", series: [series("S")], axis_config: { x_label: "Day" } },
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects a pie chart that uses series instead of segments", () => {
+      expect(validate({ type: "data_visualization", title: "T", chart: { type: "pie", series: [series("S")] } })).toBe(
+        false,
+      );
+    });
+
+    it("rejects a cartesian chart that uses segments instead of series", () => {
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "line", segments: [{ label: "Free", value: 1 }] },
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects empty / oversized series and segments", () => {
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: [], axis_config: axisConfig },
+        }),
+      ).toBe(false);
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: Array.from({ length: 7 }, (_, i) => series(`s${i}`)), axis_config: axisConfig },
+        }),
+      ).toBe(false);
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "pie", segments: Array.from({ length: 7 }, (_, i) => ({ label: `s${i}`, value: 1 })) },
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects a series with empty data or > 20 data points", () => {
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: [{ name: "S", data: [] }], axis_config: axisConfig },
+        }),
+      ).toBe(false);
+      const tooManyPoints = Array.from({ length: 21 }, (_, i) => ({ label: `c${i}`, value: i }));
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: [{ name: "S", data: tooManyPoints }], axis_config: axisConfig },
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects a pie segment value that is not greater than 0", () => {
+      for (const value of [0, -5]) {
+        expect(
+          validate({
+            type: "data_visualization",
+            title: "T",
+            chart: { type: "pie", segments: [{ label: "Free", value }] },
+          }),
+        ).toBe(false);
+      }
+    });
+
+    it("rejects strings over their documented max length", () => {
+      // series name max 20, data-point label max 20, category max 20, x_label max 50
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: [series("x".repeat(21))], axis_config: axisConfig },
+        }),
+      ).toBe(false);
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: {
+            type: "bar",
+            series: [{ name: "S", data: [{ label: "x".repeat(21), value: 1 }] }],
+            axis_config: axisConfig,
+          },
+        }),
+      ).toBe(false);
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: [series("S")], axis_config: { categories: ["x".repeat(21)] } },
+        }),
+      ).toBe(false);
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: [series("S")], axis_config: { categories: ["Mon"], x_label: "x".repeat(51) } },
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects a non-numeric data-point value", () => {
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: {
+            type: "bar",
+            series: [{ name: "S", data: [{ label: "Mon", value: "800" }] }],
+            axis_config: axisConfig,
+          },
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects additionalProperties on the block", () => {
+      expect(validate({ ...cartesian("line"), extra: 1 })).toBe(false);
+    });
+  });
+
   describe("divider_block", () => {
     const validate = compileDef("divider_block");
 

@@ -123,6 +123,8 @@ The schema uses `$defs` for every block, element, composition object, rich-text 
 | `findDuplicateBlockIds` | `(blocks) => string[]` | Duplicate `block_id` values in a blocks array. |
 | `checkCumulativeMarkdownLength` | `(blocks) => string[]` | Sum of all `markdown` block text > 12,000 chars. |
 | `checkSingleTableBlock` | `(blocks) => string[]` | More than one `table` block per payload. |
+| `checkDataVisualizationMax` | `(blocks) => string[]` | More than two `data_visualization` blocks per message. |
+| `checkDataVisualizationConsistency` | `(blocks) => string[]` | Chart series with duplicate names, or data points that don't line up with `axis_config.categories`. |
 | `checkFocusOnLoadUniqueness` | `(blocks) => string[]` | More than one element with `focus_on_load: true` in a view (walks nested elements + accessories). |
 | `checkSurfaceCompatibility` | `(blocks, surface) => string[]` | Blocks not allowed on the target surface (e.g. `alert` on message, `markdown` on modal, `file_input` outside modals). |
 | `checkCardActionsMax` | `(blocks) => string[]` | More than `CARD_ACTIONS_MAX` action buttons on a card block. |
@@ -139,12 +141,12 @@ Each returns an array of human-readable error strings — empty when valid.
 
 ## Coverage
 
-- **18 blocks**: actions, alert, card, carousel, context, context_actions, divider, file, header, image, input, markdown, plan, rich_text, section, table, task_card, video.
+- **19 blocks**: actions, alert, card, carousel, context, context_actions, data_visualization, divider, file, header, image, input, markdown, plan, rich_text, section, table, task_card, video.
 - **All block elements**: button, icon_button, workflow_button, feedback_buttons, plain_text / email / url / number inputs, datepicker, datetimepicker, timepicker, file_input, rich_text_input, checkboxes, radio_buttons, image, overflow, url source, and all 5 single + 5 multi-select menu variants.
 - **All 9 composition objects**: text (plain_text + mrkdwn), confirm, option (3 contextual variants), option_group, slack_file, dispatch_action_config, conversation_filter, trigger, workflow.
 - **Rich text**: 4 container kinds (section, list, preformatted, quote) + 10 leaf kinds (text, link, user, usergroup, team, channel, emoji, broadcast, color, date) with style flags.
 - **View envelopes**: `modal_view` + `home_view` under `$defs`.
-- **Cross-payload rules** (via helpers): dup `block_id`, cumulative markdown, single-table, `focus_on_load` uniqueness, surface compatibility.
+- **Cross-payload rules** (via helpers): dup `block_id`, cumulative markdown, single-table, two-data-visualization-per-message, chart series/category consistency, `focus_on_load` uniqueness, surface compatibility.
 
 Every documented `maxLength`, regex (date / time / user ID / channel ID / team ID format), enum value, and array cardinality limit is enforced structurally.
 

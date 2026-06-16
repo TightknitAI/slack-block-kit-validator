@@ -23,6 +23,54 @@ describe("validateBlockKit", () => {
       expect(result.errors.some((e) => e.includes("only one 'table' block"))).toBe(true);
     });
 
+    it("accepts up to two data_visualization blocks in a message", () => {
+      const viz = (id: string) => ({
+        type: "data_visualization",
+        block_id: id,
+        title: "Chart",
+        chart: { type: "pie", segments: [{ label: "Free", value: 1 }] },
+      });
+      const result = validateBlockKit([viz("a"), viz("b")]);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it("flags more than two data_visualization blocks", () => {
+      const viz = (id: string) => ({
+        type: "data_visualization",
+        block_id: id,
+        title: "Chart",
+        chart: { type: "pie", segments: [{ label: "Free", value: 1 }] },
+      });
+      const result = validateBlockKit([viz("a"), viz("b"), viz("c")]);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes("data_visualization"))).toBe(true);
+    });
+
+    it("flags a chart data point whose label is not a declared category", () => {
+      const result = validateBlockKit([
+        {
+          type: "data_visualization",
+          title: "Weekly active users",
+          chart: {
+            type: "line",
+            series: [
+              {
+                name: "Desktop",
+                data: [
+                  { label: "Mon", value: 1 },
+                  { label: "Xyz", value: 2 },
+                ],
+              },
+            ],
+            axis_config: { categories: ["Mon", "Tue"] },
+          },
+        },
+      ]);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes("'Xyz'"))).toBe(true);
+    });
+
     it("flags duplicate block_ids", () => {
       const result = validateBlockKit([
         { type: "divider", block_id: "x" },

@@ -4,7 +4,7 @@
 // Source: src/slack-block-kit.schema.json
 
 /**
- * JSON Schema (draft 2020-12) for Slack Block Kit payloads. Validates a top-level array of blocks. Individual block, element, and composition object schemas are exposed via $defs for re-use. Compiled from https://docs.slack.dev/reference/block-kit (fetched 2026-04-16). Surface restrictions (messages vs modals vs home) and payload-level rules (e.g. cumulative 12k char markdown limit, single-table-per-message) are documented in $defs descriptions but not enforced at the per-block level.
+ * JSON Schema (draft 2020-12) for Slack Block Kit payloads. Validates a top-level array of blocks. Individual block, element, and composition object schemas are exposed via $defs for re-use. Compiled from https://docs.slack.dev/reference/block-kit (fetched 2026-04-16). Surface restrictions (messages vs modals vs home) and payload-level rules (e.g. cumulative 12k char markdown limit, single-table-per-message, max two data-visualization blocks per message) are documented in $defs descriptions but not enforced at the per-block level.
  */
 export type SlackBlockKitPayload = [Block, ...Block[]] | ModalView | HomeView;
 /**
@@ -17,6 +17,7 @@ export type Block =
   | CarouselBlock
   | ContextActionsBlock
   | ContextBlock
+  | DataVisualizationBlock
   | DividerBlock
   | FileBlock
   | HeaderBlock
@@ -409,6 +410,65 @@ export type ContextActionsBlockElement = FeedbackButtonsElement | IconButtonElem
  * Elements allowed inside a context block.
  */
 export type ContextBlockElement = ImageElement | TextObject;
+/**
+ * The chart rendered by a data_visualization block. line/bar/area charts use series + axis_config; pie charts use segments.
+ */
+export type DataVisualizationChart =
+  | {
+      type: "line" | "bar" | "area";
+      /**
+       * @minItems 1
+       * @maxItems 6
+       */
+      series:
+        | [DataVisualizationSeries]
+        | [DataVisualizationSeries, DataVisualizationSeries]
+        | [DataVisualizationSeries, DataVisualizationSeries, DataVisualizationSeries]
+        | [DataVisualizationSeries, DataVisualizationSeries, DataVisualizationSeries, DataVisualizationSeries]
+        | [
+            DataVisualizationSeries,
+            DataVisualizationSeries,
+            DataVisualizationSeries,
+            DataVisualizationSeries,
+            DataVisualizationSeries,
+          ]
+        | [
+            DataVisualizationSeries,
+            DataVisualizationSeries,
+            DataVisualizationSeries,
+            DataVisualizationSeries,
+            DataVisualizationSeries,
+            DataVisualizationSeries,
+          ];
+      axis_config: DataVisualizationAxisConfig;
+    }
+  | {
+      type: "pie";
+      /**
+       * @minItems 1
+       * @maxItems 6
+       */
+      segments:
+        | [DataVisualizationSegment]
+        | [DataVisualizationSegment, DataVisualizationSegment]
+        | [DataVisualizationSegment, DataVisualizationSegment, DataVisualizationSegment]
+        | [DataVisualizationSegment, DataVisualizationSegment, DataVisualizationSegment, DataVisualizationSegment]
+        | [
+            DataVisualizationSegment,
+            DataVisualizationSegment,
+            DataVisualizationSegment,
+            DataVisualizationSegment,
+            DataVisualizationSegment,
+          ]
+        | [
+            DataVisualizationSegment,
+            DataVisualizationSegment,
+            DataVisualizationSegment,
+            DataVisualizationSegment,
+            DataVisualizationSegment,
+            DataVisualizationSegment,
+          ];
+    };
 /**
  * Either image_url or slack_file is required (not both).
  */
@@ -1101,6 +1161,284 @@ export interface ContextBlock {
         ContextBlockElement,
       ];
   block_id?: BlockId;
+}
+/**
+ * Renders data as a line, bar, area, or pie chart. Messages only (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.
+ */
+export interface DataVisualizationBlock {
+  type: "data_visualization";
+  block_id?: BlockId;
+  title: string;
+  chart: DataVisualizationChart;
+}
+/**
+ * A named series of data points plotted on a line/bar/area chart. The name drives the chart legend and must be unique across all series in the same chart (enforced via checkDataVisualizationConsistency).
+ */
+export interface DataVisualizationSeries {
+  name: string;
+  /**
+   * @minItems 1
+   * @maxItems 20
+   */
+  data:
+    | [DataVisualizationDataPoint]
+    | [DataVisualizationDataPoint, DataVisualizationDataPoint]
+    | [DataVisualizationDataPoint, DataVisualizationDataPoint, DataVisualizationDataPoint]
+    | [DataVisualizationDataPoint, DataVisualizationDataPoint, DataVisualizationDataPoint, DataVisualizationDataPoint]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ]
+    | [
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+        DataVisualizationDataPoint,
+      ];
+}
+/**
+ * A single point in a chart series: an x-axis label and its numeric value. The label must match one of axis_config.categories (enforced via checkDataVisualizationConsistency). Negative values are permitted — line/bar/area charts render against a zero baseline.
+ */
+export interface DataVisualizationDataPoint {
+  label: string;
+  value: number;
+}
+/**
+ * Axis configuration for cartesian (line/bar/area) charts. categories define the valid x-axis labels and their left-to-right display order.
+ */
+export interface DataVisualizationAxisConfig {
+  categories: string[];
+  x_label?: string;
+  y_label?: string;
+}
+/**
+ * A single slice of a pie chart. value must be greater than 0; Slack derives the displayed percentage from each segment's value as a share of the total.
+ */
+export interface DataVisualizationSegment {
+  label: string;
+  value: number;
 }
 export interface DividerBlock {
   type: "divider";

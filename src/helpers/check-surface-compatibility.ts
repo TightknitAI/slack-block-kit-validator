@@ -18,10 +18,15 @@ const BLOCKS_NOT_ALLOWED_IN_MESSAGE = new Set(["alert", "file"]);
 // carousel/card are listed as modal-available in Slack's blocks.json but
 // empirically fail to render inside modal views — confirmed by the PR author
 // against the live API. They work in messages and home tabs.
+// `data_visualization` is a messages-only block — its reference page lists
+// "Available in Surfaces: Messages" only
+// (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block).
+// Forbidden in both modals and home tabs.
 const BLOCKS_NOT_ALLOWED_IN_MODAL = new Set([
   "card",
   "carousel",
   "context_actions",
+  "data_visualization",
   "file",
   "markdown",
   "plan",
@@ -32,6 +37,7 @@ const BLOCKS_NOT_ALLOWED_IN_MODAL = new Set([
 const BLOCKS_NOT_ALLOWED_IN_HOME = new Set([
   "alert",
   "context_actions",
+  "data_visualization",
   "file",
   "markdown",
   "plan",

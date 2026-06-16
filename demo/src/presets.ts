@@ -237,6 +237,88 @@ const twoTables = stringify([
   },
 ]);
 
+const activeUsersChart = stringify([
+  {
+    type: "header",
+    text: { type: "plain_text", text: "Weekly active users" },
+  },
+  {
+    type: "data_visualization",
+    block_id: "wau_chart",
+    title: "Weekly active users by platform",
+    chart: {
+      type: "line",
+      series: [
+        {
+          name: "Desktop",
+          data: [
+            { label: "Mon", value: 800 },
+            { label: "Tue", value: 920 },
+            { label: "Wed", value: 880 },
+            { label: "Thu", value: 1010 },
+            { label: "Fri", value: 1120 },
+          ],
+        },
+        {
+          name: "Mobile",
+          data: [
+            { label: "Mon", value: 400 },
+            { label: "Tue", value: 530 },
+            { label: "Wed", value: 500 },
+            { label: "Thu", value: 590 },
+            { label: "Fri", value: 600 },
+          ],
+        },
+      ],
+      axis_config: {
+        categories: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+        x_label: "Day",
+        y_label: "Users",
+      },
+    },
+  },
+]);
+
+const threeCharts = stringify([
+  {
+    type: "data_visualization",
+    block_id: "chart_plans",
+    title: "Plan distribution",
+    chart: {
+      type: "pie",
+      segments: [
+        { label: "Free", value: 52 },
+        { label: "Pro", value: 28 },
+        { label: "Enterprise", value: 20 },
+      ],
+    },
+  },
+  {
+    type: "data_visualization",
+    block_id: "chart_regions",
+    title: "Signups by region",
+    chart: {
+      type: "pie",
+      segments: [
+        { label: "NA", value: 60 },
+        { label: "EU", value: 40 },
+      ],
+    },
+  },
+  {
+    type: "data_visualization",
+    block_id: "chart_tiers",
+    title: "Support tier mix",
+    chart: {
+      type: "pie",
+      segments: [
+        { label: "Standard", value: 70 },
+        { label: "Premium", value: 30 },
+      ],
+    },
+  },
+]);
+
 // Build a payload that exceeds the 12,000-char cumulative markdown limit.
 // Generated programmatically so the preset source stays readable.
 const markdownOverflow = (() => {
@@ -867,12 +949,28 @@ export const presets: Preset[] = [
     json: duplicateBlockIds,
   },
   {
+    id: "active-users-chart",
+    label: "Data visualization chart",
+    surface: "message",
+    blurb: "A multi-series line chart — line/bar/area/pie are all supported.",
+    tone: "valid",
+    json: activeUsersChart,
+  },
+  {
     id: "two-tables",
     label: "Two table blocks",
     surface: "message",
     blurb: "Only one table block is allowed per message.",
     tone: "invalid",
     json: twoTables,
+  },
+  {
+    id: "three-charts",
+    label: "Three data visualization blocks",
+    surface: "message",
+    blurb: "At most two data visualization blocks are allowed per message.",
+    tone: "invalid",
+    json: threeCharts,
   },
   {
     id: "markdown-overflow",
