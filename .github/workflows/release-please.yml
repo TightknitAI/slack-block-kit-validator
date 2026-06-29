@@ -35,7 +35,7 @@ jobs:
       # GitHub Actions treats any non-empty string as truthy, so a bare
       # `if: ${{ steps.release.outputs.releases_created }}` would run on
       # every push to main.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: ${{ steps.release.outputs.releases_created == 'true' }}
 
       - uses: ./.github/actions/setup
