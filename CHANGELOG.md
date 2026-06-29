@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.9](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.8...slack-block-kit-validator-v0.1.9) (2026-06-29)
+
+
+### Features
+
+* support the new container block ([#52](https://github.com/TightknitAI/slack-block-kit-validator/issues/52)) ([cbce02c](https://github.com/TightknitAI/slack-block-kit-validator/commit/cbce02cb45d96511f46336e13ad014c1c02b86e9))
+
+
+### Bug Fixes
+
+* **ci:** run release-please with a dedicated token ([#50](https://github.com/TightknitAI/slack-block-kit-validator/issues/50)) ([a49202c](https://github.com/TightknitAI/slack-block-kit-validator/commit/a49202c34df6d1d9bbf94c974831068f7729cd1e))
+* **ci:** use default GITHUB_TOKEN for release-please ([#53](https://github.com/TightknitAI/slack-block-kit-validator/issues/53)) ([50d204e](https://github.com/TightknitAI/slack-block-kit-validator/commit/50d204e8b2e511ebcd34f6f6e6fab4128fd15141))
+
 ## [0.1.8](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.7...slack-block-kit-validator-v0.1.8) (2026-06-16)
 
 
