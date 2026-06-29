@@ -1118,7 +1118,7 @@ export interface ContainerBlock {
   type: "container";
   block_id?: BlockId;
   title: PlainTextObject;
-  subtitle?: TextObject;
+  subtitle?: PlainTextObject;
   icon?: ImageElement;
   width?: "narrow" | "standard" | "wide" | "full";
   is_collapsible?: boolean;

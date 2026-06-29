@@ -190,7 +190,7 @@ describe("blocks", () => {
           type: "container",
           block_id: "c1",
           title,
-          subtitle: { type: "mrkdwn", text: "Review changes" },
+          subtitle: { type: "plain_text", text: "Review changes" },
           icon: { type: "image", alt_text: "i", image_url: "https://example.com/i.png" },
           width: "wide",
           is_collapsible: true,
@@ -234,6 +234,17 @@ describe("blocks", () => {
 
     it("rejects an invalid width", () => {
       expect(validate({ type: "container", title, width: "huge", child_blocks: [section] })).toBe(false);
+    });
+
+    it("rejects an mrkdwn subtitle (title and subtitle are plain_text only)", () => {
+      expect(
+        validate({
+          type: "container",
+          title,
+          subtitle: { type: "mrkdwn", text: "nope" },
+          child_blocks: [section],
+        }),
+      ).toBe(false);
     });
 
     it("rejects default_collapsed without is_collapsible: true", () => {

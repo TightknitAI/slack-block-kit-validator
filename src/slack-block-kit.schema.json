@@ -1207,7 +1207,7 @@
           "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
         },
         "subtitle": {
-          "allOf": [{ "$ref": "#/$defs/text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
         },
         "icon": { "$ref": "#/$defs/image_element" },
         "width": { "enum": ["narrow", "standard", "wide", "full"] },
