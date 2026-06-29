@@ -279,6 +279,39 @@ const activeUsersChart = stringify([
   },
 ]);
 
+const bulkUpdateContainer = stringify([
+  {
+    type: "container",
+    block_id: "bulk_update",
+    title: { type: "plain_text", text: "Bulk update: 2 records selected" },
+    subtitle: { type: "plain_text", text: "Review changes before confirming" },
+    is_collapsible: true,
+    child_blocks: [
+      {
+        type: "section",
+        text: { type: "mrkdwn", text: "*DCW-1024*\nStatus: Open → Closed\nAssignee: @donut → @carl" },
+      },
+      { type: "divider" },
+      {
+        type: "section",
+        text: { type: "mrkdwn", text: "*DCW-1025*\nStatus: In Progress → Closed\nAssignee: @mordecai → @carl" },
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: { type: "plain_text", text: "Confirm All" },
+            style: "primary",
+            action_id: "bulk_confirm",
+          },
+          { type: "button", text: { type: "plain_text", text: "Cancel" }, action_id: "bulk_cancel" },
+        ],
+      },
+    ],
+  },
+]);
+
 const threeCharts = stringify([
   {
     type: "data_visualization",
@@ -955,6 +988,14 @@ export const presets: Preset[] = [
     blurb: "A multi-series line chart — line/bar/area/pie are all supported.",
     tone: "valid",
     json: activeUsersChart,
+  },
+  {
+    id: "bulk-update-container",
+    label: "Container block",
+    surface: "message",
+    blurb: "A collapsible container grouping sections, a divider, and actions into one unit.",
+    tone: "valid",
+    json: bulkUpdateContainer,
   },
   {
     id: "two-tables",

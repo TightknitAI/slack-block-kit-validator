@@ -175,6 +175,96 @@ describe("blocks", () => {
     });
   });
 
+  describe("container_block", () => {
+    const validate = compileDef("container_block");
+    const title = { type: "plain_text", text: "Bulk update" };
+    const section = { type: "section", text: { type: "mrkdwn", text: "row" } };
+
+    it("accepts a minimal container", () => {
+      expect(validate({ type: "container", title, child_blocks: [section] })).toBe(true);
+    });
+
+    it("accepts all documented optional fields", () => {
+      expect(
+        validate({
+          type: "container",
+          block_id: "c1",
+          title,
+          subtitle: { type: "plain_text", text: "Review changes" },
+          icon: { type: "image", alt_text: "i", image_url: "https://example.com/i.png" },
+          width: "wide",
+          is_collapsible: true,
+          default_collapsed: true,
+          child_blocks: [section, { type: "divider" }],
+        }),
+      ).toBe(true);
+    });
+
+    it("accepts each documented child block type", () => {
+      const children = [
+        { type: "actions", elements: [button] },
+        { type: "context", elements: [{ type: "mrkdwn", text: "c" }] },
+        { type: "divider" },
+        { type: "header", text: { type: "plain_text", text: "H" } },
+        section,
+      ];
+      expect(validate({ type: "container", title, child_blocks: children })).toBe(true);
+    });
+
+    it("rejects missing title and missing child_blocks", () => {
+      expect(validate({ type: "container", child_blocks: [section] })).toBe(false);
+      expect(validate({ type: "container", title })).toBe(false);
+    });
+
+    it("rejects empty and >10 child_blocks", () => {
+      expect(validate({ type: "container", title, child_blocks: [] })).toBe(false);
+      expect(validate({ type: "container", title, child_blocks: Array(11).fill(section) })).toBe(false);
+    });
+
+    it("rejects a nested container child (no nesting)", () => {
+      const nested = { type: "container", title, child_blocks: [section] };
+      expect(validate({ type: "container", title, child_blocks: [nested] })).toBe(false);
+    });
+
+    it("rejects a title > 150 chars", () => {
+      expect(
+        validate({ type: "container", title: { type: "plain_text", text: "x".repeat(151) }, child_blocks: [section] }),
+      ).toBe(false);
+    });
+
+    it("rejects an invalid width", () => {
+      expect(validate({ type: "container", title, width: "huge", child_blocks: [section] })).toBe(false);
+    });
+
+    it("rejects an mrkdwn subtitle (title and subtitle are plain_text only)", () => {
+      expect(
+        validate({
+          type: "container",
+          title,
+          subtitle: { type: "mrkdwn", text: "nope" },
+          child_blocks: [section],
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects default_collapsed without is_collapsible: true", () => {
+      expect(validate({ type: "container", title, default_collapsed: true, child_blocks: [section] })).toBe(false);
+      expect(
+        validate({
+          type: "container",
+          title,
+          is_collapsible: false,
+          default_collapsed: true,
+          child_blocks: [section],
+        }),
+      ).toBe(false);
+    });
+
+    it("rejects additionalProperties", () => {
+      expect(validate({ type: "container", title, child_blocks: [section], extra: 1 })).toBe(false);
+    });
+  });
+
   describe("context_block", () => {
     const validate = compileDef("context_block");
 

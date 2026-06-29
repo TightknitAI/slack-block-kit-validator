@@ -25,6 +25,7 @@ const BLOCKS_NOT_ALLOWED_IN_MESSAGE = new Set(["alert", "file"]);
 const BLOCKS_NOT_ALLOWED_IN_MODAL = new Set([
   "card",
   "carousel",
+  "container",
   "context_actions",
   "data_visualization",
   "file",
@@ -36,6 +37,7 @@ const BLOCKS_NOT_ALLOWED_IN_MODAL = new Set([
 
 const BLOCKS_NOT_ALLOWED_IN_HOME = new Set([
   "alert",
+  "container",
   "context_actions",
   "data_visualization",
   "file",
