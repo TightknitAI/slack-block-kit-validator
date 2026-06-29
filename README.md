@@ -141,7 +141,7 @@ Each returns an array of human-readable error strings — empty when valid.
 
 ## Coverage
 
-- **19 blocks**: actions, alert, card, carousel, context, context_actions, data_visualization, divider, file, header, image, input, markdown, plan, rich_text, section, table, task_card, video.
+- **20 blocks**: actions, alert, card, carousel, container, context, context_actions, data_visualization, divider, file, header, image, input, markdown, plan, rich_text, section, table, task_card, video.
 - **All block elements**: button, icon_button, workflow_button, feedback_buttons, plain_text / email / url / number inputs, datepicker, datetimepicker, timepicker, file_input, rich_text_input, checkboxes, radio_buttons, image, overflow, url source, and all 5 single + 5 multi-select menu variants.
 - **All 9 composition objects**: text (plain_text + mrkdwn), confirm, option (3 contextual variants), option_group, slack_file, dispatch_action_config, conversation_filter, trigger, workflow.
 - **Rich text**: 4 container kinds (section, list, preformatted, quote) + 10 leaf kinds (text, link, user, usergroup, team, channel, emoji, broadcast, color, date) with style flags.

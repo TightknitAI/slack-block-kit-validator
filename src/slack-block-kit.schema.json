@@ -1178,6 +1178,58 @@
       }
     },
 
+    "container_child_block": {
+      "description": "A block allowed inside a container block's child_blocks array. Slack documents this set as: actions, context, divider, file, header, image, input, rich_text, section, table, video (https://docs.slack.dev/reference/block-kit/blocks/container-block). Notably excludes container itself (no nesting) and message-only chrome like card/carousel/markdown.",
+      "oneOf": [
+        { "$ref": "#/$defs/actions_block" },
+        { "$ref": "#/$defs/context_block" },
+        { "$ref": "#/$defs/divider_block" },
+        { "$ref": "#/$defs/file_block" },
+        { "$ref": "#/$defs/header_block" },
+        { "$ref": "#/$defs/image_block" },
+        { "$ref": "#/$defs/input_block" },
+        { "$ref": "#/$defs/rich_text_block" },
+        { "$ref": "#/$defs/section_block" },
+        { "$ref": "#/$defs/table_block" },
+        { "$ref": "#/$defs/video_block" }
+      ]
+    },
+
+    "container_block": {
+      "description": "A general-purpose wrapper that groups child blocks into a single, optionally collapsible unit with a configurable width. Messages only (https://docs.slack.dev/reference/block-kit/blocks/container-block). default_collapsed only takes effect when is_collapsible is true; the schema rejects default_collapsed: true without is_collapsible: true.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "title", "child_blocks"],
+      "properties": {
+        "type": { "const": "container" },
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "title": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
+        },
+        "subtitle": {
+          "allOf": [{ "$ref": "#/$defs/text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
+        },
+        "icon": { "$ref": "#/$defs/image_element" },
+        "width": { "enum": ["narrow", "standard", "wide", "full"] },
+        "is_collapsible": { "type": "boolean" },
+        "default_collapsed": { "type": "boolean" },
+        "child_blocks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/container_child_block" }
+        }
+      },
+      "if": {
+        "properties": { "default_collapsed": { "const": true } },
+        "required": ["default_collapsed"]
+      },
+      "then": {
+        "properties": { "is_collapsible": { "const": true } },
+        "required": ["is_collapsible"]
+      }
+    },
+
     "context_actions_block": {
       "type": "object",
       "additionalProperties": false,
@@ -1623,6 +1675,7 @@
         { "$ref": "#/$defs/alert_block" },
         { "$ref": "#/$defs/card_block" },
         { "$ref": "#/$defs/carousel_block" },
+        { "$ref": "#/$defs/container_block" },
         { "$ref": "#/$defs/context_actions_block" },
         { "$ref": "#/$defs/context_block" },
         { "$ref": "#/$defs/data_visualization_block" },

@@ -63,6 +63,7 @@ const BLOCK_TYPE_TO_DEF: Readonly<Record<string, string>> = {
   alert: "alert_block",
   card: "card_block",
   carousel: "carousel_block",
+  container: "container_block",
   context: "context_block",
   context_actions: "context_actions_block",
   data_visualization: "data_visualization_block",
