@@ -1,6 +1,6 @@
 {
   "name": "@tightknitai/slack-block-kit-validator",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "JSON Schema (draft 2020-12) and validation helpers for Slack Block Kit payloads.",
   "type": "module",
   "main": "./dist/index.js",

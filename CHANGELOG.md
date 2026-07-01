@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.10...slack-block-kit-validator-v0.1.11) (2026-07-01)
+
+
+### Reverts
+
+* add response-only metadata fields to image elements and blocks ([#57](https://github.com/TightknitAI/slack-block-kit-validator/issues/57)) ([#58](https://github.com/TightknitAI/slack-block-kit-validator/issues/58)) ([52e7f86](https://github.com/TightknitAI/slack-block-kit-validator/commit/52e7f86af842eff102ffa85a56095613814a349b))
+
 ## [0.1.10](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.9...slack-block-kit-validator-v0.1.10) (2026-07-01)
 
 
