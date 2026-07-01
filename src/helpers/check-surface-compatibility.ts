@@ -9,24 +9,27 @@ export type Surface = "message" | "modal" | "home";
 // block entry there has an `available-in-surfaces` array valued with some
 // subset of ["Modals", "Messages", "Home tabs"]. Whatever's missing from
 // that array is what we forbid here.
-// `file` is only produced by Slack when retrieving messages that contain
-// remote files; apps cannot send it outbound on any surface
-// (https://docs.slack.dev/reference/block-kit/blocks/file-block:
-// "You can't add this block to app surfaces directly...").
+//
+// Four entries below intentionally deviate from blocks.json — Slack's canonical
+// data lists a surface where the block doesn't actually render. Each is
+// empirically grounded:
+//   • card / modals   — blocks.json lists Modals; fails to render there.
+//   • file / messages — inbound-only; apps can't send it outbound at all
+//     (https://docs.slack.dev/reference/block-kit/blocks/file-block:
+//     "You can't add this block to app surfaces directly...").
+//   • table / home tabs — blocks.json lists Home tabs; Tightknit testing shows
+//     the table block renders on messages only (modals and home drop it).
+//   • data_table / home tabs — same: blocks.json lists Home tabs, but as a
+//     table-family block it inherits table's messages-only behavior (mirrored
+//     for consistency, pending independent confirmation).
 const BLOCKS_NOT_ALLOWED_IN_MESSAGE = new Set(["alert", "file"]);
 
-// carousel/card are listed as modal-available in Slack's blocks.json but
-// empirically fail to render inside modal views — confirmed by the PR author
-// against the live API. They work in messages and home tabs.
-// `data_visualization` is a messages-only block — its reference page lists
-// "Available in Surfaces: Messages" only
-// (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block).
-// Forbidden in both modals and home tabs.
 const BLOCKS_NOT_ALLOWED_IN_MODAL = new Set([
   "card",
   "carousel",
   "container",
   "context_actions",
+  "data_table",
   "data_visualization",
   "file",
   "markdown",
@@ -39,6 +42,7 @@ const BLOCKS_NOT_ALLOWED_IN_HOME = new Set([
   "alert",
   "container",
   "context_actions",
+  "data_table",
   "data_visualization",
   "file",
   "markdown",
