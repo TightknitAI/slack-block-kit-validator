@@ -357,7 +357,7 @@ export type CardBlock1 =
       [k: string]: unknown | undefined;
     };
 /**
- * Must be used inside a section or context block. Either image_url or slack_file is required. image_width, image_height, image_bytes, and fallback are response-only metadata Slack echoes back on retrieved messages; they are ignored on send but accepted here so real Slack payloads validate.
+ * Must be used inside a section or context block. Either image_url or slack_file is required.
  */
 export type ImageElement = {
   type: "image";
@@ -449,7 +449,7 @@ export type ContainerChildBlock =
  */
 export type ContextBlockElement = ImageElement | TextObject;
 /**
- * Either image_url or slack_file is required (not both). image_width, image_height, image_bytes, is_animated, and fallback are response-only metadata Slack echoes back on retrieved messages; they are ignored on send but accepted here so real Slack payloads validate.
+ * Either image_url or slack_file is required (not both).
  */
 export type ImageBlock = {
   type: "image";
