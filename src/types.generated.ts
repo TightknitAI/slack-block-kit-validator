@@ -364,26 +364,46 @@ export type ImageElement = {
   alt_text: string;
   image_url?: string;
   slack_file?: SlackFileObject;
+  fallback?: string;
+  image_width?: number;
+  image_height?: number;
+  image_bytes?: number;
 } & ImageElement1 & {
     type: "image";
     alt_text: string;
     image_url?: string;
     slack_file?: SlackFileObject;
+    fallback?: string;
+    image_width?: number;
+    image_height?: number;
+    image_bytes?: number;
   } & ImageElement1 & {
     type: "image";
     alt_text: string;
     image_url?: string;
     slack_file?: SlackFileObject;
+    fallback?: string;
+    image_width?: number;
+    image_height?: number;
+    image_bytes?: number;
   } & ImageElement1 & {
     type: "image";
     alt_text: string;
     image_url?: string;
     slack_file?: SlackFileObject;
+    fallback?: string;
+    image_width?: number;
+    image_height?: number;
+    image_bytes?: number;
   } & ImageElement1 & {
     type: "image";
     alt_text: string;
     image_url?: string;
     slack_file?: SlackFileObject;
+    fallback?: string;
+    image_width?: number;
+    image_height?: number;
+    image_bytes?: number;
   } & ImageElement1;
 /**
  * Reference to a Slack file. Exactly one of url or id must be provided. Supported file types: png, jpg, jpeg, gif.
@@ -438,6 +458,11 @@ export type ImageBlock = {
   slack_file?: SlackFileObject;
   title?: PlainTextObject;
   block_id?: BlockId;
+  fallback?: string;
+  image_width?: number;
+  image_height?: number;
+  image_bytes?: number;
+  is_animated?: boolean;
 } & ImageBlock1 & {
     type: "image";
     alt_text: string;
@@ -445,6 +470,11 @@ export type ImageBlock = {
     slack_file?: SlackFileObject;
     title?: PlainTextObject;
     block_id?: BlockId;
+    fallback?: string;
+    image_width?: number;
+    image_height?: number;
+    image_bytes?: number;
+    is_animated?: boolean;
   } & ImageBlock1;
 export type ImageBlock1 =
   | {
