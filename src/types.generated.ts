@@ -18,6 +18,7 @@ export type Block =
   | ContainerBlock
   | ContextActionsBlock
   | ContextBlock
+  | DataTableBlock
   | DataVisualizationBlock
   | DividerBlock
   | FileBlock
@@ -622,6 +623,23 @@ export type TableColumnSetting = null | {
  * Elements allowed inside a context_actions block.
  */
 export type ContextActionsBlockElement = FeedbackButtonsElement | IconButtonElement;
+/**
+ * A cell inside a data_table_block row. `raw_text` / `raw_number` for simple values, `rich_text` for formatted content. Per https://docs.slack.dev/reference/block-kit/blocks/data-table-block. The docs' per-cell schemas list `properties` without a `required` array; we mirror `table_cell` and require the value-bearing field(s). The rule 'the first (header) row cannot contain rich_text cells' is a row-position constraint JSON Schema can't express and is not enforced here.
+ */
+export type DataTableCell =
+  | {
+      type: "raw_text";
+      text: string;
+    }
+  | {
+      type: "raw_number";
+      value: number;
+      text?: string;
+    }
+  | {
+      type: "rich_text";
+      elements: RichTextContainerElement[];
+    };
 /**
  * The chart rendered by a data_visualization block. line/bar/area charts use series + axis_config; pie charts use segments.
  */
@@ -2164,6 +2182,675 @@ export interface IconButtonElement {
   confirm?: ConfirmObject;
   accessibility_label?: string;
   visible_to_user_ids?: string[];
+}
+/**
+ * Rich, interactive table with pagination, sorting, and filtering (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). Distinct from `table_block`, which is a simpler static table. The single-table and aggregate 10,000-character limits are payload-level rules not enforced here. `row_header_column_index` must point at an existing column, a cross-field rule JSON Schema can't check (bounded to 0–19 since a row has at most 20 cells).
+ */
+export interface DataTableBlock {
+  type: "data_table";
+  block_id?: BlockId;
+  caption: string;
+  page_size?: number;
+  row_header_column_index?: number;
+  /**
+   * First row is the header; 2–101 rows total (1 header + 1–100 data rows), 1–20 cells per row.
+   *
+   * @minItems 2
+   * @maxItems 101
+   */
+  rows: [
+    (
+      | [DataTableCell]
+      | [DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+    ),
+    (
+      | [DataTableCell]
+      | [DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+    ),
+    ...(
+      | [DataTableCell]
+      | [DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+      | [
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+          DataTableCell,
+        ]
+    )[],
+  ];
 }
 /**
  * Renders data as a line, bar, area, or pie chart. Messages only (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.

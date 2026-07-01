@@ -237,6 +237,38 @@ const twoTables = stringify([
   },
 ]);
 
+const dataTableLeaderboard = stringify([
+  {
+    type: "header",
+    text: { type: "plain_text", text: "Contributor leaderboard" },
+  },
+  {
+    type: "data_table",
+    caption: "Merged PRs by contributor this sprint",
+    page_size: 10,
+    rows: [
+      [
+        { type: "raw_text", text: "Contributor" },
+        { type: "raw_text", text: "Merged PRs" },
+        { type: "raw_text", text: "Status" },
+      ],
+      [
+        { type: "raw_text", text: "ana" },
+        { type: "raw_number", value: 12, text: "12" },
+        {
+          type: "rich_text",
+          elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "on track", style: { bold: true } }] }],
+        },
+      ],
+      [
+        { type: "raw_text", text: "zach" },
+        { type: "raw_number", value: 9, text: "9" },
+        { type: "raw_text", text: "on track" },
+      ],
+    ],
+  },
+]);
+
 const activeUsersChart = stringify([
   {
     type: "header",
@@ -1012,6 +1044,14 @@ export const presets: Preset[] = [
     blurb: "At most two data visualization blocks are allowed per message.",
     tone: "invalid",
     json: threeCharts,
+  },
+  {
+    id: "data-table",
+    label: "Data table block",
+    surface: "message",
+    blurb: "Interactive `data_table` with raw_text, raw_number, and rich_text cells.",
+    tone: "valid",
+    json: dataTableLeaderboard,
   },
   {
     id: "markdown-overflow",

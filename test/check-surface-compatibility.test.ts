@@ -98,6 +98,14 @@ describe("checkSurfaceCompatibility", () => {
     expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
   });
 
+  it("allows data_table on messages but not modal or home", () => {
+    // blocks.json lists data_table as Messages + Home tabs, but as a
+    // table-family block it inherits table's messages-only render behavior.
+    expect(checkSurfaceCompatibility([{ type: "data_table" }], "message")).toEqual([]);
+    expect(checkSurfaceCompatibility([{ type: "data_table" }], "modal")).toHaveLength(1);
+    expect(checkSurfaceCompatibility([{ type: "data_table" }], "home")).toHaveLength(1);
+  });
+
   it("rejects file_input on non-modal surfaces", () => {
     const errors = checkSurfaceCompatibility([{ type: "input", element: { type: "file_input" } }], "home");
     expect(errors.some((e) => e.includes("'file_input'"))).toBe(true);

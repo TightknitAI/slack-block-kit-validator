@@ -66,6 +66,7 @@ const BLOCK_TYPE_TO_DEF: Readonly<Record<string, string>> = {
   container: "container_block",
   context: "context_block",
   context_actions: "context_actions_block",
+  data_table: "data_table_block",
   data_visualization: "data_visualization_block",
   divider: "divider_block",
   file: "file_block",

@@ -1352,6 +1352,69 @@
       ]
     },
 
+    "data_table_cell": {
+      "description": "A cell inside a data_table_block row. `raw_text` / `raw_number` for simple values, `rich_text` for formatted content. Per https://docs.slack.dev/reference/block-kit/blocks/data-table-block. The docs' per-cell schemas list `properties` without a `required` array; we mirror `table_cell` and require the value-bearing field(s). The rule 'the first (header) row cannot contain rich_text cells' is a row-position constraint JSON Schema can't express and is not enforced here.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "text"],
+          "properties": {
+            "type": { "const": "raw_text" },
+            "text": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "value"],
+          "properties": {
+            "type": { "const": "raw_number" },
+            "value": { "type": "number" },
+            "text": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "elements"],
+          "properties": {
+            "type": { "const": "rich_text" },
+            "elements": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/rich_text_container_element" }
+            }
+          }
+        }
+      ]
+    },
+
+    "data_table_block": {
+      "description": "Rich, interactive table with pagination, sorting, and filtering (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). Distinct from `table_block`, which is a simpler static table. The single-table and aggregate 10,000-character limits are payload-level rules not enforced here. `row_header_column_index` must point at an existing column, a cross-field rule JSON Schema can't check (bounded to 0–19 since a row has at most 20 cells).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "caption", "rows"],
+      "properties": {
+        "type": { "const": "data_table" },
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "caption": { "type": "string", "minLength": 1 },
+        "page_size": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "row_header_column_index": { "type": "integer", "minimum": 0, "maximum": 19 },
+        "rows": {
+          "description": "First row is the header; 2–101 rows total (1 header + 1–100 data rows), 1–20 cells per row.",
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 101,
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": { "$ref": "#/$defs/data_table_cell" }
+          }
+        }
+      }
+    },
+
     "data_visualization_block": {
       "description": "Renders data as a line, bar, area, or pie chart. Messages only (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.",
       "type": "object",
@@ -1678,6 +1741,7 @@
         { "$ref": "#/$defs/container_block" },
         { "$ref": "#/$defs/context_actions_block" },
         { "$ref": "#/$defs/context_block" },
+        { "$ref": "#/$defs/data_table_block" },
         { "$ref": "#/$defs/data_visualization_block" },
         { "$ref": "#/$defs/divider_block" },
         { "$ref": "#/$defs/file_block" },

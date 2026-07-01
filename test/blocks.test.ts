@@ -330,6 +330,89 @@ describe("blocks", () => {
     });
   });
 
+  describe("data_table_block", () => {
+    const validate = compileDef("data_table_block");
+    const header = [
+      { type: "raw_text", text: "Name" },
+      { type: "raw_text", text: "Count" },
+    ];
+    const dataRow = [
+      { type: "raw_text", text: "ana" },
+      { type: "raw_number", value: 7, text: "7" },
+    ];
+
+    it("accepts a minimal data table (header + one data row)", () => {
+      expect(validate({ type: "data_table", caption: "Stats", rows: [header, dataRow] })).toBe(true);
+    });
+
+    it("accepts all documented optional fields and a rich_text cell", () => {
+      expect(
+        validate({
+          type: "data_table",
+          block_id: "dt1",
+          caption: "Stats",
+          page_size: 20,
+          row_header_column_index: 0,
+          rows: [
+            header,
+            [
+              { type: "raw_text", text: "ana" },
+              {
+                type: "rich_text",
+                elements: [
+                  { type: "rich_text_section", elements: [{ type: "text", text: "7", style: { bold: true } }] },
+                ],
+              },
+            ],
+          ],
+        }),
+      ).toBe(true);
+    });
+
+    it("requires type, caption, and rows", () => {
+      expect(validate({ type: "data_table", rows: [header, dataRow] })).toBe(false);
+      expect(validate({ type: "data_table", caption: "Stats" })).toBe(false);
+    });
+
+    it("rejects an empty caption", () => {
+      expect(validate({ type: "data_table", caption: "", rows: [header, dataRow] })).toBe(false);
+    });
+
+    it("rejects fewer than 2 rows (header + at least one data row)", () => {
+      expect(validate({ type: "data_table", caption: "Stats", rows: [header] })).toBe(false);
+    });
+
+    it("rejects more than 101 rows and more than 20 cells per row", () => {
+      expect(validate({ type: "data_table", caption: "Stats", rows: Array.from({ length: 102 }, () => header) })).toBe(
+        false,
+      );
+      const wideRow = Array.from({ length: 21 }, () => ({ type: "raw_text", text: "x" }));
+      expect(validate({ type: "data_table", caption: "Stats", rows: [wideRow, wideRow] })).toBe(false);
+    });
+
+    it("rejects page_size out of 1–100 range", () => {
+      expect(validate({ type: "data_table", caption: "Stats", page_size: 0, rows: [header, dataRow] })).toBe(false);
+      expect(validate({ type: "data_table", caption: "Stats", page_size: 101, rows: [header, dataRow] })).toBe(false);
+    });
+
+    it("rejects a raw_number cell without a numeric value", () => {
+      const bad = [
+        { type: "raw_text", text: "ana" },
+        { type: "raw_number", text: "7" },
+      ];
+      expect(validate({ type: "data_table", caption: "Stats", rows: [header, bad] })).toBe(false);
+    });
+
+    it("rejects an unknown cell type and additionalProperties", () => {
+      const badCell = [
+        { type: "raw_text", text: "ana" },
+        { type: "mrkdwn", text: "7" },
+      ];
+      expect(validate({ type: "data_table", caption: "Stats", rows: [header, badCell] })).toBe(false);
+      expect(validate({ type: "data_table", caption: "Stats", rows: [header, dataRow], extra: 1 })).toBe(false);
+    });
+  });
+
   describe("data_visualization_block", () => {
     const validate = compileDef("data_visualization_block");
     const axisConfig = { categories: ["Mon", "Tue"], x_label: "Day", y_label: "Users" };
