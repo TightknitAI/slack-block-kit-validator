@@ -762,7 +762,7 @@
     },
 
     "image_element": {
-      "description": "Must be used inside a section or context block. Either image_url or slack_file is required.",
+      "description": "Must be used inside a section or context block. Either image_url or slack_file is required. image_width, image_height, image_bytes, and fallback are response-only metadata Slack echoes back on retrieved messages; they are ignored on send but accepted here so real Slack payloads validate.",
       "type": "object",
       "additionalProperties": false,
       "required": ["type", "alt_text"],
@@ -774,7 +774,11 @@
         "type": { "const": "image" },
         "alt_text": { "type": "string", "minLength": 1 },
         "image_url": { "type": "string", "format": "uri", "maxLength": 3000 },
-        "slack_file": { "$ref": "#/$defs/slack_file_object" }
+        "slack_file": { "$ref": "#/$defs/slack_file_object" },
+        "fallback": { "type": "string" },
+        "image_width": { "type": "integer" },
+        "image_height": { "type": "integer" },
+        "image_bytes": { "type": "integer" }
       }
     },
 
@@ -1466,7 +1470,7 @@
     },
 
     "image_block": {
-      "description": "Either image_url or slack_file is required (not both).",
+      "description": "Either image_url or slack_file is required (not both). image_width, image_height, image_bytes, is_animated, and fallback are response-only metadata Slack echoes back on retrieved messages; they are ignored on send but accepted here so real Slack payloads validate.",
       "type": "object",
       "additionalProperties": false,
       "required": ["type", "alt_text"],
@@ -1482,7 +1486,12 @@
         "title": {
           "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 2000 } } }]
         },
-        "block_id": { "$ref": "#/$defs/block_id" }
+        "block_id": { "$ref": "#/$defs/block_id" },
+        "fallback": { "type": "string" },
+        "image_width": { "type": "integer" },
+        "image_height": { "type": "integer" },
+        "image_bytes": { "type": "integer" },
+        "is_animated": { "type": "boolean" }
       }
     },
 

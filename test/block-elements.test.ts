@@ -680,6 +680,20 @@ describe("block elements", () => {
         }),
       ).toBe(false);
     });
+
+    it("accepts Slack's response-only metadata (image_width/height/bytes, fallback)", () => {
+      expect(
+        validate({
+          type: "image",
+          image_url: "https://e.com/x.png",
+          alt_text: "x",
+          fallback: "1024x1024px image",
+          image_width: 1024,
+          image_height: 1024,
+          image_bytes: 34567,
+        }),
+      ).toBe(true);
+    });
   });
 
   describe("url_source_element", () => {

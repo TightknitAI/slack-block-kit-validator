@@ -357,33 +357,53 @@ export type CardBlock1 =
       [k: string]: unknown | undefined;
     };
 /**
- * Must be used inside a section or context block. Either image_url or slack_file is required.
+ * Must be used inside a section or context block. Either image_url or slack_file is required. image_width, image_height, image_bytes, and fallback are response-only metadata Slack echoes back on retrieved messages; they are ignored on send but accepted here so real Slack payloads validate.
  */
 export type ImageElement = {
   type: "image";
   alt_text: string;
   image_url?: string;
   slack_file?: SlackFileObject;
+  fallback?: string;
+  image_width?: number;
+  image_height?: number;
+  image_bytes?: number;
 } & ImageElement1 & {
     type: "image";
     alt_text: string;
     image_url?: string;
     slack_file?: SlackFileObject;
+    fallback?: string;
+    image_width?: number;
+    image_height?: number;
+    image_bytes?: number;
   } & ImageElement1 & {
     type: "image";
     alt_text: string;
     image_url?: string;
     slack_file?: SlackFileObject;
+    fallback?: string;
+    image_width?: number;
+    image_height?: number;
+    image_bytes?: number;
   } & ImageElement1 & {
     type: "image";
     alt_text: string;
     image_url?: string;
     slack_file?: SlackFileObject;
+    fallback?: string;
+    image_width?: number;
+    image_height?: number;
+    image_bytes?: number;
   } & ImageElement1 & {
     type: "image";
     alt_text: string;
     image_url?: string;
     slack_file?: SlackFileObject;
+    fallback?: string;
+    image_width?: number;
+    image_height?: number;
+    image_bytes?: number;
   } & ImageElement1;
 /**
  * Reference to a Slack file. Exactly one of url or id must be provided. Supported file types: png, jpg, jpeg, gif.
@@ -429,7 +449,7 @@ export type ContainerChildBlock =
  */
 export type ContextBlockElement = ImageElement | TextObject;
 /**
- * Either image_url or slack_file is required (not both).
+ * Either image_url or slack_file is required (not both). image_width, image_height, image_bytes, is_animated, and fallback are response-only metadata Slack echoes back on retrieved messages; they are ignored on send but accepted here so real Slack payloads validate.
  */
 export type ImageBlock = {
   type: "image";
@@ -438,6 +458,11 @@ export type ImageBlock = {
   slack_file?: SlackFileObject;
   title?: PlainTextObject;
   block_id?: BlockId;
+  fallback?: string;
+  image_width?: number;
+  image_height?: number;
+  image_bytes?: number;
+  is_animated?: boolean;
 } & ImageBlock1 & {
     type: "image";
     alt_text: string;
@@ -445,6 +470,11 @@ export type ImageBlock = {
     slack_file?: SlackFileObject;
     title?: PlainTextObject;
     block_id?: BlockId;
+    fallback?: string;
+    image_width?: number;
+    image_height?: number;
+    image_bytes?: number;
+    is_animated?: boolean;
   } & ImageBlock1;
 export type ImageBlock1 =
   | {
