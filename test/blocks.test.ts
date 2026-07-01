@@ -803,32 +803,6 @@ describe("blocks", () => {
         }),
       ).toBe(false);
     });
-
-    it("accepts Slack's response-only metadata (image_width/height/bytes, is_animated, fallback)", () => {
-      expect(
-        validate({
-          type: "image",
-          image_url: "https://e.com/x.png",
-          alt_text: "x",
-          fallback: "1024x1024px image",
-          image_width: 1024,
-          image_height: 1024,
-          image_bytes: 34567,
-          is_animated: false,
-        }),
-      ).toBe(true);
-    });
-
-    it("rejects wrong types for response-only metadata", () => {
-      expect(
-        validate({
-          type: "image",
-          image_url: "https://e.com/x.png",
-          alt_text: "x",
-          image_width: "1024",
-        }),
-      ).toBe(false);
-    });
   });
 
   describe("input_block", () => {

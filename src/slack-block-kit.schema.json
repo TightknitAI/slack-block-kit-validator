@@ -774,11 +774,7 @@
         "type": { "const": "image" },
         "alt_text": { "type": "string", "minLength": 1 },
         "image_url": { "type": "string", "format": "uri", "maxLength": 3000 },
-        "slack_file": { "$ref": "#/$defs/slack_file_object" },
-        "fallback": { "type": "string" },
-        "image_width": { "type": "integer" },
-        "image_height": { "type": "integer" },
-        "image_bytes": { "type": "integer" }
+        "slack_file": { "$ref": "#/$defs/slack_file_object" }
       }
     },
 
@@ -1486,12 +1482,7 @@
         "title": {
           "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 2000 } } }]
         },
-        "block_id": { "$ref": "#/$defs/block_id" },
-        "fallback": { "type": "string" },
-        "image_width": { "type": "integer" },
-        "image_height": { "type": "integer" },
-        "image_bytes": { "type": "integer" },
-        "is_animated": { "type": "boolean" }
+        "block_id": { "$ref": "#/$defs/block_id" }
       }
     },
 
