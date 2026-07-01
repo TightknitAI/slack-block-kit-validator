@@ -8,12 +8,11 @@ export type Surface = "message" | "modal" | "home";
 // that powers the "Surfaces" column on each block's reference page. Every
 // block entry there has an `available-in-surfaces` array valued with some
 // subset of ["Modals", "Messages", "Home tabs"]. Whatever's missing from
-// that array is what we forbid here. `test/surface-drift.test.ts` diffs these
-// sets against a committed snapshot of blocks.json so this can't silently rot.
+// that array is what we forbid here.
 //
 // Four entries below intentionally deviate from blocks.json — Slack's canonical
 // data lists a surface where the block doesn't actually render. Each is
-// empirically grounded and kept in the drift test's KNOWN_DEVIATIONS allowlist:
+// empirically grounded:
 //   • card / modals   — blocks.json lists Modals; fails to render there.
 //   • file / messages — inbound-only; apps can't send it outbound at all
 //     (https://docs.slack.dev/reference/block-kit/blocks/file-block:
