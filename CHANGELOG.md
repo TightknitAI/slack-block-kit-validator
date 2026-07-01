@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.9...slack-block-kit-validator-v0.1.10) (2026-07-01)
+
+
+### Features
+
+* add data_table block support and surface-rule drift check (ENG-5108) ([#55](https://github.com/TightknitAI/slack-block-kit-validator/issues/55)) ([68ba572](https://github.com/TightknitAI/slack-block-kit-validator/commit/68ba572eb2232ca5f40ba07794d2d852206bbe41))
+
 ## [0.1.9](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.8...slack-block-kit-validator-v0.1.9) (2026-06-29)
 
 
