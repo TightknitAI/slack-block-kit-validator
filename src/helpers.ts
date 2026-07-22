@@ -9,6 +9,7 @@ export * from "./helpers/check-data-visualization-max.js";
 export * from "./helpers/check-focus-on-load-uniqueness.js";
 export * from "./helpers/check-number-input-bounds.js";
 export * from "./helpers/check-response-url-enabled-context.js";
+export * from "./helpers/check-single-plan-block.js";
 export * from "./helpers/check-single-table-block.js";
 export * from "./helpers/check-surface-compatibility.js";
 export * from "./helpers/find-duplicate-block-ids.js";

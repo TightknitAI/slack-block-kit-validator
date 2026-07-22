@@ -23,6 +23,21 @@ describe("validateBlockKit", () => {
       expect(result.errors.some((e) => e.includes("only one 'table' block"))).toBe(true);
     });
 
+    it("accepts a single plan block", () => {
+      const result = validateBlockKit([{ type: "plan", title: "Sprint plan" }]);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it("flags more than one plan block", () => {
+      const result = validateBlockKit([
+        { type: "plan", title: "Plan A" },
+        { type: "plan", title: "Plan B" },
+      ]);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes("only one 'plan' block"))).toBe(true);
+    });
+
     it("accepts up to two data_visualization blocks in a message", () => {
       const viz = (id: string) => ({
         type: "data_visualization",

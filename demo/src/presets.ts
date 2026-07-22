@@ -237,6 +237,26 @@ const twoTables = stringify([
   },
 ]);
 
+const twoPlans = stringify([
+  {
+    type: "section",
+    text: { type: "mrkdwn", text: "Here's what I'm working on:" },
+  },
+  {
+    type: "plan",
+    title: "Ship the release",
+    tasks: [
+      { task_id: "t1", title: "Cut the release branch", status: "complete" },
+      { task_id: "t2", title: "Run the smoke tests", status: "in_progress" },
+    ],
+  },
+  {
+    type: "plan",
+    title: "Draft the changelog",
+    tasks: [{ task_id: "t3", title: "Summarize merged PRs", status: "pending" }],
+  },
+]);
+
 const dataTableLeaderboard = stringify([
   {
     type: "header",
@@ -1036,6 +1056,14 @@ export const presets: Preset[] = [
     blurb: "Only one table block is allowed per message.",
     tone: "invalid",
     json: twoTables,
+  },
+  {
+    id: "two-plans",
+    label: "Two plan blocks",
+    surface: "message",
+    blurb: "Only one plan block is allowed per message.",
+    tone: "invalid",
+    json: twoPlans,
   },
   {
     id: "three-charts",
