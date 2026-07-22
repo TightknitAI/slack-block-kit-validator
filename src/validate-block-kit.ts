@@ -8,6 +8,7 @@ import { checkDataVisualizationMax } from "./helpers/check-data-visualization-ma
 import { checkFocusOnLoadUniqueness } from "./helpers/check-focus-on-load-uniqueness.js";
 import { checkNumberInputBounds } from "./helpers/check-number-input-bounds.js";
 import { checkResponseUrlEnabledContext } from "./helpers/check-response-url-enabled-context.js";
+import { checkSinglePlanBlock } from "./helpers/check-single-plan-block.js";
 import { checkSingleTableBlock } from "./helpers/check-single-table-block.js";
 import { checkSurfaceCompatibility, type Surface } from "./helpers/check-surface-compatibility.js";
 import { findDuplicateBlockIds } from "./helpers/find-duplicate-block-ids.js";
@@ -171,7 +172,7 @@ const stripUndefined = (input: unknown, depth = 0): unknown => {
 /**
  * Validates a Slack Block Kit payload against the JSON Schema and the set of
  * caveat helpers (duplicate block_ids, cumulative markdown length, single-table,
- * focus_on_load uniqueness, surface compatibility).
+ * single-plan, focus_on_load uniqueness, surface compatibility).
  * @param input - the payload to validate
  * @param options - target shape + optional surface
  * @returns `{ valid, errors }` — `errors` is a flat array of human-readable messages
@@ -199,6 +200,7 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
   errors.push(...findDuplicateBlockIds(blocks));
   errors.push(...checkCumulativeMarkdownLength(blocks));
   errors.push(...checkSingleTableBlock(blocks));
+  errors.push(...checkSinglePlanBlock(blocks));
   errors.push(...checkDataVisualizationMax(blocks));
   errors.push(...checkDataVisualizationConsistency(blocks));
   errors.push(...checkCardActionsMax(blocks));
