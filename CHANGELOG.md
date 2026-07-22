@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.11](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.10...slack-block-kit-validator-v0.1.11) (2026-07-22)
+
+
+### Bug Fixes
+
+* **deps:** pin fast-uri to patched ^3.1.4 to clear host-confusion advisories ([#62](https://github.com/TightknitAI/slack-block-kit-validator/issues/62)) ([7b32635](https://github.com/TightknitAI/slack-block-kit-validator/commit/7b32635eca8bfc9346afc4cd91ce46d3fe260ab3))
+
+
+### Reverts
+
+* add response-only metadata fields to image elements and blocks ([#57](https://github.com/TightknitAI/slack-block-kit-validator/issues/57)) ([#58](https://github.com/TightknitAI/slack-block-kit-validator/issues/58)) ([52e7f86](https://github.com/TightknitAI/slack-block-kit-validator/commit/52e7f86af842eff102ffa85a56095613814a349b))
+
 ## [0.1.10](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.9...slack-block-kit-validator-v0.1.10) (2026-07-01)
 
 
