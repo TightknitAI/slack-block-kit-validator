@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.11...slack-block-kit-validator-v0.1.12) (2026-08-03)
+
+
+### Bug Fixes
+
+* **deps:** remediate Vanta/Dependabot medium advisories (ENG-5578) ([#64](https://github.com/TightknitAI/slack-block-kit-validator/issues/64)) ([7e30b98](https://github.com/TightknitAI/slack-block-kit-validator/commit/7e30b9841c4f4e6af73d4c7e46d34cd45798d70f))
+
 ## [0.1.11](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.10...slack-block-kit-validator-v0.1.11) (2026-07-22)
 
 
