@@ -15,7 +15,7 @@ JSON Schema (draft 2020-12) and validation helpers for Slack Block Kit JSON. Cat
 
 Slack's API returns `200 OK` when you send malformed Block Kit JSON — the metadata is dropped and the message renders as plain text (or a modal opens blank). The only way to find out is to eyeball a real Slack channel. Slack hasn't open-sourced their validator.
 
-This package compiles every rule in <https://docs.slack.dev/reference/block-kit> into a single JSON Schema, plus a handful of helpers for the cross-payload rules JSON Schema can't express (duplicate `block_id`, cumulative markdown length, one-table-per-message, `focus_on_load` uniqueness, surface compatibility).
+This package compiles every rule in <https://docs.slack.dev/reference/block-kit> into a single JSON Schema, plus a handful of helpers for the cross-payload rules JSON Schema can't express (duplicate `block_id`, duplicate `action_id` within a block, cumulative markdown length, one-table-per-message, `focus_on_load` uniqueness, surface compatibility).
 
 > Prefer an API call or an MCP server over an npm install? The repo also ships a Cloudflare Worker that exposes this package as a public, rate-limited HTTP endpoint plus a remote MCP server — see [`worker/`](./worker).
 
@@ -83,6 +83,7 @@ The helpers are pure (no deps, no Ajv) and can be stacked on top of any validato
 ```ts
 import {
   findDuplicateBlockIds,
+  findDuplicateActionIds,
   checkCumulativeMarkdownLength,
   checkSingleTableBlock,
   checkSinglePlanBlock,
@@ -122,6 +123,7 @@ The schema uses `$defs` for every block, element, composition object, rich-text 
 | Helper | Signature | What it checks |
 |---|---|---|
 | `findDuplicateBlockIds` | `(blocks) => string[]` | Duplicate `block_id` values in a blocks array. |
+| `findDuplicateActionIds` | `(blocks) => string[]` | Duplicate `action_id` values *within* a single block (legal across different blocks). |
 | `checkCumulativeMarkdownLength` | `(blocks) => string[]` | Sum of all `markdown` block text > 12,000 chars. |
 | `checkSingleTableBlock` | `(blocks) => string[]` | More than one `table` block per payload. |
 | `checkSinglePlanBlock` | `(blocks) => string[]` | More than one `plan` block per payload. |
@@ -148,7 +150,7 @@ Each returns an array of human-readable error strings — empty when valid.
 - **All 9 composition objects**: text (plain_text + mrkdwn), confirm, option (3 contextual variants), option_group, slack_file, dispatch_action_config, conversation_filter, trigger, workflow.
 - **Rich text**: 4 container kinds (section, list, preformatted, quote) + 10 leaf kinds (text, link, user, usergroup, team, channel, emoji, broadcast, color, date) with style flags.
 - **View envelopes**: `modal_view` + `home_view` under `$defs`.
-- **Cross-payload rules** (via helpers): dup `block_id`, cumulative markdown, single-table, single-plan, two-data-visualization-per-message, chart series/category consistency, `focus_on_load` uniqueness, surface compatibility.
+- **Cross-payload rules** (via helpers): dup `block_id`, dup `action_id` within a block, cumulative markdown, single-table, single-plan, two-data-visualization-per-message, chart series/category consistency, `focus_on_load` uniqueness, surface compatibility.
 
 Every documented `maxLength`, regex (date / time / user ID / channel ID / team ID format), enum value, and array cardinality limit is enforced structurally.
 

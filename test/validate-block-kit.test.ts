@@ -23,6 +23,30 @@ describe("validateBlockKit", () => {
       expect(result.errors.some((e) => e.includes("only one 'table' block"))).toBe(true);
     });
 
+    it("flags two elements in one block sharing an action_id", () => {
+      const button = (text: string) => ({
+        type: "button",
+        text: { type: "plain_text", text, emoji: true },
+        action_id: "123",
+      });
+      const result = validateBlockKit([{ type: "actions", elements: [button("A"), button("B")] }]);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toEqual([
+        "blocks[0].elements[1].action_id must be unique within the block — '123' appears at elements[0] and elements[1]",
+      ]);
+    });
+
+    it("accepts the same action_id in two different blocks", () => {
+      const actions = (block_id: string) => ({
+        type: "actions",
+        block_id,
+        elements: [{ type: "button", text: { type: "plain_text", text: "Go", emoji: true }, action_id: "123" }],
+      });
+      const result = validateBlockKit([actions("one"), actions("two")], { surface: "message" });
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
     it("accepts a single plan block", () => {
       const result = validateBlockKit([{ type: "plan", title: "Sprint plan" }]);
       expect(result.valid).toBe(true);

@@ -12,4 +12,5 @@ export * from "./helpers/check-response-url-enabled-context.js";
 export * from "./helpers/check-single-plan-block.js";
 export * from "./helpers/check-single-table-block.js";
 export * from "./helpers/check-surface-compatibility.js";
+export * from "./helpers/find-duplicate-action-ids.js";
 export * from "./helpers/find-duplicate-block-ids.js";

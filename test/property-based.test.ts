@@ -1,6 +1,7 @@
 import * as fc from "fast-check";
 import { checkFocusOnLoadUniqueness } from "../src/helpers/check-focus-on-load-uniqueness";
 import { checkNumberInputBounds } from "../src/helpers/check-number-input-bounds";
+import { findDuplicateActionIds } from "../src/helpers/find-duplicate-action-ids";
 import { findDuplicateBlockIds } from "../src/helpers/find-duplicate-block-ids";
 import { validateBlockKit } from "../src/validate-block-kit";
 
@@ -26,6 +27,16 @@ describe("property: helpers return without throwing on arbitrary input", () => {
     fc.assert(
       fc.property(fc.array(arbAnything(), { maxLength: 30 }), (xs) => {
         const errs = findDuplicateBlockIds(xs as never);
+        expect(Array.isArray(errs)).toBe(true);
+      }),
+      { numRuns: 200 },
+    );
+  });
+
+  it("findDuplicateActionIds terminates on deeply nested input", () => {
+    fc.assert(
+      fc.property(fc.array(arbAnything(), { maxLength: 10 }), (xs) => {
+        const errs = findDuplicateActionIds(xs);
         expect(Array.isArray(errs)).toBe(true);
       }),
       { numRuns: 200 },
