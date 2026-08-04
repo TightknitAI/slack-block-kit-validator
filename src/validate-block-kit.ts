@@ -11,6 +11,7 @@ import { checkResponseUrlEnabledContext } from "./helpers/check-response-url-ena
 import { checkSinglePlanBlock } from "./helpers/check-single-plan-block.js";
 import { checkSingleTableBlock } from "./helpers/check-single-table-block.js";
 import { checkSurfaceCompatibility, type Surface } from "./helpers/check-surface-compatibility.js";
+import { findDuplicateActionIds } from "./helpers/find-duplicate-action-ids.js";
 import { findDuplicateBlockIds } from "./helpers/find-duplicate-block-ids.js";
 import schema from "./slack-block-kit.schema.json" with { type: "json" };
 
@@ -171,8 +172,9 @@ const stripUndefined = (input: unknown, depth = 0): unknown => {
 
 /**
  * Validates a Slack Block Kit payload against the JSON Schema and the set of
- * caveat helpers (duplicate block_ids, cumulative markdown length, single-table,
- * single-plan, focus_on_load uniqueness, surface compatibility).
+ * caveat helpers (duplicate block_ids, duplicate action_ids within a block,
+ * cumulative markdown length, single-table, single-plan, focus_on_load
+ * uniqueness, surface compatibility).
  * @param input - the payload to validate
  * @param options - target shape + optional surface
  * @returns `{ valid, errors }` — `errors` is a flat array of human-readable messages
@@ -198,6 +200,7 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
   }[];
 
   errors.push(...findDuplicateBlockIds(blocks));
+  errors.push(...findDuplicateActionIds(blocks));
   errors.push(...checkCumulativeMarkdownLength(blocks));
   errors.push(...checkSingleTableBlock(blocks));
   errors.push(...checkSinglePlanBlock(blocks));
