@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.13](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.12...slack-block-kit-validator-v0.1.13) (2026-08-04)
+
+
+### Bug Fixes
+
+* flag duplicate action_id within a block ([#67](https://github.com/TightknitAI/slack-block-kit-validator/issues/67)) ([9e78182](https://github.com/TightknitAI/slack-block-kit-validator/commit/9e78182cf80c3c89141a5727ada69f88bc055a89))
+
 ## [0.1.12](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.11...slack-block-kit-validator-v0.1.12) (2026-08-03)
 
 
