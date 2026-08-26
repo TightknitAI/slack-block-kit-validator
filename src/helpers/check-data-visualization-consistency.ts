@@ -76,10 +76,16 @@ export function checkDataVisualizationConsistency(blocks: readonly { type?: stri
       if (!Array.isArray(data)) {
         return;
       }
-      const labels = data.map((d) => (d as DataPointLike)?.label).filter((l): l is string => typeof l === "string");
-
-      // Labels that aren't a declared category.
-      for (const label of labels) {
+      // Count each label once. A single pass builds the per-label tally, so the
+      // category coverage check below is a map lookup rather than a nested scan
+      // over every data point.
+      const labelCounts = new Map<string, number>();
+      for (const d of data) {
+        const label = (d as DataPointLike)?.label;
+        if (typeof label !== "string") {
+          continue;
+        }
+        labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1);
         if (!categorySet.has(label)) {
           errors.push(
             `blocks[${i}].chart.series[${si}] has a data point labeled '${label}' that is not in axis_config.categories`,
@@ -89,7 +95,7 @@ export function checkDataVisualizationConsistency(blocks: readonly { type?: stri
 
       // Each category must be covered by exactly one data point.
       for (const category of categorySet) {
-        const count = labels.filter((l) => l === category).length;
+        const count = labelCounts.get(category) ?? 0;
         if (count === 0) {
           errors.push(`blocks[${i}].chart.series[${si}] is missing a data point for category '${category}'`);
         } else if (count > 1) {

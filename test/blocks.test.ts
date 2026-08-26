@@ -594,6 +594,17 @@ describe("blocks", () => {
       ).toBe(false);
     });
 
+    it("rejects axis_config with more than 20 categories", () => {
+      const tooManyCategories = Array.from({ length: 21 }, (_, i) => `c${i}`);
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: [series("S")], axis_config: { categories: tooManyCategories } },
+        }),
+      ).toBe(false);
+    });
+
     it("rejects a pie segment value that is not greater than 0", () => {
       for (const value of [0, -5]) {
         expect(

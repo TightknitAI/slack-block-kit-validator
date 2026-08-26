@@ -157,4 +157,26 @@ describe("checkDataVisualizationConsistency", () => {
   it("accepts an empty array", () => {
     expect(checkDataVisualizationConsistency([])).toEqual([]);
   });
+
+  it("counts duplicate data points in a single pass without a nested scan", () => {
+    const block = viz(
+      cartesian(
+        [
+          {
+            name: "S",
+            data: [
+              { label: "Mon", value: 1 },
+              { label: "Mon", value: 2 },
+              { label: "Mon", value: 3 },
+              { label: "Tue", value: 4 },
+            ],
+          },
+        ],
+        ["Mon", "Tue"],
+      ),
+    );
+    const errors = checkDataVisualizationConsistency([block]);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("3 data points for category 'Mon'");
+  });
 });

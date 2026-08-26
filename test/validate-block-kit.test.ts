@@ -396,4 +396,28 @@ describe("validateBlockKit", () => {
       expect(result.valid).toBe(true);
     });
   });
+
+  describe("resource bounds", () => {
+    it("does not crash when a caveat helper emits a very large error array", () => {
+      // A data_visualization chart with tens of thousands of categories once
+      // made checkDataVisualizationConsistency emit ~150k error strings. The
+      // spread that collected them (errors.push(...helper(blocks))) overflowed
+      // the call-argument limit and threw RangeError. Bounded appends must
+      // keep this a normal validation failure.
+      const categories = Array.from({ length: 25000 }, (_, i) => `c${i}`.slice(0, 20));
+      const series = Array.from({ length: 6 }, (_, s) => ({
+        name: `S${s}`,
+        data: [{ label: "c0", value: 1 }],
+      }));
+      const block = {
+        type: "data_visualization",
+        title: "T",
+        chart: { type: "line", series, axis_config: { categories } },
+      };
+
+      const result = validateBlockKit([block]);
+      expect(result.valid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+  });
 });

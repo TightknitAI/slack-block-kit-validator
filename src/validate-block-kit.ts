@@ -88,6 +88,19 @@ const focusValidators: FocusValidators = new Map(
   Object.entries(BLOCK_TYPE_TO_DEF).map(([type, def]) => [type, compile(def)] as const),
 );
 
+/**
+ * Appends every message from `source` onto `target`. A spread
+ * (`target.push(...source)`) passes each element as a separate call argument,
+ * so an adversarial payload that makes a check emit a huge array overflows the
+ * argument limit and throws `RangeError: Maximum call stack size exceeded`. A
+ * loop keeps the append bounded regardless of the source length.
+ */
+const pushAll = (target: string[], source: readonly string[]): void => {
+  for (const message of source) {
+    target.push(message);
+  }
+};
+
 const resolveSurface = (target: ValidationTarget, surface: Surface | undefined): Surface | undefined => {
   if (target === "modal") {
     return "modal";
@@ -189,7 +202,7 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
 
   const validator = validators[target];
   if (!validator(normalizedInput)) {
-    errors.push(...formatAjvErrors(validator.errors ?? [], normalizedInput, target, focusValidators));
+    pushAll(errors, formatAjvErrors(validator.errors ?? [], normalizedInput, target, focusValidators));
   }
 
   const blocks = extractBlocks(normalizedInput, target) as readonly {
@@ -199,19 +212,19 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
     element?: { type?: string };
   }[];
 
-  errors.push(...findDuplicateBlockIds(blocks));
-  errors.push(...findDuplicateActionIds(blocks));
-  errors.push(...checkCumulativeMarkdownLength(blocks));
-  errors.push(...checkSingleTableBlock(blocks));
-  errors.push(...checkSinglePlanBlock(blocks));
-  errors.push(...checkDataVisualizationMax(blocks));
-  errors.push(...checkDataVisualizationConsistency(blocks));
-  errors.push(...checkCardActionsMax(blocks));
-  errors.push(...checkFocusOnLoadUniqueness(blocks));
-  errors.push(...checkNumberInputBounds(blocks));
-  errors.push(...checkResponseUrlEnabledContext(blocks, surface));
+  pushAll(errors, findDuplicateBlockIds(blocks));
+  pushAll(errors, findDuplicateActionIds(blocks));
+  pushAll(errors, checkCumulativeMarkdownLength(blocks));
+  pushAll(errors, checkSingleTableBlock(blocks));
+  pushAll(errors, checkSinglePlanBlock(blocks));
+  pushAll(errors, checkDataVisualizationMax(blocks));
+  pushAll(errors, checkDataVisualizationConsistency(blocks));
+  pushAll(errors, checkCardActionsMax(blocks));
+  pushAll(errors, checkFocusOnLoadUniqueness(blocks));
+  pushAll(errors, checkNumberInputBounds(blocks));
+  pushAll(errors, checkResponseUrlEnabledContext(blocks, surface));
   if (surface) {
-    errors.push(...checkSurfaceCompatibility(blocks, surface));
+    pushAll(errors, checkSurfaceCompatibility(blocks, surface));
   }
 
   return { valid: errors.length === 0, errors };
