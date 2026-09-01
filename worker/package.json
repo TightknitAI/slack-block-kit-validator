@@ -18,12 +18,13 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@tightknitai/slack-block-kit-validator": "workspace:*",
-    "agents": "^0.20.1",
+    "agents": "^0.21.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.6",
     "@cloudflare/vitest-pool-workers": "^0.22.0",
-    "@cloudflare/workers-types": "^4.20260519.1",
+    "@cloudflare/workers-types": "^5.20260823.1",
     "typescript": "^7.0.2",
     "vite": "~8.2.0",
     "vitest": "^4.1.6",
