@@ -112,11 +112,13 @@ The schema uses `$defs` for every block, element, composition object, rich-text 
 
 | Export | Signature | Description |
 |---|---|---|
-| `validateBlockKit` | `(input, opts?) => { valid, errors[] }` | Runs schema + all caveat helpers. Defaults to validating a bare blocks array. |
+| `validateBlockKit` | `(input, opts?) => { valid, errors[] }` | Runs the schema, then the caveat helpers. Defaults to validating a bare blocks array. |
 | `ValidationResult` | `{ valid: boolean; errors: string[] }` | Return type. |
 | `ValidationTarget` | `'blocks' \| 'modal' \| 'home'` | What shape `input` should match. |
 | `ValidateBlockKitOptions` | `{ target?, surface? }` | Options bag. |
 | `Surface` | `'message' \| 'modal' \| 'home'` | Surface compatibility target. |
+
+The two stages run in order: when the payload fails the JSON Schema, `validateBlockKit` returns those errors on their own and skips the helpers. The caveat rules compare fields against their siblings, which only means something once each field is known to be well-formed — and stopping there keeps a payload that ignores the schema's size caps from reaching the helpers' per-element loops. Fix the structural errors and re-run to see the cross-payload ones. The verdict doesn't depend on the order: schema errors alone already make `valid` false.
 
 ### Helpers
 

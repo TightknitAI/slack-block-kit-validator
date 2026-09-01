@@ -642,6 +642,24 @@ describe("blocks", () => {
       ).toBe(false);
     });
 
+    it("rejects more than 20 categories", () => {
+      const categories = (n: number) => Array.from({ length: n }, (_, i) => `c${i}`);
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: [series("S")], axis_config: { categories: categories(20) } },
+        }),
+      ).toBe(true);
+      expect(
+        validate({
+          type: "data_visualization",
+          title: "T",
+          chart: { type: "bar", series: [series("S")], axis_config: { categories: categories(21) } },
+        }),
+      ).toBe(false);
+    });
+
     it("rejects a non-numeric data-point value", () => {
       expect(
         validate({

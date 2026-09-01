@@ -222,7 +222,22 @@ export async function handleValidate(
     );
   }
 
-  const result = validateBlockKit(body.input, { target: body.target, surface: body.surface });
+  // Defense in depth: a validation error is a *result*, never an exception, so
+  // anything thrown here is a bug in the validator rather than bad input. Turn
+  // it into a structured 500 so the client gets JSON (with CORS and rate-limit
+  // headers intact) instead of the runtime's bare error page.
+  let result: ReturnType<typeof validateBlockKit>;
+  try {
+    result = validateBlockKit(body.input, { target: body.target, surface: body.surface });
+  } catch (e) {
+    console.error("validateBlockKit threw", e);
+    return jsonResponse(
+      500,
+      { error: "validation_failed", message: "The validator failed to process this payload." },
+      env,
+      extraHeaders,
+    );
+  }
 
   // Cap response size. A pathological payload that fails every rule can
   // produce thousands of error strings; clients only need a representative

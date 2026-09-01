@@ -171,10 +171,33 @@ const stripUndefined = (input: unknown, depth = 0): unknown => {
 };
 
 /**
+ * Appends every message in `messages` to `target`.
+ *
+ * A plain `target.push(...messages)` passes one argument per element, so a
+ * helper that returns enough messages overflows V8's argument limit and
+ * throws `RangeError: Maximum call stack size exceeded` — from a payload
+ * small enough to fit under any request-size cap. A loop has no such limit.
+ * @param target - the accumulating error array
+ * @param messages - messages to append
+ */
+const pushAll = (target: string[], messages: readonly string[]): void => {
+  for (const message of messages) {
+    target.push(message);
+  }
+};
+
+/**
  * Validates a Slack Block Kit payload against the JSON Schema and the set of
  * caveat helpers (duplicate block_ids, duplicate action_ids within a block,
  * cumulative markdown length, single-table, single-plan, focus_on_load
  * uniqueness, surface compatibility).
+ *
+ * The helpers run only once the payload satisfies the JSON Schema. When the
+ * schema rejects it, the schema errors are returned on their own: the caveat
+ * rules are cross-checks between fields that are already known to be
+ * well-formed, and skipping them keeps a payload that ignores the schema's
+ * size caps from reaching the helpers' per-element loops. `valid` is the same
+ * either way — schema errors alone already make it `false`.
  * @param input - the payload to validate
  * @param options - target shape + optional surface
  * @returns `{ valid, errors }` — `errors` is a flat array of human-readable messages
@@ -189,7 +212,14 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
 
   const validator = validators[target];
   if (!validator(normalizedInput)) {
-    errors.push(...formatAjvErrors(validator.errors ?? [], normalizedInput, target, focusValidators));
+    pushAll(errors, formatAjvErrors(validator.errors ?? [], normalizedInput, target, focusValidators));
+    // Stop before the cross-payload helpers. They only add value on a
+    // structurally sound payload, and running them on a schema-invalid one is
+    // what lets a caller drive their loops with arrays the schema would have
+    // rejected — an `axis_config.categories` of 5,000 entries costs the
+    // schema one `maxItems` error but costs the helpers real CPU per entry.
+    // The verdict is unchanged either way: `valid` is already false.
+    return { valid: false, errors };
   }
 
   const blocks = extractBlocks(normalizedInput, target) as readonly {
@@ -199,19 +229,19 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
     element?: { type?: string };
   }[];
 
-  errors.push(...findDuplicateBlockIds(blocks));
-  errors.push(...findDuplicateActionIds(blocks));
-  errors.push(...checkCumulativeMarkdownLength(blocks));
-  errors.push(...checkSingleTableBlock(blocks));
-  errors.push(...checkSinglePlanBlock(blocks));
-  errors.push(...checkDataVisualizationMax(blocks));
-  errors.push(...checkDataVisualizationConsistency(blocks));
-  errors.push(...checkCardActionsMax(blocks));
-  errors.push(...checkFocusOnLoadUniqueness(blocks));
-  errors.push(...checkNumberInputBounds(blocks));
-  errors.push(...checkResponseUrlEnabledContext(blocks, surface));
+  pushAll(errors, findDuplicateBlockIds(blocks));
+  pushAll(errors, findDuplicateActionIds(blocks));
+  pushAll(errors, checkCumulativeMarkdownLength(blocks));
+  pushAll(errors, checkSingleTableBlock(blocks));
+  pushAll(errors, checkSinglePlanBlock(blocks));
+  pushAll(errors, checkDataVisualizationMax(blocks));
+  pushAll(errors, checkDataVisualizationConsistency(blocks));
+  pushAll(errors, checkCardActionsMax(blocks));
+  pushAll(errors, checkFocusOnLoadUniqueness(blocks));
+  pushAll(errors, checkNumberInputBounds(blocks));
+  pushAll(errors, checkResponseUrlEnabledContext(blocks, surface));
   if (surface) {
-    errors.push(...checkSurfaceCompatibility(blocks, surface));
+    pushAll(errors, checkSurfaceCompatibility(blocks, surface));
   }
 
   return { valid: errors.length === 0, errors };

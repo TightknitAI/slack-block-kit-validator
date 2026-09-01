@@ -18,6 +18,17 @@ interface VizBlockLike {
 }
 
 /**
+ * Cap on the number of label/category mismatch errors reported for a single
+ * series. A schema-valid chart tops out at 20 categories and 20 data points
+ * per series, so a legitimate payload never reaches this — the cap only bites
+ * when unbounded input reaches the helper directly (it is exported on its own
+ * via `/helpers`, where no schema has run), and it stops a chart with tens of
+ * thousands of categories from materializing one error string per category
+ * per series.
+ */
+const MAX_ERRORS_PER_SERIES = 100;
+
+/**
  * Enforces the two `data_visualization` rules Slack applies at runtime that
  * JSON Schema can't express, because each depends on the values of sibling
  * fields:
@@ -78,10 +89,34 @@ export function checkDataVisualizationConsistency(blocks: readonly { type?: stri
       }
       const labels = data.map((d) => (d as DataPointLike)?.label).filter((l): l is string => typeof l === "string");
 
+      // Tally the labels in one pass so the category sweep below can look each
+      // one up in O(1). Counting inside that loop instead (`labels.filter(...)`
+      // per category) rescans every label for every category — O(categories ×
+      // labels), which turns a chart with thousands of each into hundreds of
+      // milliseconds of CPU. This is O(categories + labels).
+      const labelCounts = new Map<string, number>();
+      for (const label of labels) {
+        labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1);
+      }
+
+      // Report at most MAX_ERRORS_PER_SERIES messages for this series, then
+      // count the rest and summarize — the first hundred already say what is
+      // wrong, and an unbounded input shouldn't turn into an unbounded array.
+      let reported = 0;
+      let suppressed = 0;
+      const report = (message: string): void => {
+        if (reported < MAX_ERRORS_PER_SERIES) {
+          errors.push(message);
+          reported++;
+        } else {
+          suppressed++;
+        }
+      };
+
       // Labels that aren't a declared category.
       for (const label of labels) {
         if (!categorySet.has(label)) {
-          errors.push(
+          report(
             `blocks[${i}].chart.series[${si}] has a data point labeled '${label}' that is not in axis_config.categories`,
           );
         }
@@ -89,14 +124,20 @@ export function checkDataVisualizationConsistency(blocks: readonly { type?: stri
 
       // Each category must be covered by exactly one data point.
       for (const category of categorySet) {
-        const count = labels.filter((l) => l === category).length;
+        const count = labelCounts.get(category) ?? 0;
         if (count === 0) {
-          errors.push(`blocks[${i}].chart.series[${si}] is missing a data point for category '${category}'`);
+          report(`blocks[${i}].chart.series[${si}] is missing a data point for category '${category}'`);
         } else if (count > 1) {
-          errors.push(
+          report(
             `blocks[${i}].chart.series[${si}] has ${count} data points for category '${category}' — expected exactly one`,
           );
         }
+      }
+
+      if (suppressed > 0) {
+        errors.push(
+          `blocks[${i}].chart.series[${si}] has ${suppressed} further data point/category mismatches — only the first ${MAX_ERRORS_PER_SERIES} are listed`,
+        );
       }
     });
   });
