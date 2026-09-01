@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.15](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.14...slack-block-kit-validator-v0.1.15) (2026-09-01)
+
+
+### Bug Fixes
+
+* **security:** update vulnerable transitive packages ([#81](https://github.com/TightknitAI/slack-block-kit-validator/issues/81)) ([94efb41](https://github.com/TightknitAI/slack-block-kit-validator/commit/94efb4124e02aaaa7916a4bdd267f9ddfd525f6b))
+
 ## [0.1.14](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.13...slack-block-kit-validator-v0.1.14) (2026-09-01)
 
 
