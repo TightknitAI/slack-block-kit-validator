@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.6",
-    "@cloudflare/vitest-pool-workers": "^0.21.3",
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^4.20260519.1",
     "typescript": "^7.0.2",
     "vite": "~8.2.0",

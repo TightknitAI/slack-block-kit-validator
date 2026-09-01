@@ -84,6 +84,11 @@ export function renderOpenApi(env: Env): Response {
               },
               content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
             },
+            "500": {
+              description:
+                "The validator failed to process the payload. An invalid payload returns 200 with `valid: false`, so this means a bug in the validator, not bad input.",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } },
+            },
           },
         },
       },
