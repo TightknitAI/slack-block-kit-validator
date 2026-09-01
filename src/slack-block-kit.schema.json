@@ -1290,13 +1290,14 @@
     },
 
     "data_visualization_axis_config": {
-      "description": "Axis configuration for cartesian (line/bar/area) charts. categories define the valid x-axis labels and their left-to-right display order.",
+      "description": "Axis configuration for cartesian (line/bar/area) charts. categories define the valid x-axis labels and their left-to-right display order. At most 20 categories — each series must carry exactly one data point per category, and a series' data array is itself capped at 20 items.",
       "type": "object",
       "additionalProperties": false,
       "required": ["categories"],
       "properties": {
         "categories": {
           "type": "array",
+          "maxItems": 20,
           "items": { "type": "string", "minLength": 1, "maxLength": 20 }
         },
         "x_label": { "type": "string", "maxLength": 50 },

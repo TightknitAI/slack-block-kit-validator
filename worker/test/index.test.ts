@@ -102,6 +102,32 @@ describe("POST /v1/validate", () => {
     expect(data.errors.length).toBeGreaterThan(0);
   });
 
+  it("answers an oversized chart payload with a verdict, not a 500", async () => {
+    // 25,000 categories used to produce ~150k error strings and throw
+    // `RangeError: Maximum call stack size exceeded` out of validateBlockKit,
+    // turning an under-cap request body into an unhandled worker error.
+    const res = await postJson({
+      input: [
+        {
+          type: "data_visualization",
+          title: "Chart",
+          chart: {
+            type: "line",
+            series: Array.from({ length: 6 }, (_, s) => ({
+              name: `s${s}`,
+              data: Array.from({ length: 20 }, (_, d) => ({ label: `c${d}`, value: 1 })),
+            })),
+            axis_config: { categories: Array.from({ length: 25_000 }, (_, i) => `c${i}`) },
+          },
+        },
+      ],
+    });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { valid: boolean; errors: string[] };
+    expect(data.valid).toBe(false);
+    expect(data.errors.length).toBeGreaterThan(0);
+  });
+
   it("sets X-Powered-By + Cache-Control: no-store on 200", async () => {
     const res = await postJson({ input: VALID_BLOCKS });
     expect(res.headers.get("X-Powered-By")).toContain("@tightknitai/slack-block-kit-validator");
@@ -291,7 +317,7 @@ describe("POST /v1/validate", () => {
     // messages (alongside `file`). Using it here exercises the cross-payload
     // rule the schema alone wouldn't catch.
     const res = await postJson({
-      input: [{ type: "alert", title: { type: "plain_text", text: "Heads up" } }],
+      input: [{ type: "alert", text: { type: "mrkdwn", text: "Heads up" } }],
       target: "blocks",
       surface: "message",
     });

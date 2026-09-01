@@ -157,4 +157,46 @@ describe("checkDataVisualizationConsistency", () => {
   it("accepts an empty array", () => {
     expect(checkDataVisualizationConsistency([])).toEqual([]);
   });
+
+  it("stays linear in categories × labels", () => {
+    // Regression guard: counting each category with `labels.filter(...)`
+    // rescans every label per category, so this chart costs seconds of CPU
+    // (O(C × L)) where the single-pass count costs tens of milliseconds
+    // (O(C + L)). The helper is exported on its own, so nothing upstream
+    // bounds C or L here. The budget sits well clear of both.
+    const N = 30_000;
+    const labels = Array.from({ length: N }, (_, i) => `cat-${i}`);
+    const block = viz(cartesian([{ name: "S", data: labels.map((label, value) => ({ label, value })) }], labels));
+
+    const started = performance.now();
+    const errors = checkDataVisualizationConsistency([block]);
+    const elapsed = performance.now() - started;
+
+    expect(errors).toEqual([]);
+    expect(elapsed).toBeLessThan(1000);
+  });
+
+  it("caps the mismatches reported for one series and counts the rest", () => {
+    // Every category is uncovered, so the pre-cap helper emitted one string
+    // per category — 25,000 of them from a single series.
+    const categories = Array.from({ length: 25_000 }, (_, i) => `c${i}`);
+    const block = viz(cartesian([{ name: "S", data: [{ label: "c0", value: 1 }] }], categories));
+
+    const errors = checkDataVisualizationConsistency([block]);
+
+    expect(errors).toHaveLength(101); // 100 listed + one summary
+    expect(errors.at(-1)).toBe(
+      "blocks[0].chart.series[0] has 24899 further data point/category mismatches — only the first 100 are listed",
+    );
+  });
+
+  it("reports every mismatch when a series stays under the cap", () => {
+    const categories = Array.from({ length: 100 }, (_, i) => `c${i}`);
+    const block = viz(cartesian([{ name: "S", data: [{ label: "c0", value: 1 }] }], categories));
+
+    const errors = checkDataVisualizationConsistency([block]);
+
+    expect(errors).toHaveLength(99); // c1..c99 uncovered, nothing suppressed
+    expect(errors.some((e) => e.includes("further data point/category mismatches"))).toBe(false);
+  });
 });

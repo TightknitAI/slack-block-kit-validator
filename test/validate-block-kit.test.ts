@@ -14,6 +14,43 @@ describe("validateBlockKit", () => {
       expect(result.errors.length).toBeGreaterThan(0);
     });
 
+    it("skips the caveat helpers once the schema has rejected the payload", () => {
+      // The helpers cross-check fields that are already well-formed, so they
+      // only run on a schema-valid payload. Skipping them also keeps a payload
+      // that ignores the schema's size caps from reaching their per-element
+      // loops — that is how an over-cap `axis_config.categories` turned into
+      // CPU amplification.
+      const result = validateBlockKit([
+        { type: "divider", block_id: "dup" },
+        { type: "section", block_id: "dup" }, // schema-invalid: no text/fields
+      ]);
+      expect(result.valid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors.some((e) => e.includes("block_id"))).toBe(false);
+    });
+
+    it("does not throw on an oversized chart, however many errors it implies", () => {
+      // 25,000 categories × 6 series used to materialize ~150k messages and
+      // blow V8's argument limit on `errors.push(...helper())`.
+      const result = validateBlockKit([
+        {
+          type: "data_visualization",
+          title: "Chart",
+          chart: {
+            type: "line",
+            series: Array.from({ length: 6 }, (_, s) => ({
+              name: `s${s}`,
+              data: Array.from({ length: 20 }, (_, d) => ({ label: `c${d}`, value: 1 })),
+            })),
+            axis_config: { categories: Array.from({ length: 25_000 }, (_, i) => `c${i}`) },
+          },
+        },
+      ]);
+      expect(result.valid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors.length).toBeLessThan(100);
+    });
+
     it("combines schema errors with caveat helpers", () => {
       const result = validateBlockKit([
         { type: "table", rows: [[{ type: "raw_text", text: "a" }]] },
