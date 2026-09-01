@@ -342,6 +342,37 @@ describe("POST /mcp body cap", () => {
     const data = (await res.json()) as { error: string };
     expect(data.error).toBe("payload_too_large");
   });
+
+  it("413s on a streamed body past the cap with no Content-Length", async () => {
+    // A ReadableStream body is sent chunked, so no Content-Length is declared
+    // — the header fast-path can't see this one, only the byte count can.
+    const chunk = new TextEncoder().encode("a".repeat(64 * 1024));
+    let sent = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (sent >= 8) return controller.close();
+        sent++;
+        controller.enqueue(chunk);
+      },
+    });
+    const res = await SELF.fetch(url("/mcp"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+    expect(res.status).toBe(413);
+    const data = (await res.json()) as { error: string };
+    expect(data.error).toBe("payload_too_large");
+  });
+
+  it("passes an under-cap body through to the MCP handler", async () => {
+    const res = await SELF.fetch(url("/mcp"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+      body: JSON.stringify({ jsonrpc: "2.0", method: "tools/list", id: 1 }),
+    });
+    expect(res.status).not.toBe(413);
+  });
 });
 
 describe("404", () => {
