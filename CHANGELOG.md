@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.14](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.13...slack-block-kit-validator-v0.1.14) (2026-09-01)
+
+
+### Bug Fixes
+
+* **deps:** remediate high-severity transitive vulnerabilities ([#79](https://github.com/TightknitAI/slack-block-kit-validator/issues/79)) ([b50a8c8](https://github.com/TightknitAI/slack-block-kit-validator/commit/b50a8c8e4f80a2f689cab5fc1f005becb54bf331))
+* **validator:** bound the data_visualization consistency checks ([#86](https://github.com/TightknitAI/slack-block-kit-validator/issues/86)) ([837a96c](https://github.com/TightknitAI/slack-block-kit-validator/commit/837a96c6358eab104a62c98a47ab3a0c013dec6b))
+
 ## [0.1.13](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.12...slack-block-kit-validator-v0.1.13) (2026-08-04)
 
 
