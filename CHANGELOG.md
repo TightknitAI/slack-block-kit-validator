@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.16](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.15...slack-block-kit-validator-v0.1.16) (2026-09-01)
+
+
+### Bug Fixes
+
+* **worker:** enforce the MCP body cap on actual bytes ([#88](https://github.com/TightknitAI/slack-block-kit-validator/issues/88)) ([d5722c2](https://github.com/TightknitAI/slack-block-kit-validator/commit/d5722c279ce853f6be9cef52be544d5124753ff2))
+
 ## [0.1.15](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.14...slack-block-kit-validator-v0.1.15) (2026-09-01)
 
 
