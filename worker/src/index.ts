@@ -118,17 +118,41 @@ const mcpServe = (): McpHandler => (BlockKitMcp as any).serve("/mcp");
 const mcpServeSse = (): McpHandler => (BlockKitMcp as any).serveSSE("/sse");
 
 /**
- * Fast-reject pathologically-large MCP requests by their declared
- * Content-Length. The MCP SDK has its own internal handling, but stopping at
- * the edge avoids waking the Durable Object for a body that's never going to
- * be a legitimate JSON-RPC envelope.
+ * Bounds an MCP request body at MAX_MCP_BODY_BYTES, mirroring what
+ * `readBoundedJson` does for /v1/validate: the declared Content-Length is only
+ * a fast-path (a chunked request omits it, a hostile one can under-declare
+ * it), so the real enforcement is counting the bytes as they stream in.
+ *
+ * Returns a request rebuilt around the buffered body — the SDK still needs to
+ * read it — or `null` when the body is over the cap or unreadable. Buffering
+ * is bounded by the cap itself, so worst case is 256 KB in memory.
  */
-const overSizedMcp = (request: Request): boolean => {
-  if (request.method !== "POST") return false;
+const boundMcpBody = async (request: Request): Promise<Request | null> => {
+  if (request.method !== "POST" || request.body === null) return request;
+
   const declared = request.headers.get("content-length");
-  if (declared === null) return false;
-  const n = Number(declared);
-  return Number.isFinite(n) && n > MAX_MCP_BODY_BYTES;
+  if (declared !== null && Number(declared) > MAX_MCP_BODY_BYTES) return null;
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_MCP_BODY_BYTES) {
+        await reader.cancel("payload_too_large").catch(() => {});
+        return null;
+      }
+      chunks.push(value);
+    }
+  } catch {
+    return null;
+  }
+
+  return new Request(request, { body: new Blob(chunks) });
 };
 
 export default {
@@ -177,7 +201,8 @@ export default {
     const isSse = pathname === "/sse" || pathname.startsWith("/sse/");
 
     if (isMcp || isSse) {
-      if (overSizedMcp(request)) {
+      const bounded = await boundMcpBody(request);
+      if (bounded === null) {
         return jsonError(
           413,
           "payload_too_large",
@@ -187,7 +212,7 @@ export default {
         );
       }
       const handler = isMcp ? mcpServe() : mcpServeSse();
-      const resp = await handler.fetch(request, env, ctx);
+      const resp = await handler.fetch(bounded, env, ctx);
       // Layer in CORS + rate-limit headers without rewrapping the body stream.
       for (const [k, v] of Object.entries(extraHeaders)) resp.headers.set(k, v);
       return resp;
