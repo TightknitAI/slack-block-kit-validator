@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: googleapis/release-please-action@v5
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
         with:
           config-file: release-please-config.json
@@ -34,7 +34,7 @@ jobs:
       # GitHub Actions treats any non-empty string as truthy, so a bare
       # `if: ${{ steps.release.outputs.releases_created }}` would run on
       # every push to main.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: ${{ steps.release.outputs.releases_created == 'true' }}
 
       - uses: ./.github/actions/setup
@@ -57,14 +57,20 @@ jobs:
       # cache instead of `npm install -g npm@latest`, which races against
       # the running npm mid-install ("Cannot find module 'promise-retry'").
       # npm 11+ also requires an explicit --tag for prereleases.
+      #
+      # The CLI version is pinned exactly rather than `npm@latest`: it runs
+      # while the OIDC publish credential is live, so a compromised or
+      # re-pointed `latest` would execute with publish access. Dependabot
+      # does not track this reference, so bump it by hand (keep >= 11.5.1).
       - name: Publish to npm
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: |
+          npm_cli="npm@12.0.2"
           version=$(node -p "require('./package.json').version")
           if [[ "$version" == *-* ]]; then
             tag="${version#*-}"
             tag="${tag%%.*}"
-            npx -y npm@latest publish --provenance --access public --tag "$tag"
+            npx -y "$npm_cli" publish --provenance --access public --tag "$tag"
           else
-            npx -y npm@latest publish --provenance --access public
+            npx -y "$npm_cli" publish --provenance --access public
           fi
