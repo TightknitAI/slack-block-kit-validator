@@ -17,16 +17,51 @@ jobs:
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Enable auto-merge for minor/patch updates
-        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+      # Only non-major bumps to devDependencies are auto-merged. Everything
+      # else is held so a human reads the upstream diff before it lands on
+      # main and flows into the next npm release:
+      #
+      # - `direct:production` covers the runtime deps that ship inside the
+      #   published package (ajv, ajv-formats), the worker's runtime deps,
+      #   and GitHub Actions bumps. A compromised patch/minor release of any
+      #   of these would otherwise reach consumers with nobody having looked
+      #   at it — whoever merges the release PR reviews a version bump and a
+      #   changelog, not the dependency diff.
+      # - `indirect` covers lockfile-only bumps to transitive deps.
+      #
+      # fetch-metadata resolves a grouped PR to the highest-priority type
+      # present (direct:production > direct:development > indirect), so a
+      # group that mixes in a production dep is held as well.
+      - name: Enable auto-merge for minor/patch devDependency updates
+        if: |
+          steps.metadata.outputs.update-type != 'version-update:semver-major' &&
+          steps.metadata.outputs.dependency-type == 'direct:development'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Approve PR
-        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        if: |
+          steps.metadata.outputs.update-type != 'version-update:semver-major' &&
+          steps.metadata.outputs.dependency-type == 'direct:development'
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Explain why a PR that used to auto-merge now waits. Posted only when
+      # the PR is opened: Dependabot rebases held PRs every time main moves,
+      # and a comment per `synchronize` event would be noise.
+      - name: Comment when held for manual review
+        if: |
+          github.event.action == 'opened' &&
+          steps.metadata.outputs.update-type != 'version-update:semver-major' &&
+          steps.metadata.outputs.dependency-type != 'direct:development'
+        run: |
+          gh pr comment "$PR_URL" --body "Held for manual review: \`${DEPENDENCY_NAMES}\` is a \`${DEPENDENCY_TYPE}\` dependency, and only non-major devDependency updates are auto-merged. Verify the changelog and the source diff between the two versions before merging."
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
+          DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
