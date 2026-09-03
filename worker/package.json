@@ -18,7 +18,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@tightknitai/slack-block-kit-validator": "workspace:*",
-    "agents": "^0.21.0",
+    "agents": "^0.22.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
