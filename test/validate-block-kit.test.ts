@@ -416,6 +416,73 @@ describe("validateBlockKit", () => {
       expect(result.valid).toBe(true);
     });
 
+    // Slack lists all three as "Messages, Home tabs" (blocks.json and each
+    // block's reference page), and none of them on modals.
+    const messageAndHomeBlocks = [
+      {
+        type: "container",
+        rich_text_title: {
+          type: "rich_text",
+          elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "Weekly summary" }] }],
+        },
+        subtitle: { type: "mrkdwn", text: "*3* updates" },
+        has_header_divider: true,
+        child_blocks: [{ type: "section", text: { type: "mrkdwn", text: "All caught up" } }],
+      },
+      {
+        type: "data_table",
+        caption: "Stats",
+        rows: [
+          [
+            { type: "raw_text", text: "Name" },
+            { type: "raw_text", text: "Count" },
+          ],
+          [
+            { type: "raw_text", text: "ana" },
+            { type: "raw_number", value: 7, text: "7" },
+          ],
+        ],
+      },
+      {
+        type: "data_visualization",
+        title: "Signups",
+        chart: {
+          type: "pie",
+          segments: [
+            { label: "Web", value: 10 },
+            { label: "Mobile", value: 5 },
+          ],
+        },
+      },
+    ];
+
+    it("accepts a home view containing container, data_table, and data_visualization blocks", () => {
+      const result = validateBlockKit({ type: "home", blocks: messageAndHomeBlocks }, { target: "home" });
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it.each(messageAndHomeBlocks.map((block) => [block.type, block] as const))(
+      "accepts a home view containing only a %s block",
+      (_type, block) => {
+        const result = validateBlockKit({ type: "home", blocks: [block] }, { target: "home" });
+        expect(result.errors).toEqual([]);
+        expect(result.valid).toBe(true);
+      },
+    );
+
+    it.each(messageAndHomeBlocks.map((block) => [block.type, block] as const))(
+      "still rejects a %s block in a modal view",
+      (type, block) => {
+        const result = validateBlockKit(
+          { type: "modal", title: { type: "plain_text", text: "M" }, blocks: [block] },
+          { target: "modal" },
+        );
+        expect(result.valid).toBe(false);
+        expect(result.errors).toContain(`blocks[0].type '${type}' is not allowed on surface 'modal'`);
+      },
+    );
+
     it("accepts home view with input block (home tabs support input)", () => {
       const result = validateBlockKit(
         {

@@ -96,6 +96,16 @@ export const rich: RichTextBlock = {
   ],
 };
 
+// Container title can be plain_text or a rich_text block; subtitle can be
+// plain_text or mrkdwn; has_header_divider is a documented optional flag.
+export const container: Extract<Block, { type: "container" }> = {
+  type: "container",
+  rich_text_title: rich,
+  subtitle: { type: "mrkdwn", text: "*3* pending" },
+  has_header_divider: true,
+  child_blocks: [section],
+};
+
 // View envelopes.
 export const modal: ModalView = {
   type: "modal",
@@ -106,7 +116,7 @@ export const modal: ModalView = {
 
 export const home: HomeView = {
   type: "home",
-  blocks: [section, { type: "divider" }],
+  blocks: [section, { type: "divider" }, container],
 };
 
 // Discriminated-union Block — exhaustiveness check.

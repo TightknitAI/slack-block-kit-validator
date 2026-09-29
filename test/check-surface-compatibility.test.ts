@@ -60,10 +60,19 @@ describe("checkSurfaceCompatibility", () => {
       { type: "table" },
       { type: "task_card" },
       { type: "context_actions" },
-      { type: "data_visualization" },
-      { type: "container" },
     ];
-    expect(checkSurfaceCompatibility(blocks, "home")).toHaveLength(8);
+    expect(checkSurfaceCompatibility(blocks, "home")).toHaveLength(6);
+  });
+
+  it("allows container, data_table, and data_visualization on home", () => {
+    // blocks.json and each block's reference page list "Messages, Home tabs":
+    // https://docs.slack.dev/reference/block-kit/blocks/container-block
+    // https://docs.slack.dev/reference/block-kit/blocks/data-table-block
+    // https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block
+    const blocks = [{ type: "container" }, { type: "data_table" }, { type: "data_visualization" }];
+    expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
+    expect(checkSurfaceCompatibility(blocks, "message")).toEqual([]);
+    expect(checkSurfaceCompatibility(blocks, "modal")).toHaveLength(3);
   });
 
   it("allows message-specific blocks (markdown, plan, table, task_card, context_actions, data_visualization, container) on messages", () => {
@@ -98,12 +107,11 @@ describe("checkSurfaceCompatibility", () => {
     expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
   });
 
-  it("allows data_table on messages but not modal or home", () => {
-    // blocks.json lists data_table as Messages + Home tabs, but as a
-    // table-family block it inherits table's messages-only render behavior.
+  it("allows data_table on messages and home but not modal", () => {
+    // Unlike table, data_table follows blocks.json (Messages + Home tabs).
     expect(checkSurfaceCompatibility([{ type: "data_table" }], "message")).toEqual([]);
     expect(checkSurfaceCompatibility([{ type: "data_table" }], "modal")).toHaveLength(1);
-    expect(checkSurfaceCompatibility([{ type: "data_table" }], "home")).toHaveLength(1);
+    expect(checkSurfaceCompatibility([{ type: "data_table" }], "home")).toEqual([]);
   });
 
   it("rejects file_input on non-modal surfaces", () => {
