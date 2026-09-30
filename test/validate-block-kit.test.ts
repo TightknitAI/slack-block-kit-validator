@@ -57,7 +57,29 @@ describe("validateBlockKit", () => {
         { type: "table", rows: [[{ type: "raw_text", text: "b" }]] },
       ]);
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("only one 'table' block"))).toBe(true);
+      expect(result.errors.some((e) => e.includes("only one 'table' or 'data_table' block"))).toBe(true);
+    });
+
+    it("counts a table nested in a container toward the single-table rule", () => {
+      const table = (text: string) => ({ type: "table", rows: [[{ type: "raw_text", text }]] });
+      const result = validateBlockKit(
+        [table("a"), { type: "container", title: { type: "plain_text", text: "Group" }, child_blocks: [table("b")] }],
+        { surface: "message" },
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errors).toEqual([
+        "only one 'table' or 'data_table' block is allowed per message — found 2 at blocks[0], blocks[1].child_blocks[0]",
+      ]);
+    });
+
+    it("does not add a 'per message' table error on home, where tables are already rejected", () => {
+      const table = (text: string) => ({ type: "table", rows: [[{ type: "raw_text", text }]] });
+      const result = validateBlockKit({ type: "home", blocks: [table("a"), table("b")] }, { target: "home" });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toEqual([
+        "blocks[0].type 'table' is not allowed on surface 'home'",
+        "blocks[1].type 'table' is not allowed on surface 'home'",
+      ]);
     });
 
     it("flags two elements in one block sharing an action_id", () => {

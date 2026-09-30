@@ -221,7 +221,7 @@ describe("real-world fixtures", () => {
       },
     ]);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes("only one 'table' block"))).toBe(true);
+    expect(result.errors.some((e) => e.includes("only one 'table' or 'data_table' block"))).toBe(true);
   });
 
   it("rejects a modal that attempts a table or file block", () => {

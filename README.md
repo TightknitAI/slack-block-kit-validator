@@ -127,7 +127,7 @@ The two stages run in order: when the payload fails the JSON Schema, `validateBl
 | `findDuplicateBlockIds` | `(blocks) => string[]` | Duplicate `block_id` values in a blocks array. |
 | `findDuplicateActionIds` | `(blocks) => string[]` | Duplicate `action_id` values *within* a single block (legal across different blocks). |
 | `checkCumulativeMarkdownLength` | `(blocks) => string[]` | Sum of all `markdown` block text > 12,000 chars. |
-| `checkSingleTableBlock` | `(blocks) => string[]` | More than one `table` block per payload. |
+| `checkSingleTableBlock` | `(blocks, surface?) => string[]` | More than one `table` / `data_table` block per message, including tables nested in `container` child blocks. Skipped on `modal` / `home`, where tables are rejected outright. |
 | `checkSinglePlanBlock` | `(blocks) => string[]` | More than one `plan` block per payload. |
 | `checkDataVisualizationMax` | `(blocks) => string[]` | More than two `data_visualization` blocks per message. |
 | `checkDataVisualizationConsistency` | `(blocks) => string[]` | Chart series with duplicate names, or data points that don't line up with `axis_config.categories`. |
