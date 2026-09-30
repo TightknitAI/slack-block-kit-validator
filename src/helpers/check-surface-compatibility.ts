@@ -40,10 +40,8 @@ const BLOCKS_NOT_ALLOWED_IN_MODAL = new Set([
 
 const BLOCKS_NOT_ALLOWED_IN_HOME = new Set([
   "alert",
-  "container",
   "context_actions",
   "data_table",
-  "data_visualization",
   "file",
   "markdown",
   "plan",

@@ -60,10 +60,20 @@ describe("checkSurfaceCompatibility", () => {
       { type: "table" },
       { type: "task_card" },
       { type: "context_actions" },
-      { type: "data_visualization" },
-      { type: "container" },
     ];
-    expect(checkSurfaceCompatibility(blocks, "home")).toHaveLength(8);
+    expect(checkSurfaceCompatibility(blocks, "home")).toHaveLength(6);
+  });
+
+  it("allows container and data_visualization on messages and home but not modal (per docs)", () => {
+    // container-block / data-visualization-block reference pages list
+    // "Available in surfaces: Messages, Home tabs".
+    const blocks = [{ type: "container" }, { type: "data_visualization" }];
+    expect(checkSurfaceCompatibility(blocks, "message")).toEqual([]);
+    expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
+    expect(checkSurfaceCompatibility(blocks, "modal")).toEqual([
+      "blocks[0].type 'container' is not allowed on surface 'modal'",
+      "blocks[1].type 'data_visualization' is not allowed on surface 'modal'",
+    ]);
   });
 
   it("allows message-specific blocks (markdown, plan, table, task_card, context_actions, data_visualization, container) on messages", () => {

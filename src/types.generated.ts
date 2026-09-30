@@ -1130,7 +1130,7 @@ export interface CarouselBlock {
   block_id?: BlockId;
 }
 /**
- * A general-purpose wrapper that groups child blocks into a single, optionally collapsible unit with a configurable width. Messages only (https://docs.slack.dev/reference/block-kit/blocks/container-block). default_collapsed only takes effect when is_collapsible is true; the schema rejects default_collapsed: true without is_collapsible: true.
+ * A general-purpose wrapper that groups child blocks into a single, optionally collapsible unit with a configurable width. Available in messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/container-block). default_collapsed only takes effect when is_collapsible is true; the schema rejects default_collapsed: true without is_collapsible: true.
  */
 export interface ContainerBlock {
   type: "container";
@@ -2853,7 +2853,7 @@ export interface DataTableBlock {
   ];
 }
 /**
- * Renders data as a line, bar, area, or pie chart. Messages only (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.
+ * Renders data as a line, bar, area, or pie chart. Available in messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.
  */
 export interface DataVisualizationBlock {
   type: "data_visualization";
