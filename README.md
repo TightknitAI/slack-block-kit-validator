@@ -132,7 +132,7 @@ The two stages run in order: when the payload fails the JSON Schema, `validateBl
 | `checkDataVisualizationMax` | `(blocks) => string[]` | More than two `data_visualization` blocks per message. |
 | `checkDataVisualizationConsistency` | `(blocks) => string[]` | Chart series with duplicate names, or data points that don't line up with `axis_config.categories`. |
 | `checkFocusOnLoadUniqueness` | `(blocks) => string[]` | More than one element with `focus_on_load: true` in a view (walks nested elements + accessories). |
-| `checkSurfaceCompatibility` | `(blocks, surface) => string[]` | Blocks not allowed on the target surface (e.g. `alert` on message, `markdown` on modal, `file_input` outside modals). |
+| `checkSurfaceCompatibility` | `(blocks, surface) => string[]` | Blocks and elements not allowed on the target surface, including inside `container` child blocks (e.g. `alert` on message, `markdown` on modal, `file_input` outside modals, `workflow_button` outside messages). |
 | `checkCardActionsMax` | `(blocks) => string[]` | More than `CARD_ACTIONS_MAX` action buttons on a card block. |
 | `checkNumberInputBounds` | `(blocks) => string[]` | `number_input` element with `min_value > max_value`. |
 | `checkResponseUrlEnabledContext` | `(blocks, surface?) => string[]` | `response_url_enabled` set in contexts that don't support it. |

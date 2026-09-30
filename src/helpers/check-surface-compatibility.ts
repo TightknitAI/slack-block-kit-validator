@@ -70,19 +70,76 @@ const MAX_BLOCKS_BY_SURFACE: Record<Surface, number> = {
 };
 
 /**
- * Reports any blocks whose type is not allowed on the given surface. Slack's
- * surface compatibility matrix is documented at
- * https://docs.slack.dev/surfaces/. Element-level restrictions (e.g. `file_input`
- * only valid in modals) are checked here by looking at each input block's inner
- * `element.type`.
+ * Element-level surface rules, keyed by element `type`. An element listed here
+ * may only appear on the listed surfaces; unlisted elements (buttons, selects,
+ * `plain_text_input`, ...) are allowed on every surface.
+ *
+ * Source of truth: the `available_in_surfaces` frontmatter on each element's
+ * reference page under https://docs.slack.dev/reference/block-kit/block-elements
+ * (fetched 2026-09-29).
+ *
+ * `email_text_input`, `number_input`, `url_text_input` and `rich_text_input`
+ * are a known inconsistency in Slack's docs: their element pages list Modals
+ * only (rich_text_input: Modals + Home tabs), while the input block that hosts
+ * them (https://docs.slack.dev/reference/block-kit/blocks/input-block) lists
+ * Messages, Modals and Home tabs. The element pages are the more
+ * specific claim, so they win here. The validator has no warnings channel, so
+ * these are reported as errors like every other rule; relax an entry if Slack
+ * is shown to render the element on a surface its page omits.
+ *
+ * `feedback_buttons` and `icon_button` only live inside `context_actions`,
+ * which is already forbidden outside messages, so their entries only fire if
+ * that block rule is ever relaxed.
+ */
+const ELEMENT_SURFACES: ReadonlyMap<string, readonly Surface[]> = new Map<string, readonly Surface[]>([
+  ["datetimepicker", ["message", "modal"]],
+  ["email_text_input", ["modal"]],
+  ["feedback_buttons", ["message"]],
+  ["file_input", ["modal"]],
+  ["icon_button", ["message"]],
+  ["number_input", ["modal"]],
+  ["rich_text_input", ["modal", "home"]],
+  ["url_text_input", ["modal"]],
+  ["workflow_button", ["message"]],
+]);
+
+/**
+ * Block types that nest other blocks, mapped to the property holding them.
+ * Surface rules apply to nested blocks exactly as they do at the top level.
+ */
+const CHILD_BLOCKS_KEY: ReadonlyMap<string, string> = new Map([
+  ["container", "child_blocks"],
+  ["carousel", "elements"],
+]);
+
+/**
+ * Cap for recursive traversal of nested blocks. Slack only nests one level
+ * (containers can't hold containers), so real payloads never come close.
+ * Stop there to guard against adversarial or malformed inputs. Matches the
+ * cap used in the other walkers (`check-focus-on-load-uniqueness`,
+ * `check-number-input-bounds`).
+ */
+const MAX_WALK_DEPTH = 50;
+
+const isObject = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object";
+
+const formatSurfaces = (surfaces: readonly Surface[]): string => surfaces.join(" and ");
+
+/**
+ * Reports any blocks or elements that are not allowed on the given surface.
+ * Slack's surface compatibility matrix is documented at
+ * https://docs.slack.dev/surfaces/.
+ *
+ * Block-level bans apply to top-level blocks and to blocks nested inside
+ * `container.child_blocks` / `carousel.elements`. Element-level restrictions
+ * (e.g. `file_input` only valid in modals) are checked wherever an
+ * interactive element can live: `input.element`, `section.accessory`, and
+ * `actions` / `context_actions` `elements`, at any nesting level.
  * @param blocks - array of Block Kit blocks
  * @param surface - target surface
  * @returns array of error messages (empty when all blocks are surface-compatible)
  */
-export function checkSurfaceCompatibility(
-  blocks: readonly { type?: string; element?: { type?: string } }[],
-  surface: Surface,
-): string[] {
+export function checkSurfaceCompatibility(blocks: readonly unknown[], surface: Surface): string[] {
   const forbidden = FORBIDDEN_BY_SURFACE[surface];
   const errors: string[] = [];
 
@@ -91,16 +148,51 @@ export function checkSurfaceCompatibility(
     errors.push(`surface '${surface}' allows at most ${maxBlocks} blocks (got ${blocks.length})`);
   }
 
-  blocks.forEach((block, i) => {
-    if (block?.type && forbidden.has(block.type)) {
-      errors.push(`blocks[${i}].type '${block.type}' is not allowed on surface '${surface}'`);
-      // Block itself is already rejected — element-level errors would be
-      // redundant noise for the same misuse.
+  const checkElement = (element: unknown, path: string): void => {
+    if (!isObject(element) || typeof element.type !== "string") {
       return;
     }
-    if (block?.type === "input" && block.element?.type === "file_input" && surface !== "modal") {
-      errors.push(`blocks[${i}].element.type 'file_input' is only allowed in modal surfaces (got '${surface}')`);
+    const allowed = ELEMENT_SURFACES.get(element.type);
+    if (allowed && !allowed.includes(surface)) {
+      errors.push(
+        `${path}.type '${element.type}' is only allowed in ${formatSurfaces(allowed)} surfaces (got '${surface}')`,
+      );
     }
+  };
+
+  const checkBlock = (block: unknown, path: string, depth: number): void => {
+    if (!isObject(block) || typeof block.type !== "string" || depth > MAX_WALK_DEPTH) {
+      return;
+    }
+    const { type } = block;
+    if (forbidden.has(type)) {
+      errors.push(`${path}.type '${type}' is not allowed on surface '${surface}'`);
+      // Block itself is already rejected — element-level and nested-block
+      // errors would be redundant noise for the same misuse.
+      return;
+    }
+
+    if (type === "input") {
+      checkElement(block.element, `${path}.element`);
+    } else if (type === "section") {
+      checkElement(block.accessory, `${path}.accessory`);
+    } else if ((type === "actions" || type === "context_actions") && Array.isArray(block.elements)) {
+      block.elements.forEach((element, j) => {
+        checkElement(element, `${path}.elements[${j}]`);
+      });
+    }
+
+    const childKey = CHILD_BLOCKS_KEY.get(type);
+    const children = childKey ? block[childKey] : undefined;
+    if (Array.isArray(children)) {
+      children.forEach((child, j) => {
+        checkBlock(child, `${path}.${childKey}[${j}]`, depth + 1);
+      });
+    }
+  };
+
+  blocks.forEach((block, i) => {
+    checkBlock(block, `blocks[${i}]`, 0);
   });
 
   return errors;
