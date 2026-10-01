@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.17](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.16...slack-block-kit-validator-v0.1.17) (2026-10-01)
+
+
+### Bug Fixes
+
+* allow container, data_table and data_visualization on home tabs; accept container rich_text_title and has_header_divider ([#107](https://github.com/TightknitAI/slack-block-kit-validator/issues/107)) ([c71a86d](https://github.com/TightknitAI/slack-block-kit-validator/commit/c71a86da64d616e7a260aacdf2cf841a9dadf971))
+
 ## [0.1.16](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.15...slack-block-kit-validator-v0.1.16) (2026-09-01)
 
 
