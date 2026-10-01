@@ -10,7 +10,7 @@ export type Surface = "message" | "modal" | "home";
 // subset of ["Modals", "Messages", "Home tabs"]. Whatever's missing from
 // that array is what we forbid here.
 //
-// Four entries below intentionally deviate from blocks.json — Slack's canonical
+// Three entries below intentionally deviate from blocks.json — Slack's canonical
 // data lists a surface where the block doesn't actually render. Each is
 // empirically grounded:
 //   • card / modals   — blocks.json lists Modals; fails to render there.
@@ -19,9 +19,10 @@ export type Surface = "message" | "modal" | "home";
 //     "You can't add this block to app surfaces directly...").
 //   • table / home tabs — blocks.json lists Home tabs; Tightknit testing shows
 //     the table block renders on messages only (modals and home drop it).
-//   • data_table / home tabs — same: blocks.json lists Home tabs, but as a
-//     table-family block it inherits table's messages-only behavior (mirrored
-//     for consistency, pending independent confirmation).
+//
+// data_table does NOT inherit table's home-tab deviation: blocks.json and its
+// reference page (https://docs.slack.dev/reference/block-kit/blocks/data-table-block)
+// both list Messages and Home tabs, so it follows the canonical data.
 const BLOCKS_NOT_ALLOWED_IN_MESSAGE = new Set(["alert", "file"]);
 
 const BLOCKS_NOT_ALLOWED_IN_MODAL = new Set([
@@ -40,10 +41,7 @@ const BLOCKS_NOT_ALLOWED_IN_MODAL = new Set([
 
 const BLOCKS_NOT_ALLOWED_IN_HOME = new Set([
   "alert",
-  "container",
   "context_actions",
-  "data_table",
-  "data_visualization",
   "file",
   "markdown",
   "plan",

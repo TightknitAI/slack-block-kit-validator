@@ -1,3 +1,4 @@
+import { validateBlockKit } from "../src/validate-block-kit";
 import { compileDef } from "./helpers/compile-def";
 
 const button = {
@@ -216,6 +217,49 @@ describe("blocks", () => {
       expect(validate({ type: "container", title })).toBe(false);
     });
 
+    describe("rich_text_title", () => {
+      const richTextTitle = {
+        type: "rich_text",
+        elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "Bulk", style: { bold: true } }] }],
+      };
+
+      it("accepts rich_text_title in place of title", () => {
+        expect(validate({ type: "container", rich_text_title: richTextTitle, child_blocks: [section] })).toBe(true);
+      });
+
+      it("accepts both title and rich_text_title (rich_text_title takes precedence in Slack)", () => {
+        expect(validate({ type: "container", title, rich_text_title: richTextTitle, child_blocks: [section] })).toBe(
+          true,
+        );
+      });
+
+      it("rejects a rich_text_title that is not a rich_text block", () => {
+        expect(validate({ type: "container", rich_text_title: title, child_blocks: [section] })).toBe(false);
+        expect(
+          validate({ type: "container", rich_text_title: { type: "section", text: title }, child_blocks: [section] }),
+        ).toBe(false);
+      });
+
+      it("reports a missing-title error when neither title nor rich_text_title is set", () => {
+        const result = validateBlockKit([{ type: "container", child_blocks: [section] }]);
+        expect(result.valid).toBe(false);
+        expect(result.errors).toContain("blocks[0]: missing required property 'title'");
+        expect(result.errors).toContain("blocks[0]: missing required property 'rich_text_title'");
+      });
+    });
+
+    it("accepts has_header_divider on non-collapsible and collapsible containers", () => {
+      expect(validate({ type: "container", title, has_header_divider: true, child_blocks: [section] })).toBe(true);
+      // Slack ignores it when collapsible; the payload is still valid.
+      expect(
+        validate({ type: "container", title, is_collapsible: true, has_header_divider: true, child_blocks: [section] }),
+      ).toBe(true);
+    });
+
+    it("rejects a non-boolean has_header_divider", () => {
+      expect(validate({ type: "container", title, has_header_divider: "yes", child_blocks: [section] })).toBe(false);
+    });
+
     it("rejects empty and >10 child_blocks", () => {
       expect(validate({ type: "container", title, child_blocks: [] })).toBe(false);
       expect(validate({ type: "container", title, child_blocks: Array(11).fill(section) })).toBe(false);
@@ -236,15 +280,29 @@ describe("blocks", () => {
       expect(validate({ type: "container", title, width: "huge", child_blocks: [section] })).toBe(false);
     });
 
-    it("rejects an mrkdwn subtitle (title and subtitle are plain_text only)", () => {
+    it("accepts an mrkdwn subtitle", () => {
       expect(
         validate({
           type: "container",
           title,
-          subtitle: { type: "mrkdwn", text: "nope" },
+          subtitle: { type: "mrkdwn", text: "*3* pending" },
           child_blocks: [section],
         }),
-      ).toBe(false);
+      ).toBe(true);
+    });
+
+    it("rejects an mrkdwn title (title is plain_text only)", () => {
+      expect(validate({ type: "container", title: { type: "mrkdwn", text: "nope" }, child_blocks: [section] })).toBe(
+        false,
+      );
+    });
+
+    it("rejects a subtitle > 150 chars in either text type", () => {
+      for (const t of ["plain_text", "mrkdwn"]) {
+        expect(
+          validate({ type: "container", title, subtitle: { type: t, text: "x".repeat(151) }, child_blocks: [section] }),
+        ).toBe(false);
+      }
     });
 
     it("rejects default_collapsed without is_collapsible: true", () => {
