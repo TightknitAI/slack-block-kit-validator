@@ -1,4 +1,6 @@
-import { checkSurfaceCompatibility } from "../src/helpers/check-surface-compatibility";
+import { checkSurfaceCompatibility, type Surface } from "../src/helpers/check-surface-compatibility";
+
+const SURFACES: readonly Surface[] = ["message", "modal", "home"];
 
 /**
  * Surface matrix source of truth: https://docs.slack.dev/blocks.json — the
@@ -129,6 +131,167 @@ describe("checkSurfaceCompatibility", () => {
     const errors = checkSurfaceCompatibility([{ type: "input", element: { type: "file_input" } }], "message");
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain("file_input");
+  });
+
+  describe("element surface rules", () => {
+    // Per each element's reference page (`available_in_surfaces` frontmatter)
+    // under https://docs.slack.dev/reference/block-kit/block-elements.
+    const expectedError = (path: string, type: string, allowed: readonly Surface[], surface: Surface) =>
+      `${path}.type '${type}' is only allowed in ${allowed.join(" and ")} surfaces (got '${surface}')`;
+
+    const inputHosted: [string, readonly Surface[]][] = [
+      ["file_input", ["modal"]],
+      ["email_text_input", ["modal"]],
+      ["number_input", ["modal"]],
+      ["url_text_input", ["modal"]],
+      ["rich_text_input", ["modal", "home"]],
+      ["datetimepicker", ["message", "modal"]],
+      ["plain_text_input", ["message", "modal", "home"]],
+    ];
+
+    describe.each(inputHosted)("%s in input.element", (type, allowed) => {
+      it.each(SURFACES)("on %s", (surface) => {
+        const errors = checkSurfaceCompatibility([{ type: "input", element: { type } }], surface);
+        expect(errors).toEqual(
+          allowed.includes(surface) ? [] : [expectedError("blocks[0].element", type, allowed, surface)],
+        );
+      });
+    });
+
+    const actionsHosted: [string, readonly Surface[]][] = [
+      ["workflow_button", ["message"]],
+      ["datetimepicker", ["message", "modal"]],
+      ["button", ["message", "modal", "home"]],
+    ];
+
+    describe.each(actionsHosted)("%s in actions.elements", (type, allowed) => {
+      it.each(SURFACES)("on %s", (surface) => {
+        const errors = checkSurfaceCompatibility(
+          [{ type: "actions", elements: [{ type: "button" }, { type }] }],
+          surface,
+        );
+        expect(errors).toEqual(
+          allowed.includes(surface) ? [] : [expectedError("blocks[0].elements[1]", type, allowed, surface)],
+        );
+      });
+    });
+
+    it.each(SURFACES)("checks workflow_button as a section accessory on %s", (surface) => {
+      const errors = checkSurfaceCompatibility([{ type: "section", accessory: { type: "workflow_button" } }], surface);
+      expect(errors).toEqual(
+        surface === "message" ? [] : [expectedError("blocks[0].accessory", "workflow_button", ["message"], surface)],
+      );
+    });
+
+    it("keeps the historical file_input message text", () => {
+      expect(checkSurfaceCompatibility([{ type: "input", element: { type: "file_input" } }], "home")).toEqual([
+        "blocks[0].element.type 'file_input' is only allowed in modal surfaces (got 'home')",
+      ]);
+    });
+
+    it("allows feedback_buttons and icon_button inside context_actions on messages", () => {
+      const blocks = [{ type: "context_actions", elements: [{ type: "feedback_buttons" }, { type: "icon_button" }] }];
+      expect(checkSurfaceCompatibility(blocks, "message")).toEqual([]);
+    });
+
+    it("reports only the block error when context_actions itself is forbidden", () => {
+      const blocks = [{ type: "context_actions", elements: [{ type: "feedback_buttons" }, { type: "icon_button" }] }];
+      expect(checkSurfaceCompatibility(blocks, "modal")).toEqual([
+        "blocks[0].type 'context_actions' is not allowed on surface 'modal'",
+      ]);
+      expect(checkSurfaceCompatibility(blocks, "home")).toEqual([
+        "blocks[0].type 'context_actions' is not allowed on surface 'home'",
+      ]);
+    });
+
+    it("ignores elements in locations that aren't element hosts", () => {
+      // `element` on a non-input block, `elements` on a context block, etc.
+      const blocks = [
+        { type: "section", element: { type: "file_input" } },
+        { type: "context", elements: [{ type: "workflow_button" }] },
+      ];
+      expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
+    });
+  });
+
+  describe("nested blocks", () => {
+    const container = (...child_blocks: unknown[]) => ({ type: "container", child_blocks });
+
+    it("allows surface-compatible children on every surface where container is allowed", () => {
+      const blocks = [
+        container({ type: "section" }, { type: "divider" }, { type: "input", element: { type: "plain_text_input" } }),
+      ];
+      expect(checkSurfaceCompatibility(blocks, "message")).toEqual([]);
+      expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
+    });
+
+    it("applies block bans to container.child_blocks", () => {
+      const blocks = [{ type: "divider" }, container({ type: "section" }, { type: "table" })];
+      expect(checkSurfaceCompatibility(blocks, "home")).toEqual([
+        "blocks[1].child_blocks[1].type 'table' is not allowed on surface 'home'",
+      ]);
+      expect(checkSurfaceCompatibility(blocks, "message")).toEqual([]);
+    });
+
+    it("rejects a nested file block on messages", () => {
+      expect(checkSurfaceCompatibility([container({ type: "file" })], "message")).toEqual([
+        "blocks[0].child_blocks[0].type 'file' is not allowed on surface 'message'",
+      ]);
+    });
+
+    it("applies element rules inside container.child_blocks", () => {
+      const blocks = [
+        container(
+          { type: "input", element: { type: "email_text_input" } },
+          { type: "actions", elements: [{ type: "workflow_button" }] },
+          { type: "section", accessory: { type: "workflow_button" } },
+        ),
+      ];
+      expect(checkSurfaceCompatibility(blocks, "message")).toEqual([
+        "blocks[0].child_blocks[0].element.type 'email_text_input' is only allowed in modal surfaces (got 'message')",
+      ]);
+      expect(checkSurfaceCompatibility(blocks, "home")).toEqual([
+        "blocks[0].child_blocks[0].element.type 'email_text_input' is only allowed in modal surfaces (got 'home')",
+        "blocks[0].child_blocks[1].elements[0].type 'workflow_button' is only allowed in message surfaces (got 'home')",
+        "blocks[0].child_blocks[2].accessory.type 'workflow_button' is only allowed in message surfaces (got 'home')",
+      ]);
+    });
+
+    it("reports only the container error on modal, not its children", () => {
+      const blocks = [container({ type: "table" }, { type: "input", element: { type: "workflow_button" } })];
+      expect(checkSurfaceCompatibility(blocks, "modal")).toEqual([
+        "blocks[0].type 'container' is not allowed on surface 'modal'",
+      ]);
+    });
+
+    it("walks carousel.elements as nested card blocks", () => {
+      const blocks = [{ type: "carousel", elements: [{ type: "card" }, { type: "card" }] }];
+      expect(checkSurfaceCompatibility(blocks, "message")).toEqual([]);
+      expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
+      expect(checkSurfaceCompatibility(blocks, "modal")).toEqual([
+        "blocks[0].type 'carousel' is not allowed on surface 'modal'",
+      ]);
+    });
+
+    it("tolerates null, non-object, and untyped children", () => {
+      const blocks = [null, container(null, 5, "x", { type: 3 }, {}), { type: "actions", elements: [null, 1] }];
+      for (const surface of SURFACES) {
+        expect(checkSurfaceCompatibility(blocks, surface)).toEqual(
+          surface === "modal" ? ["blocks[1].type 'container' is not allowed on surface 'modal'"] : [],
+        );
+      }
+    });
+
+    it("stops descending past the depth cap instead of overflowing the stack", () => {
+      // Real Slack payloads never nest containers; this is a guard for
+      // callers invoking the helper directly on unvalidated input.
+      let deep: unknown = { type: "table" };
+      for (let i = 0; i < 10_000; i++) {
+        deep = container(deep);
+      }
+      expect(() => checkSurfaceCompatibility([deep], "home")).not.toThrow();
+      expect(checkSurfaceCompatibility([deep], "home")).toEqual([]);
+    });
   });
 
   describe("per-surface block-count caps", () => {

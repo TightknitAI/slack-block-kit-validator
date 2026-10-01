@@ -232,7 +232,7 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
   pushAll(errors, findDuplicateBlockIds(blocks));
   pushAll(errors, findDuplicateActionIds(blocks));
   pushAll(errors, checkCumulativeMarkdownLength(blocks));
-  pushAll(errors, checkSingleTableBlock(blocks));
+  pushAll(errors, checkSingleTableBlock(blocks, surface));
   pushAll(errors, checkSinglePlanBlock(blocks));
   pushAll(errors, checkDataVisualizationMax(blocks));
   pushAll(errors, checkDataVisualizationConsistency(blocks));

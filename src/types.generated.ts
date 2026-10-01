@@ -2193,7 +2193,7 @@ export interface IconButtonElement {
   visible_to_user_ids?: string[];
 }
 /**
- * Rich, interactive table with pagination, sorting, and filtering (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). Distinct from `table_block`, which is a simpler static table. The single-table and aggregate 10,000-character limits are payload-level rules not enforced here. `row_header_column_index` must point at an existing column, a cross-field rule JSON Schema can't check (bounded to 0–19 since a row has at most 20 cells).
+ * Rich, interactive table with pagination, sorting, and filtering (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). Distinct from `table_block`, which is a simpler static table. The one-table-per-message limit (shared with `table_block`) is enforced via the checkSingleTableBlock helper; the aggregate 10,000-character limit is a payload-level rule not enforced here. `row_header_column_index` must point at an existing column, a cross-field rule JSON Schema can't check (bounded to 0–19 since a row has at most 20 cells).
  */
 export interface DataTableBlock {
   type: "data_table";

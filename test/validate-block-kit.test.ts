@@ -57,7 +57,29 @@ describe("validateBlockKit", () => {
         { type: "table", rows: [[{ type: "raw_text", text: "b" }]] },
       ]);
       expect(result.valid).toBe(false);
-      expect(result.errors.some((e) => e.includes("only one 'table' block"))).toBe(true);
+      expect(result.errors.some((e) => e.includes("only one 'table' or 'data_table' block"))).toBe(true);
+    });
+
+    it("counts a table nested in a container toward the single-table rule", () => {
+      const table = (text: string) => ({ type: "table", rows: [[{ type: "raw_text", text }]] });
+      const result = validateBlockKit(
+        [table("a"), { type: "container", title: { type: "plain_text", text: "Group" }, child_blocks: [table("b")] }],
+        { surface: "message" },
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errors).toEqual([
+        "only one 'table' or 'data_table' block is allowed per message — found 2 at blocks[0], blocks[1].child_blocks[0]",
+      ]);
+    });
+
+    it("does not add a 'per message' table error on home, where tables are already rejected", () => {
+      const table = (text: string) => ({ type: "table", rows: [[{ type: "raw_text", text }]] });
+      const result = validateBlockKit({ type: "home", blocks: [table("a"), table("b")] }, { target: "home" });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toEqual([
+        "blocks[0].type 'table' is not allowed on surface 'home'",
+        "blocks[1].type 'table' is not allowed on surface 'home'",
+      ]);
     });
 
     it("flags two elements in one block sharing an action_id", () => {
@@ -211,6 +233,59 @@ describe("validateBlockKit", () => {
       );
       expect(result.valid).toBe(false);
       expect(result.errors.some((e) => e.includes("'table'"))).toBe(true);
+    });
+
+    it("accepts a container block on a home view", () => {
+      const result = validateBlockKit(
+        {
+          type: "home",
+          blocks: [
+            {
+              type: "container",
+              title: { type: "plain_text", text: "Group" },
+              child_blocks: [{ type: "section", text: { type: "mrkdwn", text: "hi" } }],
+            },
+          ],
+        },
+        { target: "home" },
+      );
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it("rejects a surface-incompatible block nested in a container", () => {
+      const result = validateBlockKit(
+        {
+          type: "home",
+          blocks: [
+            {
+              type: "container",
+              title: { type: "plain_text", text: "Group" },
+              child_blocks: [{ type: "table", rows: [[{ type: "raw_text", text: "a" }]] }],
+            },
+          ],
+        },
+        { target: "home" },
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errors).toEqual(["blocks[0].child_blocks[0].type 'table' is not allowed on surface 'home'"]);
+    });
+
+    it("rejects a modal-only input element on a message surface", () => {
+      const result = validateBlockKit(
+        [
+          {
+            type: "input",
+            label: { type: "plain_text", text: "Email" },
+            element: { type: "email_text_input", action_id: "email" },
+          },
+        ],
+        { surface: "message" },
+      );
+      expect(result.valid).toBe(false);
+      expect(result.errors).toEqual([
+        "blocks[0].element.type 'email_text_input' is only allowed in modal surfaces (got 'message')",
+      ]);
     });
   });
 
