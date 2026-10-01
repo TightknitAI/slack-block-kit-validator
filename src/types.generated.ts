@@ -410,6 +410,110 @@ export type ImageElement1 =
       [k: string]: unknown | undefined;
     };
 /**
+ * A general-purpose wrapper that groups child blocks into a single, optionally collapsible unit with a configurable width. Messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/container-block). At least one of title or rich_text_title is required; Slack renders rich_text_title when both are present. default_collapsed only takes effect when is_collapsible is true; the schema rejects default_collapsed: true without is_collapsible: true. has_header_divider only applies when the block is not collapsible; Slack ignores it otherwise, so the schema accepts it either way.
+ */
+export type ContainerBlock = ContainerBlock1 & {
+  type: "container";
+  block_id?: BlockId;
+  title?: PlainTextObject;
+  rich_text_title?: RichTextBlock;
+  subtitle?: TextObject;
+  icon?: ImageElement;
+  width?: "narrow" | "standard" | "wide" | "full";
+  is_collapsible?: boolean;
+  default_collapsed?: boolean;
+  has_header_divider?: boolean;
+  /**
+   * @minItems 1
+   * @maxItems 10
+   */
+  child_blocks:
+    | [ContainerChildBlock]
+    | [ContainerChildBlock, ContainerChildBlock]
+    | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
+    | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
+    | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
+    | [
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+      ]
+    | [
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+      ]
+    | [
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+      ]
+    | [
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+      ]
+    | [
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+        ContainerChildBlock,
+      ];
+};
+export type ContainerBlock1 =
+  | {
+      [k: string]: unknown | undefined;
+    }
+  | {
+      [k: string]: unknown | undefined;
+    };
+/**
+ * Any of the 4 rich-text container kinds usable inside a rich_text block's elements array.
+ */
+export type RichTextContainerElement =
+  | RichTextSectionElement
+  | RichTextListElement
+  | RichTextPreformattedElement
+  | RichTextQuoteElement;
+/**
+ * Any of the 10 rich-text leaf element kinds.
+ */
+export type RichTextLeaf =
+  | RichTextTextLeaf
+  | RichTextLinkLeaf
+  | RichTextUserLeaf
+  | RichTextUsergroupLeaf
+  | RichTextTeamLeaf
+  | RichTextChannelLeaf
+  | RichTextEmojiLeaf
+  | RichTextBroadcastLeaf
+  | RichTextColorLeaf
+  | RichTextDateLeaf;
+/**
  * A block allowed inside a container block's child_blocks array. Slack documents this set as: actions, context, divider, file, header, image, input, rich_text, section, table, video (https://docs.slack.dev/reference/block-kit/blocks/container-block). Notably excludes container itself (no nesting) and message-only chrome like card/carousel/markdown.
  */
 export type ContainerChildBlock =
@@ -478,28 +582,6 @@ export type InputBlockElement =
   | MultiChannelsSelectElement
   | RichTextInputElement
   | FileInputElement;
-/**
- * Any of the 4 rich-text container kinds usable inside a rich_text block's elements array.
- */
-export type RichTextContainerElement =
-  | RichTextSectionElement
-  | RichTextListElement
-  | RichTextPreformattedElement
-  | RichTextQuoteElement;
-/**
- * Any of the 10 rich-text leaf element kinds.
- */
-export type RichTextLeaf =
-  | RichTextTextLeaf
-  | RichTextLinkLeaf
-  | RichTextUserLeaf
-  | RichTextUsergroupLeaf
-  | RichTextTeamLeaf
-  | RichTextChannelLeaf
-  | RichTextEmojiLeaf
-  | RichTextBroadcastLeaf
-  | RichTextColorLeaf
-  | RichTextDateLeaf;
 /**
  * Must have text or fields (or both).
  */
@@ -1129,78 +1211,124 @@ export interface CarouselBlock {
     | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock];
   block_id?: BlockId;
 }
-/**
- * A general-purpose wrapper that groups child blocks into a single, optionally collapsible unit with a configurable width. Available in messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/container-block). default_collapsed only takes effect when is_collapsible is true; the schema rejects default_collapsed: true without is_collapsible: true.
- */
-export interface ContainerBlock {
-  type: "container";
+export interface RichTextBlock {
+  type: "rich_text";
+  /**
+   * Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).
+   */
+  elements: RichTextContainerElement[];
   block_id?: BlockId;
-  title: PlainTextObject;
-  subtitle?: PlainTextObject;
-  icon?: ImageElement;
-  width?: "narrow" | "standard" | "wide" | "full";
-  is_collapsible?: boolean;
-  default_collapsed?: boolean;
+}
+export interface RichTextSectionElement {
+  type: "rich_text_section";
+  /**
+   * Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).
+   */
+  elements: RichTextLeaf[];
+}
+export interface RichTextTextLeaf {
+  type: "text";
+  text: string;
+  style?: RichTextStyleObject;
+}
+/**
+ * Style flags for rich-text leaf elements. Slack docs disagree on which flags are allowed per leaf type; this is the union of all flags documented.
+ */
+export interface RichTextStyleObject {
+  bold?: boolean;
+  italic?: boolean;
+  strike?: boolean;
+  underline?: boolean;
+  code?: boolean;
+  highlight?: boolean;
+  client_highlight?: boolean;
+  unlink?: boolean;
+}
+export interface RichTextLinkLeaf {
+  type: "link";
+  url: string;
+  text?: string;
+  unsafe?: boolean;
+  style?: RichTextStyleObject;
+}
+export interface RichTextUserLeaf {
+  type: "user";
+  user_id: string;
+  style?: RichTextStyleObject;
+}
+export interface RichTextUsergroupLeaf {
+  type: "usergroup";
+  usergroup_id: string;
+  style?: RichTextStyleObject;
+}
+/**
+ * Whole-team mention (e.g. <!T12345>) — referenced by team_id.
+ */
+export interface RichTextTeamLeaf {
+  type: "team";
+  team_id: string;
+  style?: RichTextStyleObject;
+}
+export interface RichTextChannelLeaf {
+  type: "channel";
+  channel_id: string;
+  style?: RichTextStyleObject;
+}
+/**
+ * Slack's official docs (rich-text-block reference) only list type/name/unicode, but the API silently accepts a `style` object on emoji leaves. We allow it to match observed behavior.
+ */
+export interface RichTextEmojiLeaf {
+  type: "emoji";
+  name: string;
+  skin_tone?: number;
+  unicode?: string;
+  style?: RichTextStyleObject;
+}
+export interface RichTextBroadcastLeaf {
+  type: "broadcast";
+  range: "here" | "channel" | "everyone";
+  style?: RichTextStyleObject;
+}
+export interface RichTextColorLeaf {
+  type: "color";
+  value: string;
+  style?: RichTextStyleObject;
+}
+export interface RichTextDateLeaf {
+  type: "date";
+  timestamp: number;
+  format: string;
+  url?: string;
+  fallback?: string;
+  style?: RichTextStyleObject;
+}
+export interface RichTextListElement {
+  type: "rich_text_list";
+  style: "bullet" | "ordered";
   /**
    * @minItems 1
-   * @maxItems 10
    */
-  child_blocks:
-    | [ContainerChildBlock]
-    | [ContainerChildBlock, ContainerChildBlock]
-    | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
-    | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
-    | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
-    | [
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-      ]
-    | [
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-      ]
-    | [
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-      ]
-    | [
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-      ]
-    | [
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-      ];
+  elements: [RichTextSectionElement, ...RichTextSectionElement[]];
+  indent?: number;
+  offset?: number;
+  border?: 0 | 1;
+}
+export interface RichTextPreformattedElement {
+  type: "rich_text_preformatted";
+  /**
+   * Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).
+   */
+  elements: RichTextLeaf[];
+  border?: 0 | 1;
+  language?: string;
+}
+export interface RichTextQuoteElement {
+  type: "rich_text_quote";
+  /**
+   * Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).
+   */
+  elements: RichTextLeaf[];
+  border?: 0 | 1;
 }
 export interface ContextBlock {
   type: "context";
@@ -1366,125 +1494,6 @@ export interface RichTextInputElement {
   dispatch_action_config?: DispatchActionConfigObject;
   focus_on_load?: boolean;
   placeholder?: PlaceholderObject;
-}
-export interface RichTextBlock {
-  type: "rich_text";
-  /**
-   * Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).
-   */
-  elements: RichTextContainerElement[];
-  block_id?: BlockId;
-}
-export interface RichTextSectionElement {
-  type: "rich_text_section";
-  /**
-   * Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).
-   */
-  elements: RichTextLeaf[];
-}
-export interface RichTextTextLeaf {
-  type: "text";
-  text: string;
-  style?: RichTextStyleObject;
-}
-/**
- * Style flags for rich-text leaf elements. Slack docs disagree on which flags are allowed per leaf type; this is the union of all flags documented.
- */
-export interface RichTextStyleObject {
-  bold?: boolean;
-  italic?: boolean;
-  strike?: boolean;
-  underline?: boolean;
-  code?: boolean;
-  highlight?: boolean;
-  client_highlight?: boolean;
-  unlink?: boolean;
-}
-export interface RichTextLinkLeaf {
-  type: "link";
-  url: string;
-  text?: string;
-  unsafe?: boolean;
-  style?: RichTextStyleObject;
-}
-export interface RichTextUserLeaf {
-  type: "user";
-  user_id: string;
-  style?: RichTextStyleObject;
-}
-export interface RichTextUsergroupLeaf {
-  type: "usergroup";
-  usergroup_id: string;
-  style?: RichTextStyleObject;
-}
-/**
- * Whole-team mention (e.g. <!T12345>) — referenced by team_id.
- */
-export interface RichTextTeamLeaf {
-  type: "team";
-  team_id: string;
-  style?: RichTextStyleObject;
-}
-export interface RichTextChannelLeaf {
-  type: "channel";
-  channel_id: string;
-  style?: RichTextStyleObject;
-}
-/**
- * Slack's official docs (rich-text-block reference) only list type/name/unicode, but the API silently accepts a `style` object on emoji leaves. We allow it to match observed behavior.
- */
-export interface RichTextEmojiLeaf {
-  type: "emoji";
-  name: string;
-  skin_tone?: number;
-  unicode?: string;
-  style?: RichTextStyleObject;
-}
-export interface RichTextBroadcastLeaf {
-  type: "broadcast";
-  range: "here" | "channel" | "everyone";
-  style?: RichTextStyleObject;
-}
-export interface RichTextColorLeaf {
-  type: "color";
-  value: string;
-  style?: RichTextStyleObject;
-}
-export interface RichTextDateLeaf {
-  type: "date";
-  timestamp: number;
-  format: string;
-  url?: string;
-  fallback?: string;
-  style?: RichTextStyleObject;
-}
-export interface RichTextListElement {
-  type: "rich_text_list";
-  style: "bullet" | "ordered";
-  /**
-   * @minItems 1
-   */
-  elements: [RichTextSectionElement, ...RichTextSectionElement[]];
-  indent?: number;
-  offset?: number;
-  border?: 0 | 1;
-}
-export interface RichTextPreformattedElement {
-  type: "rich_text_preformatted";
-  /**
-   * Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).
-   */
-  elements: RichTextLeaf[];
-  border?: 0 | 1;
-  language?: string;
-}
-export interface RichTextQuoteElement {
-  type: "rich_text_quote";
-  /**
-   * Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).
-   */
-  elements: RichTextLeaf[];
-  border?: 0 | 1;
 }
 /**
  * Must be used inside an input block in modals only. Requires files:read OAuth scope. 10MB per-file limit (not enforceable in JSON Schema).
@@ -2853,7 +2862,7 @@ export interface DataTableBlock {
   ];
 }
 /**
- * Renders data as a line, bar, area, or pie chart. Available in messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.
+ * Renders data as a line, bar, area, or pie chart. Messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.
  */
 export interface DataVisualizationBlock {
   type: "data_visualization";
