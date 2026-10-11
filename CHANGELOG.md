@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.18](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.17...slack-block-kit-validator-v0.1.18) (2026-10-11)
+
+
+### Bug Fixes
+
+* precompile validateBlockKit so it never generates code at runtime ([#112](https://github.com/TightknitAI/slack-block-kit-validator/issues/112)) ([2d780f2](https://github.com/TightknitAI/slack-block-kit-validator/commit/2d780f276a477f4cbb76fa0a8b855a24e4e5c97f))
+
 ## [0.1.17](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.16...slack-block-kit-validator-v0.1.17) (2026-10-01)
 
 
