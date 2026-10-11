@@ -64,6 +64,30 @@ jobs:
             exit 1
           fi
 
+  precompiled-validators-fresh:
+    # Same check for the precompiled validators `validateBlockKit` runs. They
+    # are committed so tests run against the code that ships; this catches a
+    # schema or Ajv change without a re-run of compile:standalone.
+    name: Precompiled validators in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm run compile:standalone
+      - run: |
+          for f in src/precompiled-validators.js src/precompiled-validators.d.ts; do
+            if ! git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+              echo "::error::$f is not committed. Run 'pnpm run compile:standalone' and commit the result."
+              exit 1
+            fi
+          done
+          if ! git diff --quiet src/precompiled-validators.js src/precompiled-validators.d.ts; then
+            echo "::error::The precompiled validators are stale. Run 'pnpm run compile:standalone' and commit the result."
+            git --no-pager diff --stat src/precompiled-validators.js src/precompiled-validators.d.ts
+            exit 1
+          fi
+
   test:
     name: Test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
