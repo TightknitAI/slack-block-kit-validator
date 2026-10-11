@@ -1,4 +1,4 @@
-import type { ErrorObject, ValidateFunction } from "ajv/dist/2020.js";
+import type { ErrorObject } from "ajv/dist/2020.js";
 
 /**
  * Convert a JSON-pointer instancePath into the user-facing `blocks[N].field`
@@ -111,12 +111,18 @@ const formatSingle = (err: ErrorObject, path: string): string => {
 };
 
 /**
+ * A compiled validator for one schema branch: an Ajv `ValidateFunction` or a
+ * precompiled standalone one. `errors` is set after a failed call.
+ */
+export type BlockValidator = ((data: unknown) => boolean) & { errors?: readonly ErrorObject[] | null };
+
+/**
  * Look-aside validators keyed by `block.type`. Populated by the caller
- * (validate-block-kit.ts) with one compiled validator per block def, so we
+ * (validate-block-kit.ts) with one precompiled validator per block def, so we
  * can re-validate a misbehaving block against just its discriminator-matched
  * branch and report focused errors instead of the full oneOf cascade.
  */
-export type FocusValidators = ReadonlyMap<string, ValidateFunction>;
+export type FocusValidators = ReadonlyMap<string, BlockValidator>;
 
 /**
  * Identify the canonical block-rooted path (`/N` for bare blocks, `/blocks/N`

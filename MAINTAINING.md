@@ -9,6 +9,8 @@ Slack adds new block types and fields over time. To update:
 3. For new top-level blocks, add to `$defs/block.oneOf` and the `modal_view` / `home_view` inner arrays if applicable.
 4. For new elements, add to the relevant parent-container whitelist (`actions_block_element`, `section_accessory_element`, `input_block_element`, `context_block_element`, or `context_actions_block_element`).
 5. Add fixtures to `test/` covering both valid and invalid payloads.
+6. For new top-level blocks, also add them to `BLOCK_TYPE_TO_DEF` in `scripts/build-standalone.ts`.
+7. Run `pnpm run generate:types && pnpm run compile:standalone` and commit `src/types.generated.ts` and `src/precompiled-validators.*`. CI fails when either is stale.
 
 ## Dependency updates
 
@@ -16,9 +18,10 @@ Dependabot opens weekly PRs for npm packages and GitHub Actions. The
 `dependabot-automerge` workflow approves and auto-merges only non-major bumps
 to `devDependencies`. Everything else is held for a human to review:
 
-- `dependencies` in `package.json` (`ajv`, `ajv-formats`) — these ship inside
-  the published package, so a compromised upstream release would reach every
-  consumer on the next release.
+- `dependencies` in `package.json` (`ajv`, `ajv-formats`) — their code is
+  inlined into the precompiled validators that ship in the published package,
+  so a compromised upstream release would reach every consumer on the next
+  release.
 - `dependencies` in `worker/package.json` — these run in the deployed
   validation API.
 - GitHub Actions bumps — these run in CI, including the release workflow that
