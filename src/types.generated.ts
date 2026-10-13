@@ -706,22 +706,9 @@ export type TableColumnSetting = null | {
  */
 export type ContextActionsBlockElement = FeedbackButtonsElement | IconButtonElement;
 /**
- * A cell inside a data_table_block row. `raw_text` / `raw_number` for simple values, `rich_text` for formatted content. Per https://docs.slack.dev/reference/block-kit/blocks/data-table-block. The docs' per-cell schemas list `properties` without a `required` array; we mirror `table_cell` and require the value-bearing field(s). The rule 'the first (header) row cannot contain rich_text cells' is a row-position constraint JSON Schema can't express and is not enforced here.
+ * A cell inside a data_table_block row (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). The docs' per-cell schemas list `properties` without a `required` array; we mirror `table_cell` and require the value-bearing field(s).
  */
-export type DataTableCell =
-  | {
-      type: "raw_text";
-      text: string;
-    }
-  | {
-      type: "raw_number";
-      value: number;
-      text?: string;
-    }
-  | {
-      type: "rich_text";
-      elements: RichTextContainerElement[];
-    };
+export type DataTableCell = DataTableRawTextCell | DataTableRawNumberCell | DataTableRichTextCell | DataTableActionCell;
 /**
  * The chart rendered by a data_visualization block. line/bar/area charts use series + axis_config; pie charts use segments.
  */
@@ -2193,7 +2180,7 @@ export interface IconButtonElement {
   visible_to_user_ids?: string[];
 }
 /**
- * Rich, interactive table with pagination, sorting, and filtering (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). Distinct from `table_block`, which is a simpler static table. The single-table and aggregate 10,000-character limits are payload-level rules not enforced here. `row_header_column_index` must point at an existing column, a cross-field rule JSON Schema can't check (bounded to 0–19 since a row has at most 20 cells).
+ * Rich, interactive table with pagination, sorting, and filtering (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). Distinct from `table_block`, which is a simpler static table. The single-table and per-message aggregate 20,000-character cell limits (action_cell button text included) are payload-level rules not enforced here, nor is the rule that every row has the same number of cells. `row_header_column_index` must point at an existing column, a cross-field rule JSON Schema can't check (bounded to 0–19 since a row has at most 20 cells).
  */
 export interface DataTableBlock {
   type: "data_table";
@@ -2202,10 +2189,10 @@ export interface DataTableBlock {
   page_size?: number;
   row_header_column_index?: number;
   /**
-   * First row is the header; 2–101 rows total (1 header + 1–100 data rows), 1–20 cells per row.
+   * First row is the header; 2–201 rows total (1 header + 1–200 data rows), 1–20 cells per row.
    *
    * @minItems 2
-   * @maxItems 101
+   * @maxItems 201
    */
   rows: [
     (
@@ -2860,6 +2847,36 @@ export interface DataTableBlock {
         ]
     )[],
   ];
+}
+/**
+ * Plain text cell in a data_table_block row.
+ */
+export interface DataTableRawTextCell {
+  type: "raw_text";
+  text: string;
+}
+/**
+ * Numeric cell in a data_table_block row. A column of only raw_number cells sorts numerically.
+ */
+export interface DataTableRawNumberCell {
+  type: "raw_number";
+  value: number;
+  text?: string;
+}
+/**
+ * Formatted cell in a data_table_block row. Not allowed in the header (first) row, which is not enforced here.
+ */
+export interface DataTableRichTextCell {
+  type: "rich_text";
+  elements: RichTextContainerElement[];
+}
+/**
+ * Button cell; clicks send a block_actions payload. Only valid in data_table_block, not table_block. `fallback` renders instead on clients without action-cell support.
+ */
+export interface DataTableActionCell {
+  type: "action_cell";
+  element: ButtonElement;
+  fallback?: DataTableRawTextCell | DataTableRawNumberCell;
 }
 /**
  * Renders data as a line, bar, area, or pie chart. Messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.
