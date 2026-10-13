@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.19](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.18...slack-block-kit-validator-v0.1.19) (2026-10-13)
+
+
+### Features
+
+* support data_table action_cell cells and up to 200 data rows ([#114](https://github.com/TightknitAI/slack-block-kit-validator/issues/114)) ([dd2749b](https://github.com/TightknitAI/slack-block-kit-validator/commit/dd2749b79044265440af5787f2ba133e4ff25c95))
+
 ## [0.1.18](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.17...slack-block-kit-validator-v0.1.18) (2026-10-11)
 
 
