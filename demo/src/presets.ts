@@ -271,6 +271,7 @@ const dataTableLeaderboard = stringify([
         { type: "raw_text", text: "Contributor" },
         { type: "raw_text", text: "Merged PRs" },
         { type: "raw_text", text: "Status" },
+        { type: "raw_text", text: "Review" },
       ],
       [
         { type: "raw_text", text: "ana" },
@@ -279,11 +280,31 @@ const dataTableLeaderboard = stringify([
           type: "rich_text",
           elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "on track", style: { bold: true } }] }],
         },
+        {
+          type: "action_cell",
+          element: {
+            type: "button",
+            text: { type: "plain_text", text: "View PRs" },
+            action_id: "view_prs",
+            value: "ana",
+          },
+          fallback: { type: "raw_text", text: "View PRs" },
+        },
       ],
       [
         { type: "raw_text", text: "zach" },
         { type: "raw_number", value: 9, text: "9" },
         { type: "raw_text", text: "on track" },
+        {
+          type: "action_cell",
+          element: {
+            type: "button",
+            text: { type: "plain_text", text: "View PRs" },
+            action_id: "view_prs",
+            value: "zach",
+          },
+          fallback: { type: "raw_text", text: "View PRs" },
+        },
       ],
     ],
   },
@@ -1077,7 +1098,7 @@ export const presets: Preset[] = [
     id: "data-table",
     label: "Data table block",
     surface: "message",
-    blurb: "Interactive `data_table` with raw_text, raw_number, and rich_text cells.",
+    blurb: "Interactive `data_table` with raw_text, raw_number, rich_text, and action_cell (button) cells.",
     tone: "valid",
     json: dataTableLeaderboard,
   },

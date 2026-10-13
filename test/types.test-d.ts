@@ -12,6 +12,7 @@ import type {
   ButtonElement,
   CheckboxesElement,
   ConfirmObject,
+  DataTableBlock,
   HeaderBlock,
   HomeView,
   ImageBlock,
@@ -106,6 +107,23 @@ export const container: Extract<Block, { type: "container" }> = {
   child_blocks: [section],
 };
 
+// data_table cells are a oneOf of named defs; action_cell nests a button and a
+// raw_text/raw_number fallback.
+export const dataTable: DataTableBlock = {
+  type: "data_table",
+  caption: "Tasks",
+  rows: [
+    [
+      { type: "raw_text", text: "Task" },
+      { type: "raw_text", text: "Action" },
+    ],
+    [
+      { type: "raw_number", value: 1, text: "1" },
+      { type: "action_cell", element: button, fallback: { type: "raw_text", text: "Open" } },
+    ],
+  ],
+};
+
 // View envelopes.
 export const modal: ModalView = {
   type: "modal",
@@ -116,7 +134,7 @@ export const modal: ModalView = {
 
 export const home: HomeView = {
   type: "home",
-  blocks: [section, { type: "divider" }, container],
+  blocks: [section, { type: "divider" }, container, dataTable],
 };
 
 // Discriminated-union Block — exhaustiveness check.

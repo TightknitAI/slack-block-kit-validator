@@ -440,10 +440,13 @@ describe("blocks", () => {
       expect(validate({ type: "data_table", caption: "Stats", rows: [header] })).toBe(false);
     });
 
-    it("rejects more than 101 rows and more than 20 cells per row", () => {
-      expect(validate({ type: "data_table", caption: "Stats", rows: Array.from({ length: 102 }, () => header) })).toBe(
-        false,
-      );
+    it("accepts 201 rows (header + 200 data rows) and rejects 202", () => {
+      const rows = (n: number) => [header, ...Array.from({ length: n - 1 }, () => dataRow)];
+      expect(validate({ type: "data_table", caption: "Stats", rows: rows(201) })).toBe(true);
+      expect(validate({ type: "data_table", caption: "Stats", rows: rows(202) })).toBe(false);
+    });
+
+    it("rejects more than 20 cells per row", () => {
       const wideRow = Array.from({ length: 21 }, () => ({ type: "raw_text", text: "x" }));
       expect(validate({ type: "data_table", caption: "Stats", rows: [wideRow, wideRow] })).toBe(false);
     });
@@ -468,6 +471,85 @@ describe("blocks", () => {
       ];
       expect(validate({ type: "data_table", caption: "Stats", rows: [header, badCell] })).toBe(false);
       expect(validate({ type: "data_table", caption: "Stats", rows: [header, dataRow], extra: 1 })).toBe(false);
+    });
+
+    describe("action_cell", () => {
+      const actionButton = {
+        type: "button",
+        text: { type: "plain_text", text: "Mark done" },
+        action_id: "mark_done",
+        value: "task_123",
+      };
+      const tableWith = (cell: unknown) => ({
+        type: "data_table",
+        caption: "Tasks",
+        rows: [header, [{ type: "raw_text", text: "ana" }, cell]],
+      });
+
+      it("accepts a button element with and without a fallback", () => {
+        expect(validate(tableWith({ type: "action_cell", element: actionButton }))).toBe(true);
+        expect(
+          validate(
+            tableWith({ type: "action_cell", element: actionButton, fallback: { type: "raw_text", text: "Open" } }),
+          ),
+        ).toBe(true);
+        expect(
+          validate(
+            tableWith({
+              type: "action_cell",
+              element: actionButton,
+              fallback: { type: "raw_number", value: 1, text: "1" },
+            }),
+          ),
+        ).toBe(true);
+      });
+
+      it("rejects a missing element", () => {
+        expect(validate(tableWith({ type: "action_cell", fallback: { type: "raw_text", text: "Open" } }))).toBe(false);
+      });
+
+      it("rejects a non-button element", () => {
+        const overflow = {
+          type: "overflow",
+          action_id: "more",
+          options: [
+            { text: { type: "plain_text", text: "a" }, value: "a" },
+            { text: { type: "plain_text", text: "b" }, value: "b" },
+          ],
+        };
+        const iconButton = { type: "icon_button", icon: "trash", text: { type: "plain_text", text: "Delete" } };
+        expect(validate(tableWith({ type: "action_cell", element: overflow }))).toBe(false);
+        expect(validate(tableWith({ type: "action_cell", element: iconButton }))).toBe(false);
+      });
+
+      it("rejects an invalid button", () => {
+        const longLabel = { ...actionButton, text: { type: "plain_text", text: "x".repeat(76) } };
+        expect(validate(tableWith({ type: "action_cell", element: longLabel }))).toBe(false);
+      });
+
+      it("rejects a fallback that is not a raw_text or raw_number cell", () => {
+        const richFallback = {
+          type: "rich_text",
+          elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "Open" }] }],
+        };
+        expect(validate(tableWith({ type: "action_cell", element: actionButton, fallback: richFallback }))).toBe(false);
+        expect(
+          validate(
+            tableWith({
+              type: "action_cell",
+              element: actionButton,
+              fallback: { type: "action_cell", element: actionButton },
+            }),
+          ),
+        ).toBe(false);
+        expect(
+          validate(tableWith({ type: "action_cell", element: actionButton, fallback: { type: "raw_text", text: "" } })),
+        ).toBe(false);
+      });
+
+      it("rejects additionalProperties", () => {
+        expect(validate(tableWith({ type: "action_cell", element: actionButton, text: "Mark done" }))).toBe(false);
+      });
     });
   });
 
@@ -1138,6 +1220,14 @@ describe("blocks", () => {
 
     it("rejects >100 rows", () => {
       expect(validate({ type: "table", rows: Array(101).fill([cell]) })).toBe(false);
+    });
+
+    it("rejects action_cell, which only data_table supports", () => {
+      const actionCell = {
+        type: "action_cell",
+        element: { type: "button", text: { type: "plain_text", text: "Go" }, action_id: "go" },
+      };
+      expect(validate({ type: "table", rows: [[cell], [actionCell]] })).toBe(false);
     });
 
     it("rejects >20 cells per row", () => {

@@ -147,6 +147,51 @@ describe("validateBlockKit", () => {
       expect(result.errors.some((e) => e.includes("'Xyz'"))).toBe(true);
     });
 
+    describe("data_table action_cell", () => {
+      const markDone = (value: string) => ({
+        type: "button",
+        text: { type: "plain_text", text: "Mark done" },
+        action_id: "mark_done",
+        value,
+      });
+      const table = (...actionCells: unknown[]) => ({
+        type: "data_table",
+        caption: "Tasks",
+        rows: [
+          [
+            { type: "raw_text", text: "Task" },
+            { type: "raw_text", text: "Action" },
+          ],
+          ...actionCells.map((cell, i) => [{ type: "raw_text", text: `Task ${i}` }, cell]),
+        ],
+      });
+
+      it("accepts action cells on message and home surfaces", () => {
+        const blocks = [
+          table({ type: "action_cell", element: markDone("task_1"), fallback: { type: "raw_text", text: "Open" } }),
+        ];
+        expect(validateBlockKit(blocks, { surface: "message" })).toEqual({ valid: true, errors: [] });
+        expect(validateBlockKit({ type: "home", blocks }, { target: "home" })).toEqual({ valid: true, errors: [] });
+      });
+
+      it("accepts rows sharing an action_id, since the button value identifies the row", () => {
+        const result = validateBlockKit([
+          table(
+            { type: "action_cell", element: markDone("task_1") },
+            { type: "action_cell", element: markDone("task_2") },
+          ),
+        ]);
+        expect(result).toEqual({ valid: true, errors: [] });
+      });
+
+      it("rejects a non-button element", () => {
+        const iconButton = { type: "icon_button", icon: "trash", text: { type: "plain_text", text: "Delete" } };
+        const result = validateBlockKit([table({ type: "action_cell", element: iconButton })]);
+        expect(result.valid).toBe(false);
+        expect(result.errors).toContain('blocks[0].rows[1][1].element.type: expected "button"');
+      });
+    });
+
     it("flags duplicate block_ids", () => {
       const result = validateBlockKit([
         { type: "divider", block_id: "x" },
