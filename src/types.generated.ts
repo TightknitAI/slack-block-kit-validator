@@ -1481,6 +1481,8 @@ export interface RichTextInputElement {
   dispatch_action_config?: DispatchActionConfigObject;
   focus_on_load?: boolean;
   placeholder?: PlaceholderObject;
+  min_lines?: number;
+  max_lines?: number;
 }
 /**
  * Must be used inside an input block in modals only. Requires files:read OAuth scope. 10MB per-file limit (not enforceable in JSON Schema).

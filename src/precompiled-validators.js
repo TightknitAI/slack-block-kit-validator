@@ -13272,7 +13272,7 @@ function validate216(data, { instancePath = "", parentData, parentDataProperty, 
       errors++;
     }
     for (const key0 in data) {
-      if (!(key0 === "type" || key0 === "action_id" || key0 === "initial_value" || key0 === "dispatch_action_config" || key0 === "focus_on_load" || key0 === "placeholder")) {
+      if (!(key0 === "type" || key0 === "action_id" || key0 === "initial_value" || key0 === "dispatch_action_config" || key0 === "focus_on_load" || key0 === "placeholder" || key0 === "min_lines" || key0 === "max_lines")) {
         const err2 = { instancePath, schemaPath: "#/additionalProperties", keyword: "additionalProperties", params: { additionalProperty: key0 }, message: "must NOT have additional properties" };
         if (vErrors === null) {
           vErrors = [err2];
@@ -13442,12 +13442,76 @@ function validate216(data, { instancePath = "", parentData, parentDataProperty, 
         errors = vErrors.length;
       }
     }
+    if (data.min_lines !== void 0) {
+      let data8 = data.min_lines;
+      if (!(typeof data8 == "number" && (!(data8 % 1) && !isNaN(data8)))) {
+        const err16 = { instancePath: instancePath + "/min_lines", schemaPath: "#/properties/min_lines/type", keyword: "type", params: { type: "integer" }, message: "must be integer" };
+        if (vErrors === null) {
+          vErrors = [err16];
+        } else {
+          vErrors.push(err16);
+        }
+        errors++;
+      }
+      if (typeof data8 == "number") {
+        if (data8 > 100 || isNaN(data8)) {
+          const err17 = { instancePath: instancePath + "/min_lines", schemaPath: "#/properties/min_lines/maximum", keyword: "maximum", params: { comparison: "<=", limit: 100 }, message: "must be <= 100" };
+          if (vErrors === null) {
+            vErrors = [err17];
+          } else {
+            vErrors.push(err17);
+          }
+          errors++;
+        }
+        if (data8 < 1 || isNaN(data8)) {
+          const err18 = { instancePath: instancePath + "/min_lines", schemaPath: "#/properties/min_lines/minimum", keyword: "minimum", params: { comparison: ">=", limit: 1 }, message: "must be >= 1" };
+          if (vErrors === null) {
+            vErrors = [err18];
+          } else {
+            vErrors.push(err18);
+          }
+          errors++;
+        }
+      }
+    }
+    if (data.max_lines !== void 0) {
+      let data9 = data.max_lines;
+      if (!(typeof data9 == "number" && (!(data9 % 1) && !isNaN(data9)))) {
+        const err19 = { instancePath: instancePath + "/max_lines", schemaPath: "#/properties/max_lines/type", keyword: "type", params: { type: "integer" }, message: "must be integer" };
+        if (vErrors === null) {
+          vErrors = [err19];
+        } else {
+          vErrors.push(err19);
+        }
+        errors++;
+      }
+      if (typeof data9 == "number") {
+        if (data9 > 100 || isNaN(data9)) {
+          const err20 = { instancePath: instancePath + "/max_lines", schemaPath: "#/properties/max_lines/maximum", keyword: "maximum", params: { comparison: "<=", limit: 100 }, message: "must be <= 100" };
+          if (vErrors === null) {
+            vErrors = [err20];
+          } else {
+            vErrors.push(err20);
+          }
+          errors++;
+        }
+        if (data9 < 1 || isNaN(data9)) {
+          const err21 = { instancePath: instancePath + "/max_lines", schemaPath: "#/properties/max_lines/minimum", keyword: "minimum", params: { comparison: ">=", limit: 1 }, message: "must be >= 1" };
+          if (vErrors === null) {
+            vErrors = [err21];
+          } else {
+            vErrors.push(err21);
+          }
+          errors++;
+        }
+      }
+    }
   } else {
-    const err16 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
+    const err22 = { instancePath, schemaPath: "#/type", keyword: "type", params: { type: "object" }, message: "must be object" };
     if (vErrors === null) {
-      vErrors = [err16];
+      vErrors = [err22];
     } else {
-      vErrors.push(err16);
+      vErrors.push(err22);
     }
     errors++;
   }
