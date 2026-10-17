@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.20](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.19...slack-block-kit-validator-v0.1.20) (2026-10-17)
+
+
+### Features
+
+* **schema:** add min_lines and max_lines to rich_text_input element ([#116](https://github.com/TightknitAI/slack-block-kit-validator/issues/116)) ([38e94b5](https://github.com/TightknitAI/slack-block-kit-validator/commit/38e94b57bc1d542485777f0d3c966e420b82df13))
+
 ## [0.1.19](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.18...slack-block-kit-validator-v0.1.19) (2026-10-13)
 
 
