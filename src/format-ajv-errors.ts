@@ -124,6 +124,105 @@ export type BlockValidator = ((data: unknown) => boolean) & { errors?: readonly 
  */
 export type FocusValidators = ReadonlyMap<string, BlockValidator>;
 
+/** How many levels of nested element unions are narrowed (rich text nests a few). */
+const MAX_NARROW_DEPTH = 10;
+
+/**
+ * Builds an error AJV itself didn't emit, for the summaries element narrowing
+ * reports in place of a union cascade.
+ * @param instancePath - where the error is, relative to the narrowed root
+ * @param keyword - the AJV keyword `formatSingle` keys its wording on
+ * @param params - the keyword's params
+ * @param message - the text `formatSingle` falls back to for unknown keywords
+ * @returns the error
+ */
+const syntheticError = (
+  instancePath: string,
+  keyword: string,
+  params: Record<string, unknown>,
+  message?: string,
+): ErrorObject => ({ instancePath, schemaPath: "#", keyword, params, message });
+
+/**
+ * Finds the elements whose errors are a union cascade: AJV tried every kind an
+ * element slot accepts and reports each kind's mismatch, so one element shows
+ * `type` mismatches against two or more different kinds (or, with no `type`
+ * at all, a missing `type` from two or more kinds).
+ * @param errors - errors relative to some root
+ * @returns the shallowest cascading element's path and the kinds its slot
+ *   takes, or undefined when there is none
+ */
+const firstUnionCascade = (errors: readonly ErrorObject[]): { path: string; kinds: unknown[] } | undefined => {
+  const kindsByPath = new Map<string, unknown[]>();
+  const missingTypeCounts = new Map<string, number>();
+  for (const err of errors) {
+    const params = (err.params ?? {}) as Record<string, unknown>;
+    if (err.keyword === "const" && err.instancePath.endsWith("/type")) {
+      const path = err.instancePath.slice(0, -"/type".length);
+      const kinds = kindsByPath.get(path) ?? [];
+      if (!kinds.includes(params.allowedValue)) {
+        kinds.push(params.allowedValue);
+      }
+      kindsByPath.set(path, kinds);
+    } else if (err.keyword === "required" && params.missingProperty === "type") {
+      missingTypeCounts.set(err.instancePath, (missingTypeCounts.get(err.instancePath) ?? 0) + 1);
+    }
+  }
+  const cascades = [
+    ...[...kindsByPath].filter(([, kinds]) => kinds.length >= 2).map(([path, kinds]) => ({ path, kinds })),
+    ...[...missingTypeCounts].filter(([, count]) => count >= 2).map(([path]) => ({ path, kinds: [] })),
+  ];
+  return cascades.sort((a, b) => a.path.length - b.path.length)[0];
+};
+
+/**
+ * Replaces each element-union cascade in `errors` with the errors of the one
+ * kind the element says it is, the way `formatAjvErrors` narrows blocks: an
+ * actions block whose button has an over-long `url` then reports just that,
+ * not a mismatch against every other element kind. Recurses into elements
+ * nested in elements (rich text), up to {@link MAX_NARROW_DEPTH}.
+ * @param errors - errors whose paths are relative to `root`
+ * @param root - what the errors were reported against
+ * @param elementValidators - per-element-type compiled validators
+ * @param depth - recursion depth
+ * @returns the errors with each cascade narrowed
+ */
+const narrowElementUnions = (
+  errors: readonly ErrorObject[],
+  root: unknown,
+  elementValidators: FocusValidators,
+  depth = 0,
+): ErrorObject[] => {
+  const cascade = firstUnionCascade(errors);
+  if (cascade === undefined || depth > MAX_NARROW_DEPTH) {
+    return [...errors];
+  }
+  const { path, kinds } = cascade;
+  const inside = (p: string) => p === path || p.startsWith(`${path}/`);
+  const outside = errors.filter((err) => !inside(err.instancePath));
+  const element = lookupAt(root, path);
+  const isObject = element != null && typeof element === "object" && !Array.isArray(element);
+  const type = isObject ? (element as { type?: unknown }).type : undefined;
+  const focus = typeof type === "string" ? elementValidators.get(type) : undefined;
+
+  let narrowed: ErrorObject[];
+  if (!isObject) {
+    narrowed = [syntheticError(path, "type", { type: "object" })];
+  } else if (type === undefined) {
+    narrowed = [syntheticError(path, "required", { missingProperty: "type" })];
+  } else if (!focus || focus(element)) {
+    // A kind that doesn't exist, or a well-formed one this slot doesn't take:
+    // name the kinds it does.
+    narrowed = [syntheticError(`${path}/type`, "enum", { allowedValues: kinds })];
+  } else {
+    narrowed = narrowElementUnions(focus.errors ?? [], element, elementValidators, depth + 1).map((err) => ({
+      ...err,
+      instancePath: `${path}${err.instancePath}`,
+    }));
+  }
+  return narrowElementUnions([...outside, ...narrowed], root, elementValidators, depth + 1);
+};
+
 /**
  * Identify the canonical block-rooted path (`/N` for bare blocks, `/blocks/N`
  * for views) for an error. Returns null for errors that aren't scoped to a
@@ -185,19 +284,22 @@ const pushFocusedErrors = (
  * re-validating each offending block against just the schema branch matching
  * its declared `type`, replacing the union noise with the real reason that
  * specific block didn't validate. Blocks whose `type` isn't a recognized block
- * kind fall back to the raw (deduplicated) AJV output.
+ * kind fall back to the raw (deduplicated) AJV output. Unions of element
+ * kinds inside a block are narrowed the same way, by each element's `type`.
  *
  * @param errors - the raw `validator.errors` array from AJV
  * @param root - the (normalized) input AJV ran against — used to read each
  *   block's `type` so we can pick the focused branch validator
  * @param target - validation target, controls path-normalization rooting
  * @param focusValidators - per-block-type compiled validators
+ * @param elementValidators - per-element-type compiled validators
  */
 export function formatAjvErrors(
   errors: readonly ErrorObject[],
   root: unknown,
   target: "blocks" | "modal" | "home",
   focusValidators: FocusValidators,
+  elementValidators: FocusValidators,
 ): string[] {
   // Group errors by block path so we can replace each block's union cascade
   // with its focused-branch errors. Errors not scoped to a block (e.g. on the
@@ -241,7 +343,7 @@ export function formatAjvErrors(
     const focus = typeof blockType === "string" ? focusValidators.get(blockType) : undefined;
     if (focus) {
       focus(block);
-      const focusedErrors = focus.errors ?? [];
+      const focusedErrors = narrowElementUnions(focus.errors ?? [], block, elementValidators);
       pushFocusedErrors(focusedErrors, bp, target, push);
       continue;
     }

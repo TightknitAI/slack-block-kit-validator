@@ -11,7 +11,13 @@ import { checkSingleTableBlock } from "./helpers/check-single-table-block.js";
 import { checkSurfaceCompatibility, type Surface } from "./helpers/check-surface-compatibility.js";
 import { findDuplicateActionIds } from "./helpers/find-duplicate-action-ids.js";
 import { findDuplicateBlockIds } from "./helpers/find-duplicate-block-ids.js";
-import { blockValidators, validateBlocks, validateHome, validateModal } from "./precompiled-validators.js";
+import {
+  blockValidators,
+  elementValidators,
+  validateBlocks,
+  validateHome,
+  validateModal,
+} from "./precompiled-validators.js";
 
 /**
  * Result of a Block Kit validation.
@@ -48,6 +54,7 @@ const validators = {
 } as const;
 
 const focusValidators: FocusValidators = new Map(Object.entries(blockValidators));
+const elementFocusValidators: FocusValidators = new Map(Object.entries(elementValidators));
 
 const resolveSurface = (target: ValidationTarget, surface: Surface | undefined): Surface | undefined => {
   if (target === "modal") {
@@ -173,7 +180,10 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
 
   const validator = validators[target];
   if (!validator(normalizedInput)) {
-    pushAll(errors, formatAjvErrors(validator.errors ?? [], normalizedInput, target, focusValidators));
+    pushAll(
+      errors,
+      formatAjvErrors(validator.errors ?? [], normalizedInput, target, focusValidators, elementFocusValidators),
+    );
     // Stop before the cross-payload helpers. They only add value on a
     // structurally sound payload, and running them on a schema-invalid one is
     // what lets a caller drive their loops with arrays the schema would have

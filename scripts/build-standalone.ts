@@ -57,13 +57,41 @@ const BLOCK_TYPE_TO_DEF: Readonly<Record<string, string>> = {
   video: "video_block",
 };
 
+/**
+ * Maps each element `type` to its `$defs` entry, read off the schema: every
+ * non-block, non-view def whose `type` is a single constant. When an element
+ * inside a block (an actions block's button, a rich text leaf) fails the union
+ * of element kinds it sits in, `formatAjvErrors` re-validates it against just
+ * this def, the same way it narrows blocks. A `type` claimed by more than one
+ * def is left out, since the branch to narrow to would be ambiguous.
+ * @param defs - the schema's `$defs`
+ * @returns element type → def name
+ */
+const elementTypeToDef = (defs: Record<string, { properties?: { type?: { const?: unknown } } }>) => {
+  const byType = new Map<string, string[]>();
+  for (const [def, schema] of Object.entries(defs)) {
+    const type = schema.properties?.type?.const;
+    if (def.endsWith("_block") || def.endsWith("_view") || typeof type !== "string") {
+      continue;
+    }
+    byType.set(type, [...(byType.get(type) ?? []), def]);
+  }
+  const out: Record<string, string> = {};
+  for (const [type, matches] of [...byType].sort(([a], [b]) => a.localeCompare(b))) {
+    if (matches.length === 1) {
+      out[type] = matches[0];
+    }
+  }
+  return out;
+};
+
 const TOP_LEVEL_REFS = {
   validateBlocks: { ref: "slack-block-kit", doc: "Validates a bare blocks array." },
   validateModal: { ref: "slack-block-kit#/$defs/modal_view", doc: "Validates a modal view envelope." },
   validateHome: { ref: "slack-block-kit#/$defs/home_view", doc: "Validates a home view envelope." },
 };
 
-const buildDts = (): string => {
+const buildDts = (elementTypes: readonly string[]): string => {
   const lines = [
     "// AUTO-GENERATED — DO NOT EDIT BY HAND.",
     "",
@@ -89,6 +117,8 @@ const buildDts = (): string => {
   lines.push(
     "/** Per-block-type validators, keyed by `block.type`. */",
     `export const blockValidators: Readonly<Record<${blockTypes}, StandaloneValidateFunction>>;`,
+    "/** Per-element-type validators, keyed by an element's `type`. */",
+    `export const elementValidators: Readonly<Record<${elementTypes.map((type) => JSON.stringify(type)).join(" | ")}, StandaloneValidateFunction>>;`,
   );
   return `${lines.join("\n")}\n`;
 };
@@ -101,6 +131,10 @@ const main = async (): Promise<void> => {
   const ajv = new Ajv2020({
     allErrors: true,
     strict: false,
+    // Compile each $def once and call it by reference. Inlined refs copied
+    // every element def into each block validator and each element validator
+    // exported for error narrowing.
+    inlineRefs: false,
     code: { source: true, esm: true, optimize: true },
   });
   addFormats(ajv);
@@ -110,7 +144,8 @@ const main = async (): Promise<void> => {
   for (const [name, { ref }] of Object.entries(TOP_LEVEL_REFS)) {
     refs[name] = ref;
   }
-  for (const def of Object.values(BLOCK_TYPE_TO_DEF)) {
+  const elementDefs = elementTypeToDef(schema.$defs);
+  for (const def of [...Object.values(BLOCK_TYPE_TO_DEF), ...Object.values(elementDefs)]) {
     refs[def] = `slack-block-kit#/$defs/${def}`;
   }
   for (const ref of Object.values(refs)) {
@@ -120,7 +155,10 @@ const main = async (): Promise<void> => {
   const blockValidatorsEntries = Object.entries(BLOCK_TYPE_TO_DEF)
     .map(([type, def]) => `${JSON.stringify(type)}: ${def}`)
     .join(", ");
-  const code = `${standaloneCode(ajv, refs)}\nexport const blockValidators = { ${blockValidatorsEntries} };\n`;
+  const elementValidatorsEntries = Object.entries(elementDefs)
+    .map(([type, def]) => `${JSON.stringify(type)}: ${def}`)
+    .join(", ");
+  const code = `${standaloneCode(ajv, refs)}\nexport const blockValidators = { ${blockValidatorsEntries} };\nexport const elementValidators = { ${elementValidatorsEntries} };\n`;
 
   // Ajv's emit still require()s its runtime helpers (equal, ucs2length) and
   // ajv-formats; bundling inlines them so the file has no imports at all.
@@ -142,7 +180,7 @@ const main = async (): Promise<void> => {
     logLevel: "error",
   });
   await rm(stagePath);
-  await writeFile(outDtsPath, buildDts());
+  await writeFile(outDtsPath, buildDts(Object.keys(elementDefs)));
 
   const final = await readFile(outPath, "utf8");
   // "Dynamic require" comes from esbuild's shim for a require() it could not inline.
