@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.21](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.20...slack-block-kit-validator-v0.1.21) (2026-10-19)
+
+
+### Bug Fixes
+
+* narrow element-union errors to the element's own kind ([#119](https://github.com/TightknitAI/slack-block-kit-validator/issues/119)) ([a78fb90](https://github.com/TightknitAI/slack-block-kit-validator/commit/a78fb908face582a487f74e847788d845c7432b6))
+
 ## [0.1.20](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.19...slack-block-kit-validator-v0.1.20) (2026-10-17)
 
 
