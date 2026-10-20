@@ -16,9 +16,9 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@tightknitai/slack-block-kit-validator": "workspace:*",
-    "agents": "^0.24.0",
+    "agents": "^0.28.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
