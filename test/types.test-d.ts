@@ -124,6 +124,12 @@ export const dataTable: DataTableBlock = {
   ],
 };
 
+// table cells accept raw_number alongside raw_text and rich_text.
+export const table: Extract<Block, { type: "table" }> = {
+  type: "table",
+  rows: [[{ type: "raw_text", text: "Seats" }, { type: "raw_number", value: 42 }, rich]],
+};
+
 // View envelopes.
 export const modal: ModalView = {
   type: "modal",
