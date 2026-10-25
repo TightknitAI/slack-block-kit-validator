@@ -1218,6 +1218,21 @@ describe("blocks", () => {
       ).toBe(true);
     });
 
+    it("accepts raw_number cells with and without display text", () => {
+      expect(
+        validate({
+          type: "table",
+          rows: [[cell, { type: "raw_number", value: 1200000, text: "$1.2M" }, { type: "raw_number", value: -0.5 }]],
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects raw_number cells with a non-numeric value, empty text or no value", () => {
+      expect(validate({ type: "table", rows: [[{ type: "raw_number", value: "12" }]] })).toBe(false);
+      expect(validate({ type: "table", rows: [[{ type: "raw_number", value: 12, text: "" }]] })).toBe(false);
+      expect(validate({ type: "table", rows: [[{ type: "raw_number", text: "12" }]] })).toBe(false);
+    });
+
     it("rejects >100 rows", () => {
       expect(validate({ type: "table", rows: Array(101).fill([cell]) })).toBe(false);
     });

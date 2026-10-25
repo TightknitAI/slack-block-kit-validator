@@ -680,13 +680,14 @@ export type SectionAccessoryElement =
   | MultiChannelsSelectElement
   | WorkflowButtonElement;
 /**
- * A cell inside a table_block row. Either raw_text or rich_text.
+ * A cell inside a table_block row. One of raw_text, raw_number or rich_text.
  */
 export type TableCell =
   | {
       type: "raw_text";
       text: string;
     }
+  | DataTableRawNumberCell
   | {
       type: "rich_text";
       /**
@@ -2119,6 +2120,14 @@ export interface TableBlock {
       ];
 }
 /**
+ * Numeric cell in a table_block or data_table_block row. In a data_table_block, a column of only raw_number cells sorts numerically.
+ */
+export interface DataTableRawNumberCell {
+  type: "raw_number";
+  value: number;
+  text?: string;
+}
+/**
  * Requires links.embed:write OAuth scope. video_url must be in app's unfurl domains, HTTPS, embeddable, return 2xx, not point to Slack-related domains.
  */
 export interface VideoBlock {
@@ -2856,14 +2865,6 @@ export interface DataTableBlock {
 export interface DataTableRawTextCell {
   type: "raw_text";
   text: string;
-}
-/**
- * Numeric cell in a data_table_block row. A column of only raw_number cells sorts numerically.
- */
-export interface DataTableRawNumberCell {
-  type: "raw_number";
-  value: number;
-  text?: string;
 }
 /**
  * Formatted cell in a data_table_block row. Not allowed in the header (first) row, which is not enforced here.
