@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.22](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.21...slack-block-kit-validator-v0.1.22) (2026-10-31)
+
+
+### Features
+
+* allow raw_number cells in the table block (ENG-6502) ([#128](https://github.com/TightknitAI/slack-block-kit-validator/issues/128)) ([24d1337](https://github.com/TightknitAI/slack-block-kit-validator/commit/24d133723ef1a8b163bb0d45283f4130210ec89b))
+* support the layout and auth_provider blocks (ENG-6734) ([#135](https://github.com/TightknitAI/slack-block-kit-validator/issues/135)) ([d53495c](https://github.com/TightknitAI/slack-block-kit-validator/commit/d53495c255ff74d9ed3d198b3fb410a0a2f9dd1d))
+
 ## [0.1.21](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.20...slack-block-kit-validator-v0.1.21) (2026-10-19)
 
 
