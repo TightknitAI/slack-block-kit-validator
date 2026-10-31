@@ -4,6 +4,7 @@ import { checkCumulativeMarkdownLength } from "./helpers/check-cumulative-markdo
 import { checkDataVisualizationConsistency } from "./helpers/check-data-visualization-consistency.js";
 import { checkDataVisualizationMax } from "./helpers/check-data-visualization-max.js";
 import { checkFocusOnLoadUniqueness } from "./helpers/check-focus-on-load-uniqueness.js";
+import { checkLayoutRules } from "./helpers/check-layout-rules.js";
 import { checkNumberInputBounds } from "./helpers/check-number-input-bounds.js";
 import { checkResponseUrlEnabledContext } from "./helpers/check-response-url-enabled-context.js";
 import { checkSinglePlanBlock } from "./helpers/check-single-plan-block.js";
@@ -158,7 +159,7 @@ const pushAll = (target: string[], messages: readonly string[]): void => {
  * Validates a Slack Block Kit payload against the JSON Schema and the set of
  * caveat helpers (duplicate block_ids, duplicate action_ids within a block,
  * cumulative markdown length, single-table, single-plan, focus_on_load
- * uniqueness, surface compatibility).
+ * uniqueness, layout nesting and row rules, surface compatibility).
  *
  * The helpers run only once the payload satisfies the JSON Schema. When the
  * schema rejects it, the schema errors are returned on their own: the caveat
@@ -208,6 +209,7 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
   pushAll(errors, checkDataVisualizationMax(blocks));
   pushAll(errors, checkDataVisualizationConsistency(blocks));
   pushAll(errors, checkCardActionsMax(blocks));
+  pushAll(errors, checkLayoutRules(blocks));
   pushAll(errors, checkFocusOnLoadUniqueness(blocks));
   pushAll(errors, checkNumberInputBounds(blocks));
   pushAll(errors, checkResponseUrlEnabledContext(blocks, surface));

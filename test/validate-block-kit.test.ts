@@ -546,3 +546,33 @@ describe("validateBlockKit", () => {
     });
   });
 });
+
+describe("validateBlockKit — layout", () => {
+  const section = { type: "section", text: { type: "mrkdwn", text: "x" } };
+  const layout = (block: unknown) => ({ type: "layout", label: "L", rows: [{ items: [{ block }] }] });
+
+  it("accepts a layout of sections on a message", () => {
+    expect(validateBlockKit([layout(section)], { surface: "message" })).toEqual({ valid: true, errors: [] });
+  });
+
+  it("rejects a layout child the surface doesn't allow", () => {
+    const result = validateBlockKit([layout({ type: "alert", text: { type: "plain_text", text: "a" } })], {
+      surface: "message",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      "blocks[0].rows[0].items[0].block.type 'alert' is not allowed on surface 'message'",
+    );
+  });
+
+  it("rejects layout nested three levels deep", () => {
+    const container = (child: unknown) => ({
+      type: "container",
+      title: { type: "plain_text", text: "C" },
+      child_blocks: [child],
+    });
+    const result = validateBlockKit([layout(container(layout(section)))]);
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toContain("can nest at most 2 levels deep");
+  });
+});

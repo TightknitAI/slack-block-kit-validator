@@ -1,3 +1,5 @@
+import { nestedBlocks } from "./check-layout-rules.js";
+
 /**
  * Block properties that hold a block's interactive elements. Slack keys
  * `state.values` by `block_id` then `action_id`, so everything reachable from
@@ -10,7 +12,9 @@ const ELEMENT_KEYS = ["elements", "actions", "element", "accessory"] as const;
 /**
  * Blocks whose children are themselves blocks, each opening its own
  * `action_id` namespace rather than sharing the parent's — a `carousel`'s
- * cards and a `container`'s child blocks each carry their own `block_id`.
+ * cards and a `container`'s child blocks each carry their own `block_id`. A
+ * `layout` holds its children at `rows[].items[].block` and is walked
+ * separately.
  */
 const CHILD_BLOCK_KEYS = new Map<string, string>([
   ["carousel", "elements"],
@@ -46,6 +50,13 @@ export function findDuplicateActionIds(blocks: readonly unknown[]): string[] {
 
   const visit = (block: unknown, path: string, depth: number): void => {
     if (!isRecord(block) || depth > MAX_WALK_DEPTH) {
+      return;
+    }
+
+    if (block.type === "layout") {
+      for (const [child, childPath] of nestedBlocks(block)) {
+        visit(child, `${path}${childPath}`, depth + 1);
+      }
       return;
     }
 

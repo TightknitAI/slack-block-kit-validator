@@ -36,6 +36,7 @@ const HEADER = `// AUTO-GENERATED — DO NOT EDIT BY HAND.
 const BLOCK_TYPE_TO_DEF: Readonly<Record<string, string>> = {
   actions: "actions_block",
   alert: "alert_block",
+  auth_provider: "auth_provider_block",
   card: "card_block",
   carousel: "carousel_block",
   container: "container_block",
@@ -48,6 +49,7 @@ const BLOCK_TYPE_TO_DEF: Readonly<Record<string, string>> = {
   header: "header_block",
   image: "image_block",
   input: "input_block",
+  layout: "layout_block",
   markdown: "markdown_block",
   plan: "plan_block",
   rich_text: "rich_text_block",
