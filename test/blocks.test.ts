@@ -176,6 +176,133 @@ describe("blocks", () => {
     });
   });
 
+  describe("auth_provider_block", () => {
+    const validate = compileDef("auth_provider_block");
+    const name = { type: "plain_text", text: "Acme" };
+    const minimal = { type: "auth_provider", value: "acme", name, is_connected: false };
+
+    it("accepts the required fields only", () => {
+      expect(validate(minimal)).toBe(true);
+    });
+
+    it("accepts every field", () => {
+      expect(
+        validate({
+          ...minimal,
+          block_id: "auth1",
+          is_connected: true,
+          description: { type: "plain_text", text: "Search Acme docs" },
+          icon_url: "https://acme.example.com/icon.png",
+          auth_url: "https://acme.example.com/oauth",
+          disconnect_url: "https://acme.example.com/disconnect",
+          connected_identity: { type: "plain_text", text: "jane@acme.example.com" },
+          connected_context: { type: "plain_text", text: "Acme Corp" },
+          accessory: {
+            type: "overflow",
+            action_id: "acme_menu",
+            options: [
+              { text: { type: "plain_text", text: "Switch accounts" }, value: "switch" },
+              { text: { type: "plain_text", text: "Disconnect" }, value: "disconnect" },
+            ],
+          },
+          fallback: [{ type: "section", text: { type: "mrkdwn", text: "Connected to Acme" } }],
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects a missing value, name or is_connected", () => {
+      for (const key of ["value", "name", "is_connected"] as const) {
+        const { [key]: _omitted, ...rest } = minimal;
+        expect(validate(rest)).toBe(false);
+      }
+    });
+
+    it("rejects a value over 150 characters and a name over 75", () => {
+      expect(validate({ ...minimal, value: "v".repeat(151) })).toBe(false);
+      expect(validate({ ...minimal, name: { type: "plain_text", text: "n".repeat(76) } })).toBe(false);
+    });
+
+    it("rejects a non-https auth_url", () => {
+      expect(validate({ ...minimal, auth_url: "http://acme.example.com/oauth" })).toBe(false);
+    });
+
+    it("rejects an accessory that isn't an overflow menu", () => {
+      expect(validate({ ...minimal, accessory: button })).toBe(false);
+    });
+  });
+
+  describe("layout_block", () => {
+    const validate = compileDef("layout_block");
+    const section = (text: string) => ({ type: "section", text: { type: "mrkdwn", text } });
+    const row = (...blocks: unknown[]) => ({ items: blocks.map((block) => ({ block })) });
+    const minimal = { type: "layout", label: "Deal summary", rows: [row(section("Stage"))] };
+
+    it("accepts a minimal layout", () => {
+      expect(validate(minimal)).toBe(true);
+    });
+
+    it("accepts every documented field", () => {
+      expect(
+        validate({
+          type: "layout",
+          block_id: "deal",
+          label: "Deal summary",
+          is_label_visible: true,
+          grid_lines: "rows",
+          rows: [
+            row(section("Stage"), section("Amount"), section("Close")),
+            row(section("Next steps")),
+            {
+              items: [
+                {
+                  block: { type: "actions", elements: [button] },
+                  width: "narrow",
+                  horizontal_alignment: "end",
+                },
+              ],
+            },
+          ],
+          fallback: [section("Stage: Proposal"), { type: "divider" }],
+        }),
+      ).toBe(true);
+    });
+
+    it("accepts a container child holding blocks", () => {
+      const container = { type: "container", title: { type: "plain_text", text: "C" }, child_blocks: [section("x")] };
+      expect(validate({ ...minimal, rows: [row(container)] })).toBe(true);
+    });
+
+    it("rejects a missing label or rows, and a label over 150 characters", () => {
+      expect(validate({ type: "layout", rows: minimal.rows })).toBe(false);
+      expect(validate({ type: "layout", label: "L" })).toBe(false);
+      expect(validate({ ...minimal, label: "l".repeat(151) })).toBe(false);
+    });
+
+    it("rejects 0 or 6 rows, and 0 or 4 items in a row", () => {
+      expect(validate({ ...minimal, rows: [] })).toBe(false);
+      expect(validate({ ...minimal, rows: Array.from({ length: 6 }, () => row(section("r"))) })).toBe(false);
+      expect(validate({ ...minimal, rows: [{ items: [] }] })).toBe(false);
+      expect(validate({ ...minimal, rows: [row(section("a"), section("b"), section("c"), section("d"))] })).toBe(false);
+    });
+
+    it("rejects a markdown or layout child", () => {
+      expect(validate({ ...minimal, rows: [row({ type: "markdown", text: "**hi**" })] })).toBe(false);
+      expect(validate({ ...minimal, rows: [row(minimal)] })).toBe(false);
+    });
+
+    it("rejects an unknown width, alignment or grid_lines value", () => {
+      expect(validate({ ...minimal, rows: [{ items: [{ block: section("a"), width: "full" }] }] })).toBe(false);
+      expect(validate({ ...minimal, rows: [{ items: [{ block: section("a"), horizontal_alignment: "left" }] }] })).toBe(
+        false,
+      );
+      expect(validate({ ...minimal, grid_lines: "columns" })).toBe(false);
+    });
+
+    it("rejects a fallback block outside the stable set", () => {
+      expect(validate({ ...minimal, fallback: [{ type: "actions", elements: [button] }] })).toBe(false);
+    });
+  });
+
   describe("container_block", () => {
     const validate = compileDef("container_block");
     const title = { type: "plain_text", text: "Bulk update" };

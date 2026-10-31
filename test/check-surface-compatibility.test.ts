@@ -153,4 +153,31 @@ describe("checkSurfaceCompatibility", () => {
       expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
     });
   });
+
+  it("allows layout blocks on every surface", () => {
+    const blocks = [{ type: "layout", rows: [{ items: [{ block: { type: "section" } }] }] }];
+    expect(checkSurfaceCompatibility(blocks, "message")).toEqual([]);
+    expect(checkSurfaceCompatibility(blocks, "modal")).toEqual([]);
+    expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
+  });
+
+  it("applies the surface's block rules to layout children, including through a container", () => {
+    const blocks = [
+      {
+        type: "layout",
+        rows: [
+          { items: [{ block: { type: "alert" } }] },
+          { items: [{ block: { type: "container", child_blocks: [{ type: "file" }] } }] },
+        ],
+      },
+    ];
+    expect(checkSurfaceCompatibility(blocks, "message")).toEqual([
+      "blocks[0].rows[0].items[0].block.type 'alert' is not allowed on surface 'message'",
+      "blocks[0].rows[1].items[0].block.child_blocks[0].type 'file' is not allowed on surface 'message'",
+    ]);
+  });
+
+  it("does not descend into a container outside a layout", () => {
+    expect(checkSurfaceCompatibility([{ type: "container", child_blocks: [{ type: "file" }] }], "message")).toEqual([]);
+  });
 });

@@ -120,4 +120,18 @@ describe("findDuplicateActionIds", () => {
     }
     expect(findDuplicateActionIds([block])).toEqual([]);
   });
+
+  it("checks blocks inside a layout, each in its own namespace", () => {
+    const actions = (...ids: string[]) => ({ type: "actions", elements: ids.map((id) => button(id)) });
+    expect(
+      findDuplicateActionIds([
+        {
+          type: "layout",
+          rows: [{ items: [{ block: actions("a") }, { block: actions("a", "a") }] }],
+        },
+      ]),
+    ).toEqual([
+      "blocks[0].rows[0].items[1].block.elements[1].action_id must be unique within the block — 'a' appears at elements[0] and elements[1]",
+    ]);
+  });
 });

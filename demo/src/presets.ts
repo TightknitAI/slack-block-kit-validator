@@ -385,6 +385,45 @@ const bulkUpdateContainer = stringify([
   },
 ]);
 
+const dealSummaryLayout = stringify([
+  {
+    type: "layout",
+    block_id: "deal_summary",
+    label: "Deal summary",
+    is_label_visible: true,
+    grid_lines: "rows",
+    rows: [
+      {
+        items: [
+          { block: { type: "section", text: { type: "mrkdwn", text: "*Stage*\nProposal" } } },
+          { block: { type: "section", text: { type: "mrkdwn", text: "*Amount*\n$48,000" } } },
+          { block: { type: "section", text: { type: "mrkdwn", text: "*Close*\nNov 14" } } },
+        ],
+      },
+      {
+        items: [
+          {
+            block: {
+              type: "actions",
+              elements: [
+                {
+                  type: "button",
+                  text: { type: "plain_text", text: "Mark won" },
+                  style: "primary",
+                  action_id: "deal_won",
+                },
+              ],
+            },
+            width: "narrow",
+            horizontal_alignment: "end",
+          },
+        ],
+      },
+    ],
+    fallback: [{ type: "section", text: { type: "mrkdwn", text: "*Deal summary*: Proposal, $48,000, closes Nov 14" } }],
+  },
+]);
+
 const threeCharts = stringify([
   {
     type: "data_visualization",
@@ -1069,6 +1108,14 @@ export const presets: Preset[] = [
     blurb: "A collapsible container grouping sections, a divider, and actions into one unit.",
     tone: "valid",
     json: bulkUpdateContainer,
+  },
+  {
+    id: "deal-summary-layout",
+    label: "Layout block",
+    surface: "message",
+    blurb: "A layout arranging sections and actions into a grid, with a fallback for older clients.",
+    tone: "valid",
+    json: dealSummaryLayout,
   },
   {
     id: "two-tables",
