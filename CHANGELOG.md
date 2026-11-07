@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.23](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.22...slack-block-kit-validator-v0.1.23) (2026-11-07)
+
+
+### Bug Fixes
+
+* **worker:** serve /openapi.json with the shared CORS and security headers ([#139](https://github.com/TightknitAI/slack-block-kit-validator/issues/139)) ([dabf20f](https://github.com/TightknitAI/slack-block-kit-validator/commit/dabf20fbe0b787481a9c3a9714adcd296898bff2))
+
 ## [0.1.22](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.21...slack-block-kit-validator-v0.1.22) (2026-10-31)
 
 
