@@ -914,6 +914,9 @@
         "url": { "type": "string", "format": "uri" },
         "text": { "type": "string" },
         "unsafe": { "type": "boolean" },
+        "from_llm": { "type": "boolean" },
+        "is_slack_url": { "type": "boolean" },
+        "truncated": { "type": "boolean" },
         "style": { "$ref": "#/$defs/rich_text_style_object" }
       }
     },
@@ -925,6 +928,7 @@
       "properties": {
         "type": { "const": "user" },
         "user_id": { "type": "string", "pattern": "^[UW][A-Z0-9]+$" },
+        "from_llm": { "type": "boolean" },
         "style": { "$ref": "#/$defs/rich_text_style_object" }
       }
     },
@@ -1013,8 +1017,97 @@
       }
     },
 
+    "rich_text_message_mention_leaf": {
+      "description": "A link to another Slack message.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "channel_id", "message_ts"],
+      "properties": {
+        "type": { "const": "message_mention" },
+        "channel_id": { "type": "string", "minLength": 1 },
+        "message_ts": { "type": "string", "minLength": 1 },
+        "author_id": { "type": "string" },
+        "thread_ts": { "type": "string" },
+        "text": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_workflow_mention_leaf": {
+      "description": "A link that starts a Slack workflow.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "workflow_id", "function_trigger_id", "text"],
+      "properties": {
+        "type": { "const": "workflow_mention" },
+        "workflow_id": { "type": "string", "minLength": 1 },
+        "function_trigger_id": { "type": "string", "minLength": 1 },
+        "text": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "channel_id": { "type": "string" },
+        "ts": { "type": "string" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_canvas_leaf": {
+      "description": "A link to a Slack canvas.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "file_id"],
+      "properties": {
+        "type": { "const": "canvas" },
+        "file_id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string" },
+        "hide_title": { "type": "boolean" },
+        "section_id": { "type": "string" },
+        "text": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "is_skill_invocation": { "type": "boolean" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_file_leaf": {
+      "description": "A link to a Slack file.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "file_id"],
+      "properties": {
+        "type": { "const": "file" },
+        "file_id": { "type": "string", "minLength": 1 },
+        "text": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "is_skill_invocation": { "type": "boolean" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_attachment_mention_leaf": {
+      "description": "A link to an app attachment or Work Object entity.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "url"],
+      "properties": {
+        "type": { "const": "attachment_mention" },
+        "url": { "type": "string", "format": "uri" },
+        "text": { "type": "string" },
+        "app_id": { "type": "string" },
+        "entity_id": { "type": "string" },
+        "icon_url": { "type": "string", "format": "uri" },
+        "channel_id": { "type": "string" },
+        "ts": { "type": "string" },
+        "full_size_preview_enabled": { "type": "boolean" },
+        "icon_name": { "type": "string" },
+        "reference_object_type": { "type": "string" },
+        "product_name": { "type": "string" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
     "rich_text_leaf": {
-      "description": "Any of the 10 rich-text leaf element kinds.",
+      "description": "Any of the 15 rich-text leaf element kinds.",
       "oneOf": [
         { "$ref": "#/$defs/rich_text_text_leaf" },
         { "$ref": "#/$defs/rich_text_link_leaf" },
@@ -1025,7 +1118,12 @@
         { "$ref": "#/$defs/rich_text_emoji_leaf" },
         { "$ref": "#/$defs/rich_text_broadcast_leaf" },
         { "$ref": "#/$defs/rich_text_color_leaf" },
-        { "$ref": "#/$defs/rich_text_date_leaf" }
+        { "$ref": "#/$defs/rich_text_date_leaf" },
+        { "$ref": "#/$defs/rich_text_message_mention_leaf" },
+        { "$ref": "#/$defs/rich_text_workflow_mention_leaf" },
+        { "$ref": "#/$defs/rich_text_canvas_leaf" },
+        { "$ref": "#/$defs/rich_text_file_leaf" },
+        { "$ref": "#/$defs/rich_text_attachment_mention_leaf" }
       ]
     },
 
