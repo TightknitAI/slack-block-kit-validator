@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.23](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.22...slack-block-kit-validator-v0.1.23) (2026-11-12)
+
+
+### Features
+
+* **schema:** accept Slack's mention, canvas and file rich text leaves ([#142](https://github.com/TightknitAI/slack-block-kit-validator/issues/142)) ([3492979](https://github.com/TightknitAI/slack-block-kit-validator/commit/34929794ececd6e751f0ccd5e77cf80bca554f43))
+
+
+### Bug Fixes
+
+* **worker:** serve /openapi.json with the shared CORS and security headers ([#139](https://github.com/TightknitAI/slack-block-kit-validator/issues/139)) ([dabf20f](https://github.com/TightknitAI/slack-block-kit-validator/commit/dabf20fbe0b787481a9c3a9714adcd296898bff2))
+
 ## [0.1.22](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.21...slack-block-kit-validator-v0.1.22) (2026-10-31)
 
 
