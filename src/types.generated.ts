@@ -315,7 +315,7 @@ export type RichTextContainerElement =
   | RichTextPreformattedElement
   | RichTextQuoteElement;
 /**
- * Any of the 10 rich-text leaf element kinds.
+ * Any of the 15 rich-text leaf element kinds.
  */
 export type RichTextLeaf =
   | RichTextTextLeaf
@@ -327,7 +327,12 @@ export type RichTextLeaf =
   | RichTextEmojiLeaf
   | RichTextBroadcastLeaf
   | RichTextColorLeaf
-  | RichTextDateLeaf;
+  | RichTextDateLeaf
+  | RichTextMessageMentionLeaf
+  | RichTextWorkflowMentionLeaf
+  | RichTextCanvasLeaf
+  | RichTextFileLeaf
+  | RichTextAttachmentMentionLeaf;
 /**
  * Must have text or fields (or both).
  */
@@ -1509,11 +1514,15 @@ export interface RichTextLinkLeaf {
   url: string;
   text?: string;
   unsafe?: boolean;
+  from_llm?: boolean;
+  is_slack_url?: boolean;
+  truncated?: boolean;
   style?: RichTextStyleObject;
 }
 export interface RichTextUserLeaf {
   type: "user";
   user_id: string;
+  from_llm?: boolean;
   style?: RichTextStyleObject;
 }
 export interface RichTextUsergroupLeaf {
@@ -1560,6 +1569,75 @@ export interface RichTextDateLeaf {
   format: string;
   url?: string;
   fallback?: string;
+  style?: RichTextStyleObject;
+}
+/**
+ * A link to another Slack message.
+ */
+export interface RichTextMessageMentionLeaf {
+  type: "message_mention";
+  channel_id: string;
+  message_ts: string;
+  author_id?: string;
+  thread_ts?: string;
+  text?: string;
+  url?: string;
+  style?: RichTextStyleObject;
+}
+/**
+ * A link that starts a Slack workflow.
+ */
+export interface RichTextWorkflowMentionLeaf {
+  type: "workflow_mention";
+  workflow_id: string;
+  function_trigger_id: string;
+  text: string;
+  url?: string;
+  channel_id?: string;
+  ts?: string;
+  style?: RichTextStyleObject;
+}
+/**
+ * A link to a Slack canvas.
+ */
+export interface RichTextCanvasLeaf {
+  type: "canvas";
+  file_id: string;
+  label?: string;
+  hide_title?: boolean;
+  section_id?: string;
+  text?: string;
+  url?: string;
+  is_skill_invocation?: boolean;
+  style?: RichTextStyleObject;
+}
+/**
+ * A link to a Slack file.
+ */
+export interface RichTextFileLeaf {
+  type: "file";
+  file_id: string;
+  text?: string;
+  url?: string;
+  is_skill_invocation?: boolean;
+  style?: RichTextStyleObject;
+}
+/**
+ * A link to an app attachment or Work Object entity.
+ */
+export interface RichTextAttachmentMentionLeaf {
+  type: "attachment_mention";
+  url: string;
+  text?: string;
+  app_id?: string;
+  entity_id?: string;
+  icon_url?: string;
+  channel_id?: string;
+  ts?: string;
+  full_size_preview_enabled?: boolean;
+  icon_name?: string;
+  reference_object_type?: string;
+  product_name?: string;
   style?: RichTextStyleObject;
 }
 export interface RichTextListElement {

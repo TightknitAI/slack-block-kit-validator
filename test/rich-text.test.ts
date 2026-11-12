@@ -163,6 +163,18 @@ describe("rich text", () => {
     it("rejects missing url", () => {
       expect(validate({ type: "link" })).toBe(false);
     });
+
+    it("accepts the flags Slack returns on links", () => {
+      expect(
+        validate({
+          type: "link",
+          url: "https://e.com",
+          from_llm: true,
+          is_slack_url: false,
+          truncated: true,
+        }),
+      ).toBe(true);
+    });
   });
 
   describe("leaf: user", () => {
@@ -178,6 +190,132 @@ describe("rich text", () => {
 
     it("rejects T-prefix (team, not user)", () => {
       expect(validate({ type: "user", user_id: "T123ABC" })).toBe(false);
+    });
+
+    it("accepts from_llm", () => {
+      expect(validate({ type: "user", user_id: "U123ABC", from_llm: true })).toBe(true);
+    });
+  });
+
+  describe("leaf: message_mention", () => {
+    const validate = compileDef("rich_text_message_mention_leaf");
+
+    it("accepts every documented field", () => {
+      expect(
+        validate({
+          type: "message_mention",
+          channel_id: "C123ABC",
+          message_ts: "1794441628.747369",
+          author_id: "U123ABC",
+          thread_ts: "1794441600.000100",
+          text: "a message",
+          url: "https://e.slack.com/archives/C123ABC/p1794441628747369",
+          style: { bold: true },
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects missing message_ts", () => {
+      expect(validate({ type: "message_mention", channel_id: "C123ABC" })).toBe(false);
+    });
+  });
+
+  describe("leaf: workflow_mention", () => {
+    const validate = compileDef("rich_text_workflow_mention_leaf");
+
+    it("accepts every documented field", () => {
+      expect(
+        validate({
+          type: "workflow_mention",
+          workflow_id: "Wf123",
+          function_trigger_id: "Ft123",
+          text: "Request access",
+          url: "https://slack.com/shortcuts/Ft123/abc",
+          channel_id: "C123ABC",
+          ts: "1794441628.747369",
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects missing text", () => {
+      expect(
+        validate({
+          type: "workflow_mention",
+          workflow_id: "Wf123",
+          function_trigger_id: "Ft123",
+        }),
+      ).toBe(false);
+    });
+  });
+
+  describe("leaf: canvas", () => {
+    const validate = compileDef("rich_text_canvas_leaf");
+
+    it("accepts every documented field", () => {
+      expect(
+        validate({
+          type: "canvas",
+          file_id: "F123ABC",
+          label: "Plan",
+          hide_title: true,
+          section_id: "temp:C:abc",
+          text: "Plan",
+          url: "https://e.slack.com/docs/T123/F123ABC",
+          is_skill_invocation: false,
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects missing file_id", () => {
+      expect(validate({ type: "canvas", text: "Plan" })).toBe(false);
+    });
+  });
+
+  describe("leaf: file", () => {
+    const validate = compileDef("rich_text_file_leaf");
+
+    it("accepts every documented field", () => {
+      expect(
+        validate({
+          type: "file",
+          file_id: "F123ABC",
+          text: "report.pdf",
+          url: "https://e.slack.com/files/U123/F123ABC/report.pdf",
+          is_skill_invocation: false,
+          style: { italic: true },
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects missing file_id", () => {
+      expect(validate({ type: "file", text: "report.pdf" })).toBe(false);
+    });
+  });
+
+  describe("leaf: attachment_mention", () => {
+    const validate = compileDef("rich_text_attachment_mention_leaf");
+
+    it("accepts every documented field", () => {
+      expect(
+        validate({
+          type: "attachment_mention",
+          url: "https://docs.google.com/document/d/abc",
+          text: "Spec",
+          app_id: "A123",
+          entity_id: "E123",
+          icon_url: "https://e.com/icon.png",
+          channel_id: "C123ABC",
+          ts: "1794441628.747369",
+          full_size_preview_enabled: true,
+          icon_name: "sf-record",
+          reference_object_type: "record",
+          product_name: "Google Docs",
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects missing url", () => {
+      expect(validate({ type: "attachment_mention", text: "Spec" })).toBe(false);
     });
   });
 
