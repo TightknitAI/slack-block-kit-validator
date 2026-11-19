@@ -1,5 +1,60 @@
 # Changelog
 
+## [0.1.23](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.22...slack-block-kit-validator-v0.1.23) (2026-11-12)
+
+
+### Features
+
+* **schema:** accept Slack's mention, canvas and file rich text leaves ([#142](https://github.com/TightknitAI/slack-block-kit-validator/issues/142)) ([3492979](https://github.com/TightknitAI/slack-block-kit-validator/commit/34929794ececd6e751f0ccd5e77cf80bca554f43))
+
+
+### Bug Fixes
+
+* **worker:** serve /openapi.json with the shared CORS and security headers ([#139](https://github.com/TightknitAI/slack-block-kit-validator/issues/139)) ([dabf20f](https://github.com/TightknitAI/slack-block-kit-validator/commit/dabf20fbe0b787481a9c3a9714adcd296898bff2))
+
+## [0.1.22](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.21...slack-block-kit-validator-v0.1.22) (2026-10-31)
+
+
+### Features
+
+* allow raw_number cells in the table block (ENG-6502) ([#128](https://github.com/TightknitAI/slack-block-kit-validator/issues/128)) ([24d1337](https://github.com/TightknitAI/slack-block-kit-validator/commit/24d133723ef1a8b163bb0d45283f4130210ec89b))
+* support the layout and auth_provider blocks (ENG-6734) ([#135](https://github.com/TightknitAI/slack-block-kit-validator/issues/135)) ([d53495c](https://github.com/TightknitAI/slack-block-kit-validator/commit/d53495c255ff74d9ed3d198b3fb410a0a2f9dd1d))
+
+## [0.1.21](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.20...slack-block-kit-validator-v0.1.21) (2026-10-19)
+
+
+### Bug Fixes
+
+* narrow element-union errors to the element's own kind ([#119](https://github.com/TightknitAI/slack-block-kit-validator/issues/119)) ([a78fb90](https://github.com/TightknitAI/slack-block-kit-validator/commit/a78fb908face582a487f74e847788d845c7432b6))
+
+## [0.1.20](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.19...slack-block-kit-validator-v0.1.20) (2026-10-17)
+
+
+### Features
+
+* **schema:** add min_lines and max_lines to rich_text_input element ([#116](https://github.com/TightknitAI/slack-block-kit-validator/issues/116)) ([38e94b5](https://github.com/TightknitAI/slack-block-kit-validator/commit/38e94b57bc1d542485777f0d3c966e420b82df13))
+
+## [0.1.19](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.18...slack-block-kit-validator-v0.1.19) (2026-10-13)
+
+
+### Features
+
+* support data_table action_cell cells and up to 200 data rows ([#114](https://github.com/TightknitAI/slack-block-kit-validator/issues/114)) ([dd2749b](https://github.com/TightknitAI/slack-block-kit-validator/commit/dd2749b79044265440af5787f2ba133e4ff25c95))
+
+## [0.1.18](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.17...slack-block-kit-validator-v0.1.18) (2026-10-11)
+
+
+### Bug Fixes
+
+* precompile validateBlockKit so it never generates code at runtime ([#112](https://github.com/TightknitAI/slack-block-kit-validator/issues/112)) ([2d780f2](https://github.com/TightknitAI/slack-block-kit-validator/commit/2d780f276a477f4cbb76fa0a8b855a24e4e5c97f))
+
+## [0.1.17](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.16...slack-block-kit-validator-v0.1.17) (2026-10-01)
+
+
+### Bug Fixes
+
+* allow container, data_table and data_visualization on home tabs; accept container rich_text_title and has_header_divider ([#107](https://github.com/TightknitAI/slack-block-kit-validator/issues/107)) ([c71a86d](https://github.com/TightknitAI/slack-block-kit-validator/commit/c71a86da64d616e7a260aacdf2cf841a9dadf971))
+
 ## [0.1.16](https://github.com/TightknitAI/slack-block-kit-validator/compare/slack-block-kit-validator-v0.1.15...slack-block-kit-validator-v0.1.16) (2026-09-01)
 
 

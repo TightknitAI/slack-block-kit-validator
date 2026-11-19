@@ -1,11 +1,10 @@
-import Ajv2020, { type ValidateFunction } from "ajv/dist/2020.js";
-import addFormats from "ajv-formats";
 import { type FocusValidators, formatAjvErrors } from "./format-ajv-errors.js";
 import { checkCardActionsMax } from "./helpers/check-card-actions-max.js";
 import { checkCumulativeMarkdownLength } from "./helpers/check-cumulative-markdown-length.js";
 import { checkDataVisualizationConsistency } from "./helpers/check-data-visualization-consistency.js";
 import { checkDataVisualizationMax } from "./helpers/check-data-visualization-max.js";
 import { checkFocusOnLoadUniqueness } from "./helpers/check-focus-on-load-uniqueness.js";
+import { checkLayoutRules } from "./helpers/check-layout-rules.js";
 import { checkNumberInputBounds } from "./helpers/check-number-input-bounds.js";
 import { checkResponseUrlEnabledContext } from "./helpers/check-response-url-enabled-context.js";
 import { checkSinglePlanBlock } from "./helpers/check-single-plan-block.js";
@@ -13,7 +12,13 @@ import { checkSingleTableBlock } from "./helpers/check-single-table-block.js";
 import { checkSurfaceCompatibility, type Surface } from "./helpers/check-surface-compatibility.js";
 import { findDuplicateActionIds } from "./helpers/find-duplicate-action-ids.js";
 import { findDuplicateBlockIds } from "./helpers/find-duplicate-block-ids.js";
-import schema from "./slack-block-kit.schema.json" with { type: "json" };
+import {
+  blockValidators,
+  elementValidators,
+  validateBlocks,
+  validateHome,
+  validateModal,
+} from "./precompiled-validators.js";
 
 /**
  * Result of a Block Kit validation.
@@ -40,53 +45,17 @@ export interface ValidateBlockKitOptions {
   surface?: Surface;
 }
 
-const ajv = new Ajv2020({ allErrors: true, strict: false });
-addFormats(ajv);
-ajv.addSchema(schema, "slack-block-kit");
-
-const compile = (ref: string): ValidateFunction => ajv.compile({ $ref: `slack-block-kit#/$defs/${ref}` });
-
+// Precompiled at build time (scripts/build-standalone.ts) rather than compiled
+// with Ajv on import: Ajv compiles via `new Function()`, which a
+// Content-Security-Policy without 'unsafe-eval' blocks.
 const validators = {
-  blocks: ajv.compile({ $ref: "slack-block-kit" }),
-  modal: compile("modal_view"),
-  home: compile("home_view"),
+  blocks: validateBlocks,
+  modal: validateModal,
+  home: validateHome,
 } as const;
 
-/**
- * Per-block-type validators used when a payload fails the top-level oneOf so
- * we can re-validate a single block against just its declared `type`'s schema
- * branch. This is how `formatAjvErrors` collapses ~80 lines of "doesn't match
- * any of the 18 block kinds" cascade down to the actual reason a section
- * block was malformed. Built from the same `$defs` as the union itself; kept
- * in sync as new block kinds are added there.
- */
-const BLOCK_TYPE_TO_DEF: Readonly<Record<string, string>> = {
-  actions: "actions_block",
-  alert: "alert_block",
-  card: "card_block",
-  carousel: "carousel_block",
-  container: "container_block",
-  context: "context_block",
-  context_actions: "context_actions_block",
-  data_table: "data_table_block",
-  data_visualization: "data_visualization_block",
-  divider: "divider_block",
-  file: "file_block",
-  header: "header_block",
-  image: "image_block",
-  input: "input_block",
-  markdown: "markdown_block",
-  plan: "plan_block",
-  rich_text: "rich_text_block",
-  section: "section_block",
-  table: "table_block",
-  task_card: "task_card_block",
-  video: "video_block",
-};
-
-const focusValidators: FocusValidators = new Map(
-  Object.entries(BLOCK_TYPE_TO_DEF).map(([type, def]) => [type, compile(def)] as const),
-);
+const focusValidators: FocusValidators = new Map(Object.entries(blockValidators));
+const elementFocusValidators: FocusValidators = new Map(Object.entries(elementValidators));
 
 const resolveSurface = (target: ValidationTarget, surface: Surface | undefined): Surface | undefined => {
   if (target === "modal") {
@@ -190,7 +159,7 @@ const pushAll = (target: string[], messages: readonly string[]): void => {
  * Validates a Slack Block Kit payload against the JSON Schema and the set of
  * caveat helpers (duplicate block_ids, duplicate action_ids within a block,
  * cumulative markdown length, single-table, single-plan, focus_on_load
- * uniqueness, surface compatibility).
+ * uniqueness, layout nesting and row rules, surface compatibility).
  *
  * The helpers run only once the payload satisfies the JSON Schema. When the
  * schema rejects it, the schema errors are returned on their own: the caveat
@@ -212,7 +181,10 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
 
   const validator = validators[target];
   if (!validator(normalizedInput)) {
-    pushAll(errors, formatAjvErrors(validator.errors ?? [], normalizedInput, target, focusValidators));
+    pushAll(
+      errors,
+      formatAjvErrors(validator.errors ?? [], normalizedInput, target, focusValidators, elementFocusValidators),
+    );
     // Stop before the cross-payload helpers. They only add value on a
     // structurally sound payload, and running them on a schema-invalid one is
     // what lets a caller drive their loops with arrays the schema would have
@@ -237,6 +209,7 @@ export function validateBlockKit(input: unknown, options: ValidateBlockKitOption
   pushAll(errors, checkDataVisualizationMax(blocks));
   pushAll(errors, checkDataVisualizationConsistency(blocks));
   pushAll(errors, checkCardActionsMax(blocks));
+  pushAll(errors, checkLayoutRules(blocks));
   pushAll(errors, checkFocusOnLoadUniqueness(blocks));
   pushAll(errors, checkNumberInputBounds(blocks));
   pushAll(errors, checkResponseUrlEnabledContext(blocks, surface));

@@ -12,6 +12,7 @@ import type {
   ButtonElement,
   CheckboxesElement,
   ConfirmObject,
+  DataTableBlock,
   HeaderBlock,
   HomeView,
   ImageBlock,
@@ -96,6 +97,39 @@ export const rich: RichTextBlock = {
   ],
 };
 
+// Container title can be plain_text or a rich_text block; subtitle can be
+// plain_text or mrkdwn; has_header_divider is a documented optional flag.
+export const container: Extract<Block, { type: "container" }> = {
+  type: "container",
+  rich_text_title: rich,
+  subtitle: { type: "mrkdwn", text: "*3* pending" },
+  has_header_divider: true,
+  child_blocks: [section],
+};
+
+// data_table cells are a oneOf of named defs; action_cell nests a button and a
+// raw_text/raw_number fallback.
+export const dataTable: DataTableBlock = {
+  type: "data_table",
+  caption: "Tasks",
+  rows: [
+    [
+      { type: "raw_text", text: "Task" },
+      { type: "raw_text", text: "Action" },
+    ],
+    [
+      { type: "raw_number", value: 1, text: "1" },
+      { type: "action_cell", element: button, fallback: { type: "raw_text", text: "Open" } },
+    ],
+  ],
+};
+
+// table cells accept raw_number alongside raw_text and rich_text.
+export const table: Extract<Block, { type: "table" }> = {
+  type: "table",
+  rows: [[{ type: "raw_text", text: "Seats" }, { type: "raw_number", value: 42 }, rich]],
+};
+
 // View envelopes.
 export const modal: ModalView = {
   type: "modal",
@@ -106,7 +140,7 @@ export const modal: ModalView = {
 
 export const home: HomeView = {
   type: "home",
-  blocks: [section, { type: "divider" }],
+  blocks: [section, { type: "divider" }, container, dataTable],
 };
 
 // Discriminated-union Block — exhaustiveness check.

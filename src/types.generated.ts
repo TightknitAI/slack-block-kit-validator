@@ -13,6 +13,7 @@ export type SlackBlockKitPayload = [Block, ...Block[]] | ModalView | HomeView;
 export type Block =
   | ActionsBlock
   | AlertBlock
+  | AuthProviderBlock
   | CardBlock
   | CarouselBlock
   | ContainerBlock
@@ -25,6 +26,7 @@ export type Block =
   | HeaderBlock
   | ImageBlock
   | InputBlock
+  | LayoutBlock
   | MarkdownBlock
   | PlanBlock
   | RichTextBlock
@@ -197,6 +199,325 @@ export type BlockId = string;
  */
 export type TextObject = PlainTextObject | MrkdwnTextObject;
 /**
+ * A stable block a client that doesn't support a newer block renders in its place. Slack allows only context, divider, header, image, rich_text, section, table and video here (https://docs.slack.dev/reference/block-kit/blocks/layout-block#fallback).
+ */
+export type FallbackBlock =
+  | ContextBlock
+  | DividerBlock
+  | HeaderBlock
+  | ImageBlock
+  | RichTextBlock
+  | SectionBlock
+  | TableBlock
+  | VideoBlock;
+/**
+ * Elements allowed inside a context block.
+ */
+export type ContextBlockElement = ImageElement | TextObject;
+/**
+ * Must be used inside a section or context block. Either image_url or slack_file is required.
+ */
+export type ImageElement = {
+  type: "image";
+  alt_text: string;
+  image_url?: string;
+  slack_file?: SlackFileObject;
+} & ImageElement1 & {
+    type: "image";
+    alt_text: string;
+    image_url?: string;
+    slack_file?: SlackFileObject;
+  } & ImageElement1 & {
+    type: "image";
+    alt_text: string;
+    image_url?: string;
+    slack_file?: SlackFileObject;
+  } & ImageElement1 & {
+    type: "image";
+    alt_text: string;
+    image_url?: string;
+    slack_file?: SlackFileObject;
+  } & ImageElement1 & {
+    type: "image";
+    alt_text: string;
+    image_url?: string;
+    slack_file?: SlackFileObject;
+  } & ImageElement1;
+/**
+ * Reference to a Slack file. Exactly one of url or id must be provided. Supported file types: png, jpg, jpeg, gif.
+ */
+export type SlackFileObject = {
+  url?: string;
+  id?: string;
+} & SlackFileObject1 & {
+    url?: string;
+    id?: string;
+  } & SlackFileObject1;
+export type SlackFileObject1 =
+  | {
+      [k: string]: unknown | undefined;
+    }
+  | {
+      [k: string]: unknown | undefined;
+    };
+export type ImageElement1 =
+  | {
+      [k: string]: unknown | undefined;
+    }
+  | {
+      [k: string]: unknown | undefined;
+    };
+/**
+ * Either image_url or slack_file is required (not both).
+ */
+export type ImageBlock = {
+  type: "image";
+  alt_text: string;
+  image_url?: string;
+  slack_file?: SlackFileObject;
+  title?: PlainTextObject;
+  block_id?: BlockId;
+} & ImageBlock1 & {
+    type: "image";
+    alt_text: string;
+    image_url?: string;
+    slack_file?: SlackFileObject;
+    title?: PlainTextObject;
+    block_id?: BlockId;
+  } & ImageBlock1 & {
+    type: "image";
+    alt_text: string;
+    image_url?: string;
+    slack_file?: SlackFileObject;
+    title?: PlainTextObject;
+    block_id?: BlockId;
+  } & ImageBlock1 & {
+    type: "image";
+    alt_text: string;
+    image_url?: string;
+    slack_file?: SlackFileObject;
+    title?: PlainTextObject;
+    block_id?: BlockId;
+  } & ImageBlock1;
+export type ImageBlock1 =
+  | {
+      [k: string]: unknown | undefined;
+    }
+  | {
+      [k: string]: unknown | undefined;
+    };
+/**
+ * Any of the 4 rich-text container kinds usable inside a rich_text block's elements array.
+ */
+export type RichTextContainerElement =
+  | RichTextSectionElement
+  | RichTextListElement
+  | RichTextPreformattedElement
+  | RichTextQuoteElement;
+/**
+ * Any of the 15 rich-text leaf element kinds.
+ */
+export type RichTextLeaf =
+  | RichTextTextLeaf
+  | RichTextLinkLeaf
+  | RichTextUserLeaf
+  | RichTextUsergroupLeaf
+  | RichTextTeamLeaf
+  | RichTextChannelLeaf
+  | RichTextEmojiLeaf
+  | RichTextBroadcastLeaf
+  | RichTextColorLeaf
+  | RichTextDateLeaf
+  | RichTextMessageMentionLeaf
+  | RichTextWorkflowMentionLeaf
+  | RichTextCanvasLeaf
+  | RichTextFileLeaf
+  | RichTextAttachmentMentionLeaf;
+/**
+ * Must have text or fields (or both).
+ */
+export type SectionBlock = SectionBlock1 & {
+  type: "section";
+  text?: TextObject;
+  block_id?: BlockId;
+  /**
+   * @minItems 1
+   * @maxItems 10
+   */
+  fields?:
+    | [TextObject]
+    | [TextObject, TextObject]
+    | [TextObject, TextObject, TextObject]
+    | [TextObject, TextObject, TextObject, TextObject]
+    | [TextObject, TextObject, TextObject, TextObject, TextObject]
+    | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+    | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+    | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+    | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+    | [
+        TextObject,
+        TextObject,
+        TextObject,
+        TextObject,
+        TextObject,
+        TextObject,
+        TextObject,
+        TextObject,
+        TextObject,
+        TextObject,
+      ];
+  accessory?: SectionAccessoryElement;
+  expand?: boolean;
+} & SectionBlock1 & {
+    type: "section";
+    text?: TextObject;
+    block_id?: BlockId;
+    /**
+     * @minItems 1
+     * @maxItems 10
+     */
+    fields?:
+      | [TextObject]
+      | [TextObject, TextObject]
+      | [TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+        ];
+    accessory?: SectionAccessoryElement;
+    expand?: boolean;
+  } & SectionBlock1 & {
+    type: "section";
+    text?: TextObject;
+    block_id?: BlockId;
+    /**
+     * @minItems 1
+     * @maxItems 10
+     */
+    fields?:
+      | [TextObject]
+      | [TextObject, TextObject]
+      | [TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+        ];
+    accessory?: SectionAccessoryElement;
+    expand?: boolean;
+  } & SectionBlock1 & {
+    type: "section";
+    text?: TextObject;
+    block_id?: BlockId;
+    /**
+     * @minItems 1
+     * @maxItems 10
+     */
+    fields?:
+      | [TextObject]
+      | [TextObject, TextObject]
+      | [TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
+      | [
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+          TextObject,
+        ];
+    accessory?: SectionAccessoryElement;
+    expand?: boolean;
+  };
+export type SectionBlock1 =
+  | {
+      [k: string]: unknown | undefined;
+    }
+  | {
+      [k: string]: unknown | undefined;
+    };
+/**
+ * Elements that may appear as the accessory of a section block. datetimepicker is intentionally excluded — docs say it 'must be used inside the actions block or input block'.
+ */
+export type SectionAccessoryElement =
+  | ButtonElement
+  | CheckboxesElement
+  | DatepickerElement
+  | TimepickerElement
+  | ImageElement
+  | OverflowElement
+  | RadioButtonsElement
+  | StaticSelectElement
+  | ExternalSelectElement
+  | UsersSelectElement
+  | ConversationsSelectElement
+  | ChannelsSelectElement
+  | MultiStaticSelectElement
+  | MultiExternalSelectElement
+  | MultiUsersSelectElement
+  | MultiConversationsSelectElement
+  | MultiChannelsSelectElement
+  | WorkflowButtonElement;
+/**
+ * A cell inside a table_block row. One of raw_text, raw_number or rich_text.
+ */
+export type TableCell =
+  | {
+      type: "raw_text";
+      text: string;
+    }
+  | DataTableRawNumberCell
+  | {
+      type: "rich_text";
+      /**
+       * Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).
+       */
+      elements: RichTextContainerElement[];
+    };
+/**
+ * Per-column settings inside table_block.column_settings. May be null to skip.
+ */
+export type TableColumnSetting = null | {
+  align?: "left" | "center" | "right";
+  is_wrapped?: boolean;
+};
+/**
  * At least one of hero_image, title, actions, or body is required.
  */
 export type CardBlock = CardBlock1 & {
@@ -342,6 +663,19 @@ export type CardBlock = CardBlock1 & {
      * @maxItems 2
      */
     actions?: [ButtonElement] | [ButtonElement, ButtonElement];
+  } & CardBlock1 & {
+    type: "card";
+    block_id?: BlockId;
+    hero_image?: ImageElement;
+    icon?: ImageElement;
+    title?: TextObject;
+    subtitle?: TextObject;
+    body?: TextObject;
+    /**
+     * @minItems 1
+     * @maxItems 2
+     */
+    actions?: [ButtonElement] | [ButtonElement, ButtonElement];
   };
 export type CardBlock1 =
   | {
@@ -357,60 +691,161 @@ export type CardBlock1 =
       [k: string]: unknown | undefined;
     };
 /**
- * Must be used inside a section or context block. Either image_url or slack_file is required.
+ * A general-purpose wrapper that groups child blocks into a single, optionally collapsible unit with a configurable width. Messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/container-block). At least one of title or rich_text_title is required; Slack renders rich_text_title when both are present. default_collapsed only takes effect when is_collapsible is true; the schema rejects default_collapsed: true without is_collapsible: true. has_header_divider only applies when the block is not collapsible; Slack ignores it otherwise, so the schema accepts it either way.
  */
-export type ImageElement = {
-  type: "image";
-  alt_text: string;
-  image_url?: string;
-  slack_file?: SlackFileObject;
-} & ImageElement1 & {
-    type: "image";
-    alt_text: string;
-    image_url?: string;
-    slack_file?: SlackFileObject;
-  } & ImageElement1 & {
-    type: "image";
-    alt_text: string;
-    image_url?: string;
-    slack_file?: SlackFileObject;
-  } & ImageElement1 & {
-    type: "image";
-    alt_text: string;
-    image_url?: string;
-    slack_file?: SlackFileObject;
-  } & ImageElement1 & {
-    type: "image";
-    alt_text: string;
-    image_url?: string;
-    slack_file?: SlackFileObject;
-  } & ImageElement1;
-/**
- * Reference to a Slack file. Exactly one of url or id must be provided. Supported file types: png, jpg, jpeg, gif.
- */
-export type SlackFileObject = {
-  url?: string;
-  id?: string;
-} & SlackFileObject1 & {
-    url?: string;
-    id?: string;
-  } & SlackFileObject1;
-export type SlackFileObject1 =
+export type ContainerBlock = ContainerBlock1 &
+  ContainerBlock1 & {
+    type: "container";
+    block_id?: BlockId;
+    title?: PlainTextObject;
+    rich_text_title?: RichTextBlock;
+    subtitle?: TextObject;
+    icon?: ImageElement;
+    width?: "narrow" | "standard" | "wide" | "full";
+    is_collapsible?: boolean;
+    default_collapsed?: boolean;
+    has_header_divider?: boolean;
+    /**
+     * @minItems 1
+     * @maxItems 10
+     */
+    child_blocks:
+      | [ContainerChildBlock]
+      | [ContainerChildBlock, ContainerChildBlock]
+      | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
+      | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
+      | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
+      | [
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+        ]
+      | [
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+        ]
+      | [
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+        ]
+      | [
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+        ]
+      | [
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+        ];
+  } & {
+    type: "container";
+    block_id?: BlockId;
+    title?: PlainTextObject;
+    rich_text_title?: RichTextBlock;
+    subtitle?: TextObject;
+    icon?: ImageElement;
+    width?: "narrow" | "standard" | "wide" | "full";
+    is_collapsible?: boolean;
+    default_collapsed?: boolean;
+    has_header_divider?: boolean;
+    /**
+     * @minItems 1
+     * @maxItems 10
+     */
+    child_blocks:
+      | [ContainerChildBlock]
+      | [ContainerChildBlock, ContainerChildBlock]
+      | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
+      | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
+      | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
+      | [
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+        ]
+      | [
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+        ]
+      | [
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+        ]
+      | [
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+        ]
+      | [
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+          ContainerChildBlock,
+        ];
+  };
+export type ContainerBlock1 =
   | {
       [k: string]: unknown | undefined;
     }
   | {
       [k: string]: unknown | undefined;
     };
-export type ImageElement1 =
-  | {
-      [k: string]: unknown | undefined;
-    }
-  | {
-      [k: string]: unknown | undefined;
-    };
 /**
- * A block allowed inside a container block's child_blocks array. Slack documents this set as: actions, context, divider, file, header, image, input, rich_text, section, table, video (https://docs.slack.dev/reference/block-kit/blocks/container-block). Notably excludes container itself (no nesting) and message-only chrome like card/carousel/markdown.
+ * A block allowed inside a container block's child_blocks array. Slack documents this set as: actions, context, divider, file, header, image, input, rich_text, section, table, video (https://docs.slack.dev/reference/block-kit/blocks/container-block), plus layout, which the layout block reference allows to nest in a container. Notably excludes container itself and message-only chrome like card/carousel/markdown.
  */
 export type ContainerChildBlock =
   | ActionsBlock
@@ -420,39 +855,11 @@ export type ContainerChildBlock =
   | HeaderBlock
   | ImageBlock
   | InputBlock
+  | LayoutBlock
   | RichTextBlock
   | SectionBlock
   | TableBlock
   | VideoBlock;
-/**
- * Elements allowed inside a context block.
- */
-export type ContextBlockElement = ImageElement | TextObject;
-/**
- * Either image_url or slack_file is required (not both).
- */
-export type ImageBlock = {
-  type: "image";
-  alt_text: string;
-  image_url?: string;
-  slack_file?: SlackFileObject;
-  title?: PlainTextObject;
-  block_id?: BlockId;
-} & ImageBlock1 & {
-    type: "image";
-    alt_text: string;
-    image_url?: string;
-    slack_file?: SlackFileObject;
-    title?: PlainTextObject;
-    block_id?: BlockId;
-  } & ImageBlock1;
-export type ImageBlock1 =
-  | {
-      [k: string]: unknown | undefined;
-    }
-  | {
-      [k: string]: unknown | undefined;
-    };
 /**
  * Elements that may appear as the element of an input block.
  */
@@ -479,167 +886,30 @@ export type InputBlockElement =
   | RichTextInputElement
   | FileInputElement;
 /**
- * Any of the 4 rich-text container kinds usable inside a rich_text block's elements array.
+ * A block allowed as a layout item's block: actions, alert, card, carousel, container, context, data_table, data_visualization, divider, file, header, image, input, rich_text, section, table, video (https://docs.slack.dev/reference/block-kit/blocks/layout-block#allowed-children). Markdown and layout itself are rejected; a layout reaches another layout only through a container, and checkLayoutRules caps that nesting at two levels.
  */
-export type RichTextContainerElement =
-  | RichTextSectionElement
-  | RichTextListElement
-  | RichTextPreformattedElement
-  | RichTextQuoteElement;
+export type LayoutChildBlock =
+  | ActionsBlock
+  | AlertBlock
+  | CardBlock
+  | CarouselBlock
+  | ContainerBlock
+  | ContextBlock
+  | DataTableBlock
+  | DataVisualizationBlock
+  | DividerBlock
+  | FileBlock
+  | HeaderBlock
+  | ImageBlock
+  | InputBlock
+  | RichTextBlock
+  | SectionBlock
+  | TableBlock
+  | VideoBlock;
 /**
- * Any of the 10 rich-text leaf element kinds.
+ * A cell inside a data_table_block row (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). The docs' per-cell schemas list `properties` without a `required` array; we mirror `table_cell` and require the value-bearing field(s).
  */
-export type RichTextLeaf =
-  | RichTextTextLeaf
-  | RichTextLinkLeaf
-  | RichTextUserLeaf
-  | RichTextUsergroupLeaf
-  | RichTextTeamLeaf
-  | RichTextChannelLeaf
-  | RichTextEmojiLeaf
-  | RichTextBroadcastLeaf
-  | RichTextColorLeaf
-  | RichTextDateLeaf;
-/**
- * Must have text or fields (or both).
- */
-export type SectionBlock = SectionBlock1 & {
-  type: "section";
-  text?: TextObject;
-  block_id?: BlockId;
-  /**
-   * @minItems 1
-   * @maxItems 10
-   */
-  fields?:
-    | [TextObject]
-    | [TextObject, TextObject]
-    | [TextObject, TextObject, TextObject]
-    | [TextObject, TextObject, TextObject, TextObject]
-    | [TextObject, TextObject, TextObject, TextObject, TextObject]
-    | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
-    | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
-    | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
-    | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
-    | [
-        TextObject,
-        TextObject,
-        TextObject,
-        TextObject,
-        TextObject,
-        TextObject,
-        TextObject,
-        TextObject,
-        TextObject,
-        TextObject,
-      ];
-  accessory?: SectionAccessoryElement;
-  expand?: boolean;
-} & SectionBlock1 & {
-    type: "section";
-    text?: TextObject;
-    block_id?: BlockId;
-    /**
-     * @minItems 1
-     * @maxItems 10
-     */
-    fields?:
-      | [TextObject]
-      | [TextObject, TextObject]
-      | [TextObject, TextObject, TextObject]
-      | [TextObject, TextObject, TextObject, TextObject]
-      | [TextObject, TextObject, TextObject, TextObject, TextObject]
-      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
-      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
-      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
-      | [TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject, TextObject]
-      | [
-          TextObject,
-          TextObject,
-          TextObject,
-          TextObject,
-          TextObject,
-          TextObject,
-          TextObject,
-          TextObject,
-          TextObject,
-          TextObject,
-        ];
-    accessory?: SectionAccessoryElement;
-    expand?: boolean;
-  };
-export type SectionBlock1 =
-  | {
-      [k: string]: unknown | undefined;
-    }
-  | {
-      [k: string]: unknown | undefined;
-    };
-/**
- * Elements that may appear as the accessory of a section block. datetimepicker is intentionally excluded — docs say it 'must be used inside the actions block or input block'.
- */
-export type SectionAccessoryElement =
-  | ButtonElement
-  | CheckboxesElement
-  | DatepickerElement
-  | TimepickerElement
-  | ImageElement
-  | OverflowElement
-  | RadioButtonsElement
-  | StaticSelectElement
-  | ExternalSelectElement
-  | UsersSelectElement
-  | ConversationsSelectElement
-  | ChannelsSelectElement
-  | MultiStaticSelectElement
-  | MultiExternalSelectElement
-  | MultiUsersSelectElement
-  | MultiConversationsSelectElement
-  | MultiChannelsSelectElement
-  | WorkflowButtonElement;
-/**
- * A cell inside a table_block row. Either raw_text or rich_text.
- */
-export type TableCell =
-  | {
-      type: "raw_text";
-      text: string;
-    }
-  | {
-      type: "rich_text";
-      /**
-       * Empty array is accepted by Slack (verified in Block Kit Builder 2026-04-16).
-       */
-      elements: RichTextContainerElement[];
-    };
-/**
- * Per-column settings inside table_block.column_settings. May be null to skip.
- */
-export type TableColumnSetting = null | {
-  align?: "left" | "center" | "right";
-  is_wrapped?: boolean;
-};
-/**
- * Elements allowed inside a context_actions block.
- */
-export type ContextActionsBlockElement = FeedbackButtonsElement | IconButtonElement;
-/**
- * A cell inside a data_table_block row. `raw_text` / `raw_number` for simple values, `rich_text` for formatted content. Per https://docs.slack.dev/reference/block-kit/blocks/data-table-block. The docs' per-cell schemas list `properties` without a `required` array; we mirror `table_cell` and require the value-bearing field(s). The rule 'the first (header) row cannot contain rich_text cells' is a row-position constraint JSON Schema can't express and is not enforced here.
- */
-export type DataTableCell =
-  | {
-      type: "raw_text";
-      text: string;
-    }
-  | {
-      type: "raw_number";
-      value: number;
-      text?: string;
-    }
-  | {
-      type: "rich_text";
-      elements: RichTextContainerElement[];
-    };
+export type DataTableCell = DataTableRawTextCell | DataTableRawNumberCell | DataTableRichTextCell | DataTableActionCell;
 /**
  * The chart rendered by a data_visualization block. line/bar/area charts use series + axis_config; pie charts use segments.
  */
@@ -699,6 +969,10 @@ export type DataVisualizationChart =
             DataVisualizationSegment,
           ];
     };
+/**
+ * Elements allowed inside a context_actions block.
+ */
+export type ContextActionsBlockElement = FeedbackButtonsElement | IconButtonElement;
 
 export interface ActionsBlock {
   type: "actions";
@@ -1110,97 +1384,23 @@ export interface AlertBlock {
   level?: "default" | "info" | "warning" | "error" | "success";
   block_id?: BlockId;
 }
-export interface CarouselBlock {
-  type: "carousel";
-  /**
-   * @minItems 1
-   * @maxItems 10
-   */
-  elements:
-    | [CardBlock]
-    | [CardBlock, CardBlock]
-    | [CardBlock, CardBlock, CardBlock]
-    | [CardBlock, CardBlock, CardBlock, CardBlock]
-    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock]
-    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock]
-    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock]
-    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock]
-    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock]
-    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock];
-  block_id?: BlockId;
-}
 /**
- * A general-purpose wrapper that groups child blocks into a single, optionally collapsible unit with a configurable width. Messages only (https://docs.slack.dev/reference/block-kit/blocks/container-block). default_collapsed only takes effect when is_collapsible is true; the schema rejects default_collapsed: true without is_collapsible: true.
+ * Shows an authentication provider's icon, name and connection state with a Connect or Disconnect control. Not yet on docs.slack.dev; fields follow the Slack Java SDK's AuthProviderBlock (v1.53.0). auth_url and disconnect_url must be https on a host listed in the app manifest's features.user_connections.auth_hosts. fallback holds stable blocks for clients that don't recognize auth_provider.
  */
-export interface ContainerBlock {
-  type: "container";
+export interface AuthProviderBlock {
+  type: "auth_provider";
+  value: string;
+  name: PlainTextObject;
+  is_connected: boolean;
+  description?: PlainTextObject;
+  icon_url?: string;
+  auth_url?: string;
+  disconnect_url?: string;
+  connected_identity?: PlainTextObject;
+  connected_context?: PlainTextObject;
+  accessory?: OverflowElement;
+  fallback?: FallbackBlock[];
   block_id?: BlockId;
-  title: PlainTextObject;
-  subtitle?: PlainTextObject;
-  icon?: ImageElement;
-  width?: "narrow" | "standard" | "wide" | "full";
-  is_collapsible?: boolean;
-  default_collapsed?: boolean;
-  /**
-   * @minItems 1
-   * @maxItems 10
-   */
-  child_blocks:
-    | [ContainerChildBlock]
-    | [ContainerChildBlock, ContainerChildBlock]
-    | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
-    | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
-    | [ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock, ContainerChildBlock]
-    | [
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-      ]
-    | [
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-      ]
-    | [
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-      ]
-    | [
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-      ]
-    | [
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-        ContainerChildBlock,
-      ];
 }
 export interface ContextBlock {
   type: "context";
@@ -1270,102 +1470,11 @@ export interface DividerBlock {
   type: "divider";
   block_id?: BlockId;
 }
-/**
- * Cannot be added to app surfaces directly; surfaces only when retrieving messages that contain remote files.
- */
-export interface FileBlock {
-  type: "file";
-  external_id: string;
-  source: "remote";
-  block_id?: BlockId;
-}
 export interface HeaderBlock {
   type: "header";
   text: PlainTextObject;
   block_id?: BlockId;
   level?: number;
-}
-/**
- * If element is a file_input, dispatch_action must not be true.
- */
-export interface InputBlock {
-  type: "input";
-  label: PlainTextObject;
-  element: InputBlockElement;
-  dispatch_action?: boolean;
-  block_id?: BlockId;
-  hint?: PlainTextObject;
-  optional?: boolean;
-}
-/**
- * Must be used inside an input block.
- */
-export interface PlainTextInputElement {
-  type: "plain_text_input";
-  action_id?: ActionId;
-  initial_value?: string;
-  multiline?: boolean;
-  min_length?: number;
-  max_length?: number;
-  dispatch_action_config?: DispatchActionConfigObject;
-  focus_on_load?: boolean;
-  placeholder?: PlaceholderObject;
-}
-export interface DispatchActionConfigObject {
-  /**
-   * @minItems 1
-   * @maxItems 2
-   */
-  trigger_actions_on:
-    | ["on_enter_pressed" | "on_character_entered"]
-    | ["on_enter_pressed" | "on_character_entered", "on_enter_pressed" | "on_character_entered"];
-}
-/**
- * Must be used inside an input block.
- */
-export interface EmailInputElement {
-  type: "email_text_input";
-  action_id?: ActionId;
-  initial_value?: string;
-  dispatch_action_config?: DispatchActionConfigObject;
-  focus_on_load?: boolean;
-  placeholder?: PlaceholderObject;
-}
-/**
- * Must be used inside an input block.
- */
-export interface UrlInputElement {
-  type: "url_text_input";
-  action_id?: ActionId;
-  initial_value?: string;
-  dispatch_action_config?: DispatchActionConfigObject;
-  focus_on_load?: boolean;
-  placeholder?: PlaceholderObject;
-}
-/**
- * Must be used inside an input block. min_value must not exceed max_value.
- */
-export interface NumberInputElement {
-  type: "number_input";
-  is_decimal_allowed: boolean;
-  action_id?: ActionId;
-  initial_value?: string;
-  min_value?: string;
-  max_value?: string;
-  dispatch_action_config?: DispatchActionConfigObject;
-  focus_on_load?: boolean;
-  placeholder?: PlaceholderObject;
-}
-/**
- * Must be used inside an input block.
- */
-export interface RichTextInputElement {
-  type: "rich_text_input";
-  action_id: ActionId;
-  initial_value?: RichTextBlock;
-  dispatch_action_config?: DispatchActionConfigObject;
-  focus_on_load?: boolean;
-  placeholder?: PlaceholderObject;
 }
 export interface RichTextBlock {
   type: "rich_text";
@@ -1405,11 +1514,15 @@ export interface RichTextLinkLeaf {
   url: string;
   text?: string;
   unsafe?: boolean;
+  from_llm?: boolean;
+  is_slack_url?: boolean;
+  truncated?: boolean;
   style?: RichTextStyleObject;
 }
 export interface RichTextUserLeaf {
   type: "user";
   user_id: string;
+  from_llm?: boolean;
   style?: RichTextStyleObject;
 }
 export interface RichTextUsergroupLeaf {
@@ -1458,6 +1571,75 @@ export interface RichTextDateLeaf {
   fallback?: string;
   style?: RichTextStyleObject;
 }
+/**
+ * A link to another Slack message.
+ */
+export interface RichTextMessageMentionLeaf {
+  type: "message_mention";
+  channel_id: string;
+  message_ts: string;
+  author_id?: string;
+  thread_ts?: string;
+  text?: string;
+  url?: string;
+  style?: RichTextStyleObject;
+}
+/**
+ * A link that starts a Slack workflow.
+ */
+export interface RichTextWorkflowMentionLeaf {
+  type: "workflow_mention";
+  workflow_id: string;
+  function_trigger_id: string;
+  text: string;
+  url?: string;
+  channel_id?: string;
+  ts?: string;
+  style?: RichTextStyleObject;
+}
+/**
+ * A link to a Slack canvas.
+ */
+export interface RichTextCanvasLeaf {
+  type: "canvas";
+  file_id: string;
+  label?: string;
+  hide_title?: boolean;
+  section_id?: string;
+  text?: string;
+  url?: string;
+  is_skill_invocation?: boolean;
+  style?: RichTextStyleObject;
+}
+/**
+ * A link to a Slack file.
+ */
+export interface RichTextFileLeaf {
+  type: "file";
+  file_id: string;
+  text?: string;
+  url?: string;
+  is_skill_invocation?: boolean;
+  style?: RichTextStyleObject;
+}
+/**
+ * A link to an app attachment or Work Object entity.
+ */
+export interface RichTextAttachmentMentionLeaf {
+  type: "attachment_mention";
+  url: string;
+  text?: string;
+  app_id?: string;
+  entity_id?: string;
+  icon_url?: string;
+  channel_id?: string;
+  ts?: string;
+  full_size_preview_enabled?: boolean;
+  icon_name?: string;
+  reference_object_type?: string;
+  product_name?: string;
+  style?: RichTextStyleObject;
+}
 export interface RichTextListElement {
   type: "rich_text_list";
   style: "bullet" | "ordered";
@@ -1485,18 +1667,6 @@ export interface RichTextQuoteElement {
    */
   elements: RichTextLeaf[];
   border?: 0 | 1;
-}
-/**
- * Must be used inside an input block in modals only. Requires files:read OAuth scope. 10MB per-file limit (not enforceable in JSON Schema).
- */
-export interface FileInputElement {
-  type: "file_input";
-  action_id?: ActionId;
-  /**
-   * @minItems 1
-   */
-  filetypes?: [string, ...string[]];
-  max_files?: number;
 }
 /**
  * One table per message (server-enforced via invalid_attachments / only_one_table_allowed). Up to 100 rows, up to 20 cells per row.
@@ -2121,6 +2291,14 @@ export interface TableBlock {
       ];
 }
 /**
+ * Numeric cell in a table_block or data_table_block row. In a data_table_block, a column of only raw_number cells sorts numerically.
+ */
+export interface DataTableRawNumberCell {
+  type: "raw_number";
+  value: number;
+  text?: string;
+}
+/**
  * Requires links.embed:write OAuth scope. video_url must be in app's unfurl domains, HTTPS, embeddable, return 2xx, not point to Slack-related domains.
  */
 export interface VideoBlock {
@@ -2136,55 +2314,168 @@ export interface VideoBlock {
   title_url?: string;
   block_id?: BlockId;
 }
-export interface ContextActionsBlock {
-  type: "context_actions";
+export interface CarouselBlock {
+  type: "carousel";
+  /**
+   * @minItems 1
+   * @maxItems 10
+   */
+  elements:
+    | [CardBlock]
+    | [CardBlock, CardBlock]
+    | [CardBlock, CardBlock, CardBlock]
+    | [CardBlock, CardBlock, CardBlock, CardBlock]
+    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock]
+    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock]
+    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock]
+    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock]
+    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock]
+    | [CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock, CardBlock];
+  block_id?: BlockId;
+}
+/**
+ * Cannot be added to app surfaces directly; surfaces only when retrieving messages that contain remote files.
+ */
+export interface FileBlock {
+  type: "file";
+  external_id: string;
+  source: "remote";
+  block_id?: BlockId;
+}
+/**
+ * If element is a file_input, dispatch_action must not be true.
+ */
+export interface InputBlock {
+  type: "input";
+  label: PlainTextObject;
+  element: InputBlockElement;
+  dispatch_action?: boolean;
+  block_id?: BlockId;
+  hint?: PlainTextObject;
+  optional?: boolean;
+}
+/**
+ * Must be used inside an input block.
+ */
+export interface PlainTextInputElement {
+  type: "plain_text_input";
+  action_id?: ActionId;
+  initial_value?: string;
+  multiline?: boolean;
+  min_length?: number;
+  max_length?: number;
+  dispatch_action_config?: DispatchActionConfigObject;
+  focus_on_load?: boolean;
+  placeholder?: PlaceholderObject;
+}
+export interface DispatchActionConfigObject {
+  /**
+   * @minItems 1
+   * @maxItems 2
+   */
+  trigger_actions_on:
+    | ["on_enter_pressed" | "on_character_entered"]
+    | ["on_enter_pressed" | "on_character_entered", "on_enter_pressed" | "on_character_entered"];
+}
+/**
+ * Must be used inside an input block.
+ */
+export interface EmailInputElement {
+  type: "email_text_input";
+  action_id?: ActionId;
+  initial_value?: string;
+  dispatch_action_config?: DispatchActionConfigObject;
+  focus_on_load?: boolean;
+  placeholder?: PlaceholderObject;
+}
+/**
+ * Must be used inside an input block.
+ */
+export interface UrlInputElement {
+  type: "url_text_input";
+  action_id?: ActionId;
+  initial_value?: string;
+  dispatch_action_config?: DispatchActionConfigObject;
+  focus_on_load?: boolean;
+  placeholder?: PlaceholderObject;
+}
+/**
+ * Must be used inside an input block. min_value must not exceed max_value.
+ */
+export interface NumberInputElement {
+  type: "number_input";
+  is_decimal_allowed: boolean;
+  action_id?: ActionId;
+  initial_value?: string;
+  min_value?: string;
+  max_value?: string;
+  dispatch_action_config?: DispatchActionConfigObject;
+  focus_on_load?: boolean;
+  placeholder?: PlaceholderObject;
+}
+/**
+ * Must be used inside an input block.
+ */
+export interface RichTextInputElement {
+  type: "rich_text_input";
+  action_id: ActionId;
+  initial_value?: RichTextBlock;
+  dispatch_action_config?: DispatchActionConfigObject;
+  focus_on_load?: boolean;
+  placeholder?: PlaceholderObject;
+  min_lines?: number;
+  max_lines?: number;
+}
+/**
+ * Must be used inside an input block in modals only. Requires files:read OAuth scope. 10MB per-file limit (not enforceable in JSON Schema).
+ */
+export interface FileInputElement {
+  type: "file_input";
+  action_id?: ActionId;
+  /**
+   * @minItems 1
+   */
+  filetypes?: [string, ...string[]];
+  max_files?: number;
+}
+/**
+ * Arranges child blocks into a grid of 1-5 rows of 1-3 items. Modals, Messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/layout-block). Children follow the host surface's block rules; carousel, data_table and data_visualization can't share a row with one another; fallback replaces the layout on clients that don't support it.
+ */
+export interface LayoutBlock {
+  type: "layout";
+  label: string;
+  is_label_visible?: boolean;
   /**
    * @minItems 1
    * @maxItems 5
    */
-  elements:
-    | [ContextActionsBlockElement]
-    | [ContextActionsBlockElement, ContextActionsBlockElement]
-    | [ContextActionsBlockElement, ContextActionsBlockElement, ContextActionsBlockElement]
-    | [ContextActionsBlockElement, ContextActionsBlockElement, ContextActionsBlockElement, ContextActionsBlockElement]
-    | [
-        ContextActionsBlockElement,
-        ContextActionsBlockElement,
-        ContextActionsBlockElement,
-        ContextActionsBlockElement,
-        ContextActionsBlockElement,
-      ];
+  rows:
+    | [LayoutRow]
+    | [LayoutRow, LayoutRow]
+    | [LayoutRow, LayoutRow, LayoutRow]
+    | [LayoutRow, LayoutRow, LayoutRow, LayoutRow]
+    | [LayoutRow, LayoutRow, LayoutRow, LayoutRow, LayoutRow];
+  grid_lines?: "none" | "rows" | "outer";
+  fallback?: FallbackBlock[];
   block_id?: BlockId;
 }
+export interface LayoutRow {
+  /**
+   * @minItems 1
+   * @maxItems 3
+   */
+  items: [LayoutItem] | [LayoutItem, LayoutItem] | [LayoutItem, LayoutItem, LayoutItem];
+}
 /**
- * Must be used inside a context_actions block.
+ * One cell of a layout row. width is a proportional weight (narrow 1, standard 2, wide 3); horizontal_alignment positions the block inside its cell and fills the cell when omitted.
  */
-export interface FeedbackButtonsElement {
-  type: "feedback_buttons";
-  positive_button: FeedbackButtonSubobject;
-  negative_button: FeedbackButtonSubobject;
-  action_id?: ActionId;
-}
-export interface FeedbackButtonSubobject {
-  text: PlainTextObject;
-  value: string;
-  accessibility_label?: string;
+export interface LayoutItem {
+  block: LayoutChildBlock;
+  width?: "narrow" | "standard" | "wide";
+  horizontal_alignment?: "start" | "center" | "end";
 }
 /**
- * Icon button — only valid inside a context_actions block.
- */
-export interface IconButtonElement {
-  type: "icon_button";
-  icon: "trash";
-  text: PlainTextObject;
-  action_id?: ActionId;
-  value?: string;
-  confirm?: ConfirmObject;
-  accessibility_label?: string;
-  visible_to_user_ids?: string[];
-}
-/**
- * Rich, interactive table with pagination, sorting, and filtering (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). Distinct from `table_block`, which is a simpler static table. The single-table and aggregate 10,000-character limits are payload-level rules not enforced here. `row_header_column_index` must point at an existing column, a cross-field rule JSON Schema can't check (bounded to 0–19 since a row has at most 20 cells).
+ * Rich, interactive table with pagination, sorting, and filtering (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). Distinct from `table_block`, which is a simpler static table. The single-table and per-message aggregate 20,000-character cell limits (action_cell button text included) are payload-level rules not enforced here, nor is the rule that every row has the same number of cells. `row_header_column_index` must point at an existing column, a cross-field rule JSON Schema can't check (bounded to 0–19 since a row has at most 20 cells).
  */
 export interface DataTableBlock {
   type: "data_table";
@@ -2193,667 +2484,41 @@ export interface DataTableBlock {
   page_size?: number;
   row_header_column_index?: number;
   /**
-   * First row is the header; 2–101 rows total (1 header + 1–100 data rows), 1–20 cells per row.
+   * First row is the header; 2–201 rows total (1 header + 1–200 data rows), 1–20 cells per row.
    *
    * @minItems 2
-   * @maxItems 101
+   * @maxItems 201
    */
   rows: [
-    (
-      | [DataTableCell]
-      | [DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-    ),
-    (
-      | [DataTableCell]
-      | [DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-    ),
-    ...(
-      | [DataTableCell]
-      | [DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell, DataTableCell]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-      | [
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-          DataTableCell,
-        ]
-    )[],
+    [DataTableCell, ...DataTableCell[]],
+    [DataTableCell, ...DataTableCell[]],
+    ...[DataTableCell, ...DataTableCell[]][],
   ];
 }
 /**
- * Renders data as a line, bar, area, or pie chart. Messages only (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.
+ * Plain text cell in a data_table_block row.
+ */
+export interface DataTableRawTextCell {
+  type: "raw_text";
+  text: string;
+}
+/**
+ * Formatted cell in a data_table_block row. Not allowed in the header (first) row, which is not enforced here.
+ */
+export interface DataTableRichTextCell {
+  type: "rich_text";
+  elements: RichTextContainerElement[];
+}
+/**
+ * Button cell; clicks send a block_actions payload. Only valid in data_table_block, not table_block. `fallback` renders instead on clients without action-cell support.
+ */
+export interface DataTableActionCell {
+  type: "action_cell";
+  element: ButtonElement;
+  fallback?: DataTableRawTextCell | DataTableRawNumberCell;
+}
+/**
+ * Renders data as a line, bar, area, or pie chart. Messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.
  */
 export interface DataVisualizationBlock {
   type: "data_visualization";
@@ -3264,6 +2929,53 @@ export interface DataVisualizationAxisConfig {
 export interface DataVisualizationSegment {
   label: string;
   value: number;
+}
+export interface ContextActionsBlock {
+  type: "context_actions";
+  /**
+   * @minItems 1
+   * @maxItems 5
+   */
+  elements:
+    | [ContextActionsBlockElement]
+    | [ContextActionsBlockElement, ContextActionsBlockElement]
+    | [ContextActionsBlockElement, ContextActionsBlockElement, ContextActionsBlockElement]
+    | [ContextActionsBlockElement, ContextActionsBlockElement, ContextActionsBlockElement, ContextActionsBlockElement]
+    | [
+        ContextActionsBlockElement,
+        ContextActionsBlockElement,
+        ContextActionsBlockElement,
+        ContextActionsBlockElement,
+        ContextActionsBlockElement,
+      ];
+  block_id?: BlockId;
+}
+/**
+ * Must be used inside a context_actions block.
+ */
+export interface FeedbackButtonsElement {
+  type: "feedback_buttons";
+  positive_button: FeedbackButtonSubobject;
+  negative_button: FeedbackButtonSubobject;
+  action_id?: ActionId;
+}
+export interface FeedbackButtonSubobject {
+  text: PlainTextObject;
+  value: string;
+  accessibility_label?: string;
+}
+/**
+ * Icon button — only valid inside a context_actions block.
+ */
+export interface IconButtonElement {
+  type: "icon_button";
+  icon: "trash";
+  text: PlainTextObject;
+  action_id?: ActionId;
+  value?: string;
+  confirm?: ConfirmObject;
+  accessibility_label?: string;
+  visible_to_user_ids?: string[];
 }
 /**
  * block_id is ignored on markdown blocks. Cumulative 12,000-char limit across all markdown blocks in one payload is a payload-level rule, not enforced here.

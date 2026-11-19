@@ -740,7 +740,9 @@
           "$ref": "#/$defs/dispatch_action_config_object"
         },
         "focus_on_load": { "type": "boolean" },
-        "placeholder": { "$ref": "#/$defs/placeholder_object" }
+        "placeholder": { "$ref": "#/$defs/placeholder_object" },
+        "min_lines": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "max_lines": { "type": "integer", "minimum": 1, "maximum": 100 }
       }
     },
 
@@ -912,6 +914,9 @@
         "url": { "type": "string", "format": "uri" },
         "text": { "type": "string" },
         "unsafe": { "type": "boolean" },
+        "from_llm": { "type": "boolean" },
+        "is_slack_url": { "type": "boolean" },
+        "truncated": { "type": "boolean" },
         "style": { "$ref": "#/$defs/rich_text_style_object" }
       }
     },
@@ -923,6 +928,7 @@
       "properties": {
         "type": { "const": "user" },
         "user_id": { "type": "string", "pattern": "^[UW][A-Z0-9]+$" },
+        "from_llm": { "type": "boolean" },
         "style": { "$ref": "#/$defs/rich_text_style_object" }
       }
     },
@@ -1011,8 +1017,97 @@
       }
     },
 
+    "rich_text_message_mention_leaf": {
+      "description": "A link to another Slack message.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "channel_id", "message_ts"],
+      "properties": {
+        "type": { "const": "message_mention" },
+        "channel_id": { "type": "string", "minLength": 1 },
+        "message_ts": { "type": "string", "minLength": 1 },
+        "author_id": { "type": "string" },
+        "thread_ts": { "type": "string" },
+        "text": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_workflow_mention_leaf": {
+      "description": "A link that starts a Slack workflow.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "workflow_id", "function_trigger_id", "text"],
+      "properties": {
+        "type": { "const": "workflow_mention" },
+        "workflow_id": { "type": "string", "minLength": 1 },
+        "function_trigger_id": { "type": "string", "minLength": 1 },
+        "text": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "channel_id": { "type": "string" },
+        "ts": { "type": "string" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_canvas_leaf": {
+      "description": "A link to a Slack canvas.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "file_id"],
+      "properties": {
+        "type": { "const": "canvas" },
+        "file_id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string" },
+        "hide_title": { "type": "boolean" },
+        "section_id": { "type": "string" },
+        "text": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "is_skill_invocation": { "type": "boolean" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_file_leaf": {
+      "description": "A link to a Slack file.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "file_id"],
+      "properties": {
+        "type": { "const": "file" },
+        "file_id": { "type": "string", "minLength": 1 },
+        "text": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "is_skill_invocation": { "type": "boolean" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
+    "rich_text_attachment_mention_leaf": {
+      "description": "A link to an app attachment or Work Object entity.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "url"],
+      "properties": {
+        "type": { "const": "attachment_mention" },
+        "url": { "type": "string", "format": "uri" },
+        "text": { "type": "string" },
+        "app_id": { "type": "string" },
+        "entity_id": { "type": "string" },
+        "icon_url": { "type": "string", "format": "uri" },
+        "channel_id": { "type": "string" },
+        "ts": { "type": "string" },
+        "full_size_preview_enabled": { "type": "boolean" },
+        "icon_name": { "type": "string" },
+        "reference_object_type": { "type": "string" },
+        "product_name": { "type": "string" },
+        "style": { "$ref": "#/$defs/rich_text_style_object" }
+      }
+    },
+
     "rich_text_leaf": {
-      "description": "Any of the 10 rich-text leaf element kinds.",
+      "description": "Any of the 15 rich-text leaf element kinds.",
       "oneOf": [
         { "$ref": "#/$defs/rich_text_text_leaf" },
         { "$ref": "#/$defs/rich_text_link_leaf" },
@@ -1023,7 +1118,12 @@
         { "$ref": "#/$defs/rich_text_emoji_leaf" },
         { "$ref": "#/$defs/rich_text_broadcast_leaf" },
         { "$ref": "#/$defs/rich_text_color_leaf" },
-        { "$ref": "#/$defs/rich_text_date_leaf" }
+        { "$ref": "#/$defs/rich_text_date_leaf" },
+        { "$ref": "#/$defs/rich_text_message_mention_leaf" },
+        { "$ref": "#/$defs/rich_text_workflow_mention_leaf" },
+        { "$ref": "#/$defs/rich_text_canvas_leaf" },
+        { "$ref": "#/$defs/rich_text_file_leaf" },
+        { "$ref": "#/$defs/rich_text_attachment_mention_leaf" }
       ]
     },
 
@@ -1128,6 +1228,39 @@
       }
     },
 
+    "auth_provider_block": {
+      "description": "Shows an authentication provider's icon, name and connection state with a Connect or Disconnect control. Not yet on docs.slack.dev; fields follow the Slack Java SDK's AuthProviderBlock (v1.53.0). auth_url and disconnect_url must be https on a host listed in the app manifest's features.user_connections.auth_hosts. fallback holds stable blocks for clients that don't recognize auth_provider.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value", "name", "is_connected"],
+      "properties": {
+        "type": { "const": "auth_provider" },
+        "value": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "name": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "is_connected": { "type": "boolean" },
+        "description": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
+        },
+        "icon_url": { "type": "string", "format": "uri", "pattern": "^https://", "maxLength": 3000 },
+        "auth_url": { "type": "string", "format": "uri", "pattern": "^https://", "maxLength": 3000 },
+        "disconnect_url": { "type": "string", "format": "uri", "pattern": "^https://", "maxLength": 3000 },
+        "connected_identity": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "connected_context": {
+          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 75 } } }]
+        },
+        "accessory": { "$ref": "#/$defs/overflow_element" },
+        "fallback": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fallback_block" }
+        },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
     "card_block": {
       "description": "At least one of hero_image, title, actions, or body is required.",
       "type": "object",
@@ -1179,7 +1312,7 @@
     },
 
     "container_child_block": {
-      "description": "A block allowed inside a container block's child_blocks array. Slack documents this set as: actions, context, divider, file, header, image, input, rich_text, section, table, video (https://docs.slack.dev/reference/block-kit/blocks/container-block). Notably excludes container itself (no nesting) and message-only chrome like card/carousel/markdown.",
+      "description": "A block allowed inside a container block's child_blocks array. Slack documents this set as: actions, context, divider, file, header, image, input, rich_text, section, table, video (https://docs.slack.dev/reference/block-kit/blocks/container-block), plus layout, which the layout block reference allows to nest in a container. Notably excludes container itself and message-only chrome like card/carousel/markdown.",
       "oneOf": [
         { "$ref": "#/$defs/actions_block" },
         { "$ref": "#/$defs/context_block" },
@@ -1188,6 +1321,7 @@
         { "$ref": "#/$defs/header_block" },
         { "$ref": "#/$defs/image_block" },
         { "$ref": "#/$defs/input_block" },
+        { "$ref": "#/$defs/layout_block" },
         { "$ref": "#/$defs/rich_text_block" },
         { "$ref": "#/$defs/section_block" },
         { "$ref": "#/$defs/table_block" },
@@ -1196,23 +1330,26 @@
     },
 
     "container_block": {
-      "description": "A general-purpose wrapper that groups child blocks into a single, optionally collapsible unit with a configurable width. Messages only (https://docs.slack.dev/reference/block-kit/blocks/container-block). default_collapsed only takes effect when is_collapsible is true; the schema rejects default_collapsed: true without is_collapsible: true.",
+      "description": "A general-purpose wrapper that groups child blocks into a single, optionally collapsible unit with a configurable width. Messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/container-block). At least one of title or rich_text_title is required; Slack renders rich_text_title when both are present. default_collapsed only takes effect when is_collapsible is true; the schema rejects default_collapsed: true without is_collapsible: true. has_header_divider only applies when the block is not collapsible; Slack ignores it otherwise, so the schema accepts it either way.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "title", "child_blocks"],
+      "required": ["type", "child_blocks"],
+      "anyOf": [{ "required": ["title"] }, { "required": ["rich_text_title"] }],
       "properties": {
         "type": { "const": "container" },
         "block_id": { "$ref": "#/$defs/block_id" },
         "title": {
           "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
         },
+        "rich_text_title": { "$ref": "#/$defs/rich_text_block" },
         "subtitle": {
-          "allOf": [{ "$ref": "#/$defs/plain_text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
+          "allOf": [{ "$ref": "#/$defs/text_object" }, { "properties": { "text": { "maxLength": 150 } } }]
         },
         "icon": { "$ref": "#/$defs/image_element" },
         "width": { "enum": ["narrow", "standard", "wide", "full"] },
         "is_collapsible": { "type": "boolean" },
         "default_collapsed": { "type": "boolean" },
+        "has_header_divider": { "type": "boolean" },
         "child_blocks": {
           "type": "array",
           "minItems": 1,
@@ -1353,45 +1490,69 @@
       ]
     },
 
-    "data_table_cell": {
-      "description": "A cell inside a data_table_block row. `raw_text` / `raw_number` for simple values, `rich_text` for formatted content. Per https://docs.slack.dev/reference/block-kit/blocks/data-table-block. The docs' per-cell schemas list `properties` without a `required` array; we mirror `table_cell` and require the value-bearing field(s). The rule 'the first (header) row cannot contain rich_text cells' is a row-position constraint JSON Schema can't express and is not enforced here.",
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["type", "text"],
-          "properties": {
-            "type": { "const": "raw_text" },
-            "text": { "type": "string", "minLength": 1 }
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["type", "value"],
-          "properties": {
-            "type": { "const": "raw_number" },
-            "value": { "type": "number" },
-            "text": { "type": "string", "minLength": 1 }
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["type", "elements"],
-          "properties": {
-            "type": { "const": "rich_text" },
-            "elements": {
-              "type": "array",
-              "items": { "$ref": "#/$defs/rich_text_container_element" }
-            }
-          }
+    "data_table_raw_text_cell": {
+      "description": "Plain text cell in a data_table_block row.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "text"],
+      "properties": {
+        "type": { "const": "raw_text" },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "data_table_raw_number_cell": {
+      "description": "Numeric cell in a table_block or data_table_block row. In a data_table_block, a column of only raw_number cells sorts numerically.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {
+        "type": { "const": "raw_number" },
+        "value": { "type": "number" },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "data_table_rich_text_cell": {
+      "description": "Formatted cell in a data_table_block row. Not allowed in the header (first) row, which is not enforced here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "elements"],
+      "properties": {
+        "type": { "const": "rich_text" },
+        "elements": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/rich_text_container_element" }
         }
+      }
+    },
+
+    "data_table_action_cell": {
+      "description": "Button cell; clicks send a block_actions payload. Only valid in data_table_block, not table_block. `fallback` renders instead on clients without action-cell support.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "element"],
+      "properties": {
+        "type": { "const": "action_cell" },
+        "element": { "$ref": "#/$defs/button_element" },
+        "fallback": {
+          "oneOf": [{ "$ref": "#/$defs/data_table_raw_text_cell" }, { "$ref": "#/$defs/data_table_raw_number_cell" }]
+        }
+      }
+    },
+
+    "data_table_cell": {
+      "description": "A cell inside a data_table_block row (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). The docs' per-cell schemas list `properties` without a `required` array; we mirror `table_cell` and require the value-bearing field(s).",
+      "oneOf": [
+        { "$ref": "#/$defs/data_table_raw_text_cell" },
+        { "$ref": "#/$defs/data_table_raw_number_cell" },
+        { "$ref": "#/$defs/data_table_rich_text_cell" },
+        { "$ref": "#/$defs/data_table_action_cell" }
       ]
     },
 
     "data_table_block": {
-      "description": "Rich, interactive table with pagination, sorting, and filtering (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). Distinct from `table_block`, which is a simpler static table. The single-table and aggregate 10,000-character limits are payload-level rules not enforced here. `row_header_column_index` must point at an existing column, a cross-field rule JSON Schema can't check (bounded to 0–19 since a row has at most 20 cells).",
+      "description": "Rich, interactive table with pagination, sorting, and filtering (https://docs.slack.dev/reference/block-kit/blocks/data-table-block). Distinct from `table_block`, which is a simpler static table. The single-table and per-message aggregate 20,000-character cell limits (action_cell button text included) are payload-level rules not enforced here, nor is the rule that every row has the same number of cells. `row_header_column_index` must point at an existing column, a cross-field rule JSON Schema can't check (bounded to 0–19 since a row has at most 20 cells).",
       "type": "object",
       "additionalProperties": false,
       "required": ["type", "caption", "rows"],
@@ -1402,10 +1563,10 @@
         "page_size": { "type": "integer", "minimum": 1, "maximum": 100 },
         "row_header_column_index": { "type": "integer", "minimum": 0, "maximum": 19 },
         "rows": {
-          "description": "First row is the header; 2–101 rows total (1 header + 1–100 data rows), 1–20 cells per row.",
+          "description": "First row is the header; 2–201 rows total (1 header + 1–200 data rows), 1–20 cells per row.",
           "type": "array",
           "minItems": 2,
-          "maxItems": 101,
+          "maxItems": 201,
           "items": {
             "type": "array",
             "minItems": 1,
@@ -1417,7 +1578,7 @@
     },
 
     "data_visualization_block": {
-      "description": "Renders data as a line, bar, area, or pie chart. Messages only (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.",
+      "description": "Renders data as a line, bar, area, or pie chart. Messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block). Slack renders at most two data_visualization blocks per message (enforced via the checkDataVisualizationMax helper, since JSON Schema can't count sibling blocks). Two further runtime rules are enforced via checkDataVisualizationConsistency, since they depend on sibling-field values JSON Schema can't compare: series names must be unique within a chart, and each series must contain exactly one data point per axis_config.categories label.",
       "type": "object",
       "additionalProperties": false,
       "required": ["type", "title", "chart"],
@@ -1523,6 +1684,93 @@
       ]
     },
 
+    "fallback_block": {
+      "description": "A stable block a client that doesn't support a newer block renders in its place. Slack allows only context, divider, header, image, rich_text, section, table and video here (https://docs.slack.dev/reference/block-kit/blocks/layout-block#fallback).",
+      "oneOf": [
+        { "$ref": "#/$defs/context_block" },
+        { "$ref": "#/$defs/divider_block" },
+        { "$ref": "#/$defs/header_block" },
+        { "$ref": "#/$defs/image_block" },
+        { "$ref": "#/$defs/rich_text_block" },
+        { "$ref": "#/$defs/section_block" },
+        { "$ref": "#/$defs/table_block" },
+        { "$ref": "#/$defs/video_block" }
+      ]
+    },
+
+    "layout_child_block": {
+      "description": "A block allowed as a layout item's block: actions, alert, card, carousel, container, context, data_table, data_visualization, divider, file, header, image, input, rich_text, section, table, video (https://docs.slack.dev/reference/block-kit/blocks/layout-block#allowed-children). Markdown and layout itself are rejected; a layout reaches another layout only through a container, and checkLayoutRules caps that nesting at two levels.",
+      "oneOf": [
+        { "$ref": "#/$defs/actions_block" },
+        { "$ref": "#/$defs/alert_block" },
+        { "$ref": "#/$defs/card_block" },
+        { "$ref": "#/$defs/carousel_block" },
+        { "$ref": "#/$defs/container_block" },
+        { "$ref": "#/$defs/context_block" },
+        { "$ref": "#/$defs/data_table_block" },
+        { "$ref": "#/$defs/data_visualization_block" },
+        { "$ref": "#/$defs/divider_block" },
+        { "$ref": "#/$defs/file_block" },
+        { "$ref": "#/$defs/header_block" },
+        { "$ref": "#/$defs/image_block" },
+        { "$ref": "#/$defs/input_block" },
+        { "$ref": "#/$defs/rich_text_block" },
+        { "$ref": "#/$defs/section_block" },
+        { "$ref": "#/$defs/table_block" },
+        { "$ref": "#/$defs/video_block" }
+      ]
+    },
+
+    "layout_item": {
+      "description": "One cell of a layout row. width is a proportional weight (narrow 1, standard 2, wide 3); horizontal_alignment positions the block inside its cell and fills the cell when omitted.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["block"],
+      "properties": {
+        "block": { "$ref": "#/$defs/layout_child_block" },
+        "width": { "enum": ["narrow", "standard", "wide"] },
+        "horizontal_alignment": { "enum": ["start", "center", "end"] }
+      }
+    },
+
+    "layout_row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/layout_item" }
+        }
+      }
+    },
+
+    "layout_block": {
+      "description": "Arranges child blocks into a grid of 1-5 rows of 1-3 items. Modals, Messages and Home tabs (https://docs.slack.dev/reference/block-kit/blocks/layout-block). Children follow the host surface's block rules; carousel, data_table and data_visualization can't share a row with one another; fallback replaces the layout on clients that don't support it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "label", "rows"],
+      "properties": {
+        "type": { "const": "layout" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "is_label_visible": { "type": "boolean" },
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": { "$ref": "#/$defs/layout_row" }
+        },
+        "grid_lines": { "enum": ["none", "rows", "outer"] },
+        "fallback": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fallback_block" }
+        },
+        "block_id": { "$ref": "#/$defs/block_id" }
+      }
+    },
+
     "markdown_block": {
       "description": "block_id is ignored on markdown blocks. Cumulative 12,000-char limit across all markdown blocks in one payload is a payload-level rule, not enforced here.",
       "type": "object",
@@ -1611,7 +1859,7 @@
     },
 
     "table_cell": {
-      "description": "A cell inside a table_block row. Either raw_text or rich_text.",
+      "description": "A cell inside a table_block row. One of raw_text, raw_number or rich_text.",
       "oneOf": [
         {
           "type": "object",
@@ -1622,6 +1870,7 @@
             "text": { "type": "string" }
           }
         },
+        { "$ref": "#/$defs/data_table_raw_number_cell" },
         {
           "type": "object",
           "additionalProperties": false,
@@ -1737,6 +1986,7 @@
       "oneOf": [
         { "$ref": "#/$defs/actions_block" },
         { "$ref": "#/$defs/alert_block" },
+        { "$ref": "#/$defs/auth_provider_block" },
         { "$ref": "#/$defs/card_block" },
         { "$ref": "#/$defs/carousel_block" },
         { "$ref": "#/$defs/container_block" },
@@ -1749,6 +1999,7 @@
         { "$ref": "#/$defs/header_block" },
         { "$ref": "#/$defs/image_block" },
         { "$ref": "#/$defs/input_block" },
+        { "$ref": "#/$defs/layout_block" },
         { "$ref": "#/$defs/markdown_block" },
         { "$ref": "#/$defs/plan_block" },
         { "$ref": "#/$defs/rich_text_block" },

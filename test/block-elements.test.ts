@@ -622,6 +622,16 @@ describe("block elements", () => {
       ).toBe(true);
     });
 
+    it("accepts min_lines and max_lines within 1-100", () => {
+      expect(validate({ type: "rich_text_input", action_id: "rt1", min_lines: 3, max_lines: 100 })).toBe(true);
+    });
+
+    it("rejects out-of-range or non-integer min_lines / max_lines", () => {
+      expect(validate({ type: "rich_text_input", action_id: "rt1", min_lines: 0 })).toBe(false);
+      expect(validate({ type: "rich_text_input", action_id: "rt1", max_lines: 101 })).toBe(false);
+      expect(validate({ type: "rich_text_input", action_id: "rt1", max_lines: 2.5 })).toBe(false);
+    });
+
     it("rejects missing action_id (required)", () => {
       expect(validate({ type: "rich_text_input" })).toBe(false);
     });

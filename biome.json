@@ -20,6 +20,15 @@
     "lineWidth": 120
   },
   "files": {
-    "includes": ["src/**", "test/**", "worker/src/**", "worker/*.json", "*.ts", "*.json"]
+    "includes": [
+      "src/**",
+      "!src/precompiled-validators.js",
+      "!src/precompiled-validators.d.ts",
+      "test/**",
+      "worker/src/**",
+      "worker/*.json",
+      "*.ts",
+      "*.json"
+    ]
   }
 }

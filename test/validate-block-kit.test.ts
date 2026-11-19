@@ -147,6 +147,51 @@ describe("validateBlockKit", () => {
       expect(result.errors.some((e) => e.includes("'Xyz'"))).toBe(true);
     });
 
+    describe("data_table action_cell", () => {
+      const markDone = (value: string) => ({
+        type: "button",
+        text: { type: "plain_text", text: "Mark done" },
+        action_id: "mark_done",
+        value,
+      });
+      const table = (...actionCells: unknown[]) => ({
+        type: "data_table",
+        caption: "Tasks",
+        rows: [
+          [
+            { type: "raw_text", text: "Task" },
+            { type: "raw_text", text: "Action" },
+          ],
+          ...actionCells.map((cell, i) => [{ type: "raw_text", text: `Task ${i}` }, cell]),
+        ],
+      });
+
+      it("accepts action cells on message and home surfaces", () => {
+        const blocks = [
+          table({ type: "action_cell", element: markDone("task_1"), fallback: { type: "raw_text", text: "Open" } }),
+        ];
+        expect(validateBlockKit(blocks, { surface: "message" })).toEqual({ valid: true, errors: [] });
+        expect(validateBlockKit({ type: "home", blocks }, { target: "home" })).toEqual({ valid: true, errors: [] });
+      });
+
+      it("accepts rows sharing an action_id, since the button value identifies the row", () => {
+        const result = validateBlockKit([
+          table(
+            { type: "action_cell", element: markDone("task_1") },
+            { type: "action_cell", element: markDone("task_2") },
+          ),
+        ]);
+        expect(result).toEqual({ valid: true, errors: [] });
+      });
+
+      it("rejects a non-button element", () => {
+        const iconButton = { type: "icon_button", icon: "trash", text: { type: "plain_text", text: "Delete" } };
+        const result = validateBlockKit([table({ type: "action_cell", element: iconButton })]);
+        expect(result.valid).toBe(false);
+        expect(result.errors).toContain('blocks[0].rows[1][1].element.type: expected "button"');
+      });
+    });
+
     it("flags duplicate block_ids", () => {
       const result = validateBlockKit([
         { type: "divider", block_id: "x" },
@@ -416,6 +461,73 @@ describe("validateBlockKit", () => {
       expect(result.valid).toBe(true);
     });
 
+    // Slack lists all three as "Messages, Home tabs" (blocks.json and each
+    // block's reference page), and none of them on modals.
+    const messageAndHomeBlocks = [
+      {
+        type: "container",
+        rich_text_title: {
+          type: "rich_text",
+          elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "Weekly summary" }] }],
+        },
+        subtitle: { type: "mrkdwn", text: "*3* updates" },
+        has_header_divider: true,
+        child_blocks: [{ type: "section", text: { type: "mrkdwn", text: "All caught up" } }],
+      },
+      {
+        type: "data_table",
+        caption: "Stats",
+        rows: [
+          [
+            { type: "raw_text", text: "Name" },
+            { type: "raw_text", text: "Count" },
+          ],
+          [
+            { type: "raw_text", text: "ana" },
+            { type: "raw_number", value: 7, text: "7" },
+          ],
+        ],
+      },
+      {
+        type: "data_visualization",
+        title: "Signups",
+        chart: {
+          type: "pie",
+          segments: [
+            { label: "Web", value: 10 },
+            { label: "Mobile", value: 5 },
+          ],
+        },
+      },
+    ];
+
+    it("accepts a home view containing container, data_table, and data_visualization blocks", () => {
+      const result = validateBlockKit({ type: "home", blocks: messageAndHomeBlocks }, { target: "home" });
+      expect(result.errors).toEqual([]);
+      expect(result.valid).toBe(true);
+    });
+
+    it.each(messageAndHomeBlocks.map((block) => [block.type, block] as const))(
+      "accepts a home view containing only a %s block",
+      (_type, block) => {
+        const result = validateBlockKit({ type: "home", blocks: [block] }, { target: "home" });
+        expect(result.errors).toEqual([]);
+        expect(result.valid).toBe(true);
+      },
+    );
+
+    it.each(messageAndHomeBlocks.map((block) => [block.type, block] as const))(
+      "still rejects a %s block in a modal view",
+      (type, block) => {
+        const result = validateBlockKit(
+          { type: "modal", title: { type: "plain_text", text: "M" }, blocks: [block] },
+          { target: "modal" },
+        );
+        expect(result.valid).toBe(false);
+        expect(result.errors).toContain(`blocks[0].type '${type}' is not allowed on surface 'modal'`);
+      },
+    );
+
     it("accepts home view with input block (home tabs support input)", () => {
       const result = validateBlockKit(
         {
@@ -432,5 +544,35 @@ describe("validateBlockKit", () => {
       );
       expect(result.valid).toBe(true);
     });
+  });
+});
+
+describe("validateBlockKit — layout", () => {
+  const section = { type: "section", text: { type: "mrkdwn", text: "x" } };
+  const layout = (block: unknown) => ({ type: "layout", label: "L", rows: [{ items: [{ block }] }] });
+
+  it("accepts a layout of sections on a message", () => {
+    expect(validateBlockKit([layout(section)], { surface: "message" })).toEqual({ valid: true, errors: [] });
+  });
+
+  it("rejects a layout child the surface doesn't allow", () => {
+    const result = validateBlockKit([layout({ type: "alert", text: { type: "plain_text", text: "a" } })], {
+      surface: "message",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      "blocks[0].rows[0].items[0].block.type 'alert' is not allowed on surface 'message'",
+    );
+  });
+
+  it("rejects layout nested three levels deep", () => {
+    const container = (child: unknown) => ({
+      type: "container",
+      title: { type: "plain_text", text: "C" },
+      child_blocks: [child],
+    });
+    const result = validateBlockKit([layout(container(layout(section)))]);
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toContain("can nest at most 2 levels deep");
   });
 });

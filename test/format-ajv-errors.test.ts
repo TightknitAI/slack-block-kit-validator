@@ -112,9 +112,69 @@ describe("error formatting", () => {
     });
 
     it("const → expected '<value>'", () => {
+      // A header's text can only be plain_text, so this is a single const.
+      const result = validateBlockKit([{ type: "header", text: { type: "mrkdwn", text: "hi" } }]);
+      expect(result.errors).toEqual(['blocks[0].text.type: expected "plain_text"']);
+    });
+  });
+
+  describe("element unions narrowed to the element's own kind", () => {
+    const button = { type: "button", text: { type: "plain_text", text: "Go" }, action_id: "go" };
+
+    it("reports only the failing field of an element in a union of element kinds", () => {
+      // Pre-narrowing this was 23 errors: the real one plus a mismatch against
+      // every other kind an actions block accepts.
+      const result = validateBlockKit([
+        { type: "actions", elements: [{ ...button, url: `https://example.com/?q=${"a".repeat(3000)}` }] },
+      ]);
+      expect(result.errors).toEqual(["blocks[0].elements[0].url: longer than 3000 characters"]);
+    });
+
+    it("narrows a section accessory", () => {
+      const result = validateBlockKit([
+        { type: "section", text: { type: "mrkdwn", text: "x" }, accessory: { type: "overflow", action_id: "o" } },
+      ]);
+      expect(result.errors).toEqual(["blocks[0].accessory: missing required property 'options'"]);
+    });
+
+    it("narrows unions nested in unions (rich text)", () => {
+      const result = validateBlockKit([
+        { type: "rich_text", elements: [{ type: "rich_text_section", elements: [{ type: "text" }] }] },
+      ]);
+      expect(result.errors).toEqual(["blocks[0].elements[0].elements[0]: missing required property 'text'"]);
+    });
+
+    it("names the kinds a slot takes for an element kind that doesn't exist", () => {
       const result = validateBlockKit([{ type: "section", text: { type: "bogus", text: "hi" } }]);
-      // text.type is a const("plain_text") or const("mrkdwn"), so we expect a const-style message.
-      expect(result.errors.some((e) => /expected "plain_text"|expected "mrkdwn"/.test(e))).toBe(true);
+      expect(result.errors).toEqual(['blocks[0].text.type: expected one of ["plain_text", "mrkdwn"]']);
+    });
+
+    it("names the kinds a slot takes for a real element kind it doesn't take", () => {
+      const result = validateBlockKit([{ type: "context_actions", elements: [button] }]);
+      expect(result.errors).toEqual([
+        'blocks[0].elements[0].type: expected one of ["feedback_buttons", "icon_button"]',
+      ]);
+    });
+
+    it("reports a single missing type for an element without one", () => {
+      const result = validateBlockKit([{ type: "actions", elements: [{ text: { type: "plain_text", text: "Go" } }] }]);
+      expect(result.errors).toEqual(["blocks[0].elements[0]: missing required property 'type'"]);
+    });
+
+    it("keeps the errors of every element, not just the first", () => {
+      const result = validateBlockKit([
+        {
+          type: "actions",
+          elements: [
+            { ...button, action_id: "a", url: `https://example.com/?q=${"a".repeat(3000)}` },
+            { type: "overflow", action_id: "b" },
+          ],
+        },
+      ]);
+      expect(result.errors).toEqual([
+        "blocks[0].elements[0].url: longer than 3000 characters",
+        "blocks[0].elements[1]: missing required property 'options'",
+      ]);
     });
   });
 });

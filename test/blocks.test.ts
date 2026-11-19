@@ -1,3 +1,4 @@
+import { validateBlockKit } from "../src/validate-block-kit";
 import { compileDef } from "./helpers/compile-def";
 
 const button = {
@@ -175,6 +176,133 @@ describe("blocks", () => {
     });
   });
 
+  describe("auth_provider_block", () => {
+    const validate = compileDef("auth_provider_block");
+    const name = { type: "plain_text", text: "Acme" };
+    const minimal = { type: "auth_provider", value: "acme", name, is_connected: false };
+
+    it("accepts the required fields only", () => {
+      expect(validate(minimal)).toBe(true);
+    });
+
+    it("accepts every field", () => {
+      expect(
+        validate({
+          ...minimal,
+          block_id: "auth1",
+          is_connected: true,
+          description: { type: "plain_text", text: "Search Acme docs" },
+          icon_url: "https://acme.example.com/icon.png",
+          auth_url: "https://acme.example.com/oauth",
+          disconnect_url: "https://acme.example.com/disconnect",
+          connected_identity: { type: "plain_text", text: "jane@acme.example.com" },
+          connected_context: { type: "plain_text", text: "Acme Corp" },
+          accessory: {
+            type: "overflow",
+            action_id: "acme_menu",
+            options: [
+              { text: { type: "plain_text", text: "Switch accounts" }, value: "switch" },
+              { text: { type: "plain_text", text: "Disconnect" }, value: "disconnect" },
+            ],
+          },
+          fallback: [{ type: "section", text: { type: "mrkdwn", text: "Connected to Acme" } }],
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects a missing value, name or is_connected", () => {
+      for (const key of ["value", "name", "is_connected"] as const) {
+        const { [key]: _omitted, ...rest } = minimal;
+        expect(validate(rest)).toBe(false);
+      }
+    });
+
+    it("rejects a value over 150 characters and a name over 75", () => {
+      expect(validate({ ...minimal, value: "v".repeat(151) })).toBe(false);
+      expect(validate({ ...minimal, name: { type: "plain_text", text: "n".repeat(76) } })).toBe(false);
+    });
+
+    it("rejects a non-https auth_url", () => {
+      expect(validate({ ...minimal, auth_url: "http://acme.example.com/oauth" })).toBe(false);
+    });
+
+    it("rejects an accessory that isn't an overflow menu", () => {
+      expect(validate({ ...minimal, accessory: button })).toBe(false);
+    });
+  });
+
+  describe("layout_block", () => {
+    const validate = compileDef("layout_block");
+    const section = (text: string) => ({ type: "section", text: { type: "mrkdwn", text } });
+    const row = (...blocks: unknown[]) => ({ items: blocks.map((block) => ({ block })) });
+    const minimal = { type: "layout", label: "Deal summary", rows: [row(section("Stage"))] };
+
+    it("accepts a minimal layout", () => {
+      expect(validate(minimal)).toBe(true);
+    });
+
+    it("accepts every documented field", () => {
+      expect(
+        validate({
+          type: "layout",
+          block_id: "deal",
+          label: "Deal summary",
+          is_label_visible: true,
+          grid_lines: "rows",
+          rows: [
+            row(section("Stage"), section("Amount"), section("Close")),
+            row(section("Next steps")),
+            {
+              items: [
+                {
+                  block: { type: "actions", elements: [button] },
+                  width: "narrow",
+                  horizontal_alignment: "end",
+                },
+              ],
+            },
+          ],
+          fallback: [section("Stage: Proposal"), { type: "divider" }],
+        }),
+      ).toBe(true);
+    });
+
+    it("accepts a container child holding blocks", () => {
+      const container = { type: "container", title: { type: "plain_text", text: "C" }, child_blocks: [section("x")] };
+      expect(validate({ ...minimal, rows: [row(container)] })).toBe(true);
+    });
+
+    it("rejects a missing label or rows, and a label over 150 characters", () => {
+      expect(validate({ type: "layout", rows: minimal.rows })).toBe(false);
+      expect(validate({ type: "layout", label: "L" })).toBe(false);
+      expect(validate({ ...minimal, label: "l".repeat(151) })).toBe(false);
+    });
+
+    it("rejects 0 or 6 rows, and 0 or 4 items in a row", () => {
+      expect(validate({ ...minimal, rows: [] })).toBe(false);
+      expect(validate({ ...minimal, rows: Array.from({ length: 6 }, () => row(section("r"))) })).toBe(false);
+      expect(validate({ ...minimal, rows: [{ items: [] }] })).toBe(false);
+      expect(validate({ ...minimal, rows: [row(section("a"), section("b"), section("c"), section("d"))] })).toBe(false);
+    });
+
+    it("rejects a markdown or layout child", () => {
+      expect(validate({ ...minimal, rows: [row({ type: "markdown", text: "**hi**" })] })).toBe(false);
+      expect(validate({ ...minimal, rows: [row(minimal)] })).toBe(false);
+    });
+
+    it("rejects an unknown width, alignment or grid_lines value", () => {
+      expect(validate({ ...minimal, rows: [{ items: [{ block: section("a"), width: "full" }] }] })).toBe(false);
+      expect(validate({ ...minimal, rows: [{ items: [{ block: section("a"), horizontal_alignment: "left" }] }] })).toBe(
+        false,
+      );
+      expect(validate({ ...minimal, grid_lines: "columns" })).toBe(false);
+    });
+
+    it("rejects a fallback block outside the stable set", () => {
+      expect(validate({ ...minimal, fallback: [{ type: "actions", elements: [button] }] })).toBe(false);
+    });
+  });
+
   describe("container_block", () => {
     const validate = compileDef("container_block");
     const title = { type: "plain_text", text: "Bulk update" };
@@ -216,6 +344,49 @@ describe("blocks", () => {
       expect(validate({ type: "container", title })).toBe(false);
     });
 
+    describe("rich_text_title", () => {
+      const richTextTitle = {
+        type: "rich_text",
+        elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "Bulk", style: { bold: true } }] }],
+      };
+
+      it("accepts rich_text_title in place of title", () => {
+        expect(validate({ type: "container", rich_text_title: richTextTitle, child_blocks: [section] })).toBe(true);
+      });
+
+      it("accepts both title and rich_text_title (rich_text_title takes precedence in Slack)", () => {
+        expect(validate({ type: "container", title, rich_text_title: richTextTitle, child_blocks: [section] })).toBe(
+          true,
+        );
+      });
+
+      it("rejects a rich_text_title that is not a rich_text block", () => {
+        expect(validate({ type: "container", rich_text_title: title, child_blocks: [section] })).toBe(false);
+        expect(
+          validate({ type: "container", rich_text_title: { type: "section", text: title }, child_blocks: [section] }),
+        ).toBe(false);
+      });
+
+      it("reports a missing-title error when neither title nor rich_text_title is set", () => {
+        const result = validateBlockKit([{ type: "container", child_blocks: [section] }]);
+        expect(result.valid).toBe(false);
+        expect(result.errors).toContain("blocks[0]: missing required property 'title'");
+        expect(result.errors).toContain("blocks[0]: missing required property 'rich_text_title'");
+      });
+    });
+
+    it("accepts has_header_divider on non-collapsible and collapsible containers", () => {
+      expect(validate({ type: "container", title, has_header_divider: true, child_blocks: [section] })).toBe(true);
+      // Slack ignores it when collapsible; the payload is still valid.
+      expect(
+        validate({ type: "container", title, is_collapsible: true, has_header_divider: true, child_blocks: [section] }),
+      ).toBe(true);
+    });
+
+    it("rejects a non-boolean has_header_divider", () => {
+      expect(validate({ type: "container", title, has_header_divider: "yes", child_blocks: [section] })).toBe(false);
+    });
+
     it("rejects empty and >10 child_blocks", () => {
       expect(validate({ type: "container", title, child_blocks: [] })).toBe(false);
       expect(validate({ type: "container", title, child_blocks: Array(11).fill(section) })).toBe(false);
@@ -236,15 +407,29 @@ describe("blocks", () => {
       expect(validate({ type: "container", title, width: "huge", child_blocks: [section] })).toBe(false);
     });
 
-    it("rejects an mrkdwn subtitle (title and subtitle are plain_text only)", () => {
+    it("accepts an mrkdwn subtitle", () => {
       expect(
         validate({
           type: "container",
           title,
-          subtitle: { type: "mrkdwn", text: "nope" },
+          subtitle: { type: "mrkdwn", text: "*3* pending" },
           child_blocks: [section],
         }),
-      ).toBe(false);
+      ).toBe(true);
+    });
+
+    it("rejects an mrkdwn title (title is plain_text only)", () => {
+      expect(validate({ type: "container", title: { type: "mrkdwn", text: "nope" }, child_blocks: [section] })).toBe(
+        false,
+      );
+    });
+
+    it("rejects a subtitle > 150 chars in either text type", () => {
+      for (const t of ["plain_text", "mrkdwn"]) {
+        expect(
+          validate({ type: "container", title, subtitle: { type: t, text: "x".repeat(151) }, child_blocks: [section] }),
+        ).toBe(false);
+      }
     });
 
     it("rejects default_collapsed without is_collapsible: true", () => {
@@ -382,10 +567,13 @@ describe("blocks", () => {
       expect(validate({ type: "data_table", caption: "Stats", rows: [header] })).toBe(false);
     });
 
-    it("rejects more than 101 rows and more than 20 cells per row", () => {
-      expect(validate({ type: "data_table", caption: "Stats", rows: Array.from({ length: 102 }, () => header) })).toBe(
-        false,
-      );
+    it("accepts 201 rows (header + 200 data rows) and rejects 202", () => {
+      const rows = (n: number) => [header, ...Array.from({ length: n - 1 }, () => dataRow)];
+      expect(validate({ type: "data_table", caption: "Stats", rows: rows(201) })).toBe(true);
+      expect(validate({ type: "data_table", caption: "Stats", rows: rows(202) })).toBe(false);
+    });
+
+    it("rejects more than 20 cells per row", () => {
       const wideRow = Array.from({ length: 21 }, () => ({ type: "raw_text", text: "x" }));
       expect(validate({ type: "data_table", caption: "Stats", rows: [wideRow, wideRow] })).toBe(false);
     });
@@ -410,6 +598,85 @@ describe("blocks", () => {
       ];
       expect(validate({ type: "data_table", caption: "Stats", rows: [header, badCell] })).toBe(false);
       expect(validate({ type: "data_table", caption: "Stats", rows: [header, dataRow], extra: 1 })).toBe(false);
+    });
+
+    describe("action_cell", () => {
+      const actionButton = {
+        type: "button",
+        text: { type: "plain_text", text: "Mark done" },
+        action_id: "mark_done",
+        value: "task_123",
+      };
+      const tableWith = (cell: unknown) => ({
+        type: "data_table",
+        caption: "Tasks",
+        rows: [header, [{ type: "raw_text", text: "ana" }, cell]],
+      });
+
+      it("accepts a button element with and without a fallback", () => {
+        expect(validate(tableWith({ type: "action_cell", element: actionButton }))).toBe(true);
+        expect(
+          validate(
+            tableWith({ type: "action_cell", element: actionButton, fallback: { type: "raw_text", text: "Open" } }),
+          ),
+        ).toBe(true);
+        expect(
+          validate(
+            tableWith({
+              type: "action_cell",
+              element: actionButton,
+              fallback: { type: "raw_number", value: 1, text: "1" },
+            }),
+          ),
+        ).toBe(true);
+      });
+
+      it("rejects a missing element", () => {
+        expect(validate(tableWith({ type: "action_cell", fallback: { type: "raw_text", text: "Open" } }))).toBe(false);
+      });
+
+      it("rejects a non-button element", () => {
+        const overflow = {
+          type: "overflow",
+          action_id: "more",
+          options: [
+            { text: { type: "plain_text", text: "a" }, value: "a" },
+            { text: { type: "plain_text", text: "b" }, value: "b" },
+          ],
+        };
+        const iconButton = { type: "icon_button", icon: "trash", text: { type: "plain_text", text: "Delete" } };
+        expect(validate(tableWith({ type: "action_cell", element: overflow }))).toBe(false);
+        expect(validate(tableWith({ type: "action_cell", element: iconButton }))).toBe(false);
+      });
+
+      it("rejects an invalid button", () => {
+        const longLabel = { ...actionButton, text: { type: "plain_text", text: "x".repeat(76) } };
+        expect(validate(tableWith({ type: "action_cell", element: longLabel }))).toBe(false);
+      });
+
+      it("rejects a fallback that is not a raw_text or raw_number cell", () => {
+        const richFallback = {
+          type: "rich_text",
+          elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "Open" }] }],
+        };
+        expect(validate(tableWith({ type: "action_cell", element: actionButton, fallback: richFallback }))).toBe(false);
+        expect(
+          validate(
+            tableWith({
+              type: "action_cell",
+              element: actionButton,
+              fallback: { type: "action_cell", element: actionButton },
+            }),
+          ),
+        ).toBe(false);
+        expect(
+          validate(tableWith({ type: "action_cell", element: actionButton, fallback: { type: "raw_text", text: "" } })),
+        ).toBe(false);
+      });
+
+      it("rejects additionalProperties", () => {
+        expect(validate(tableWith({ type: "action_cell", element: actionButton, text: "Mark done" }))).toBe(false);
+      });
     });
   });
 
@@ -1078,8 +1345,31 @@ describe("blocks", () => {
       ).toBe(true);
     });
 
+    it("accepts raw_number cells with and without display text", () => {
+      expect(
+        validate({
+          type: "table",
+          rows: [[cell, { type: "raw_number", value: 1200000, text: "$1.2M" }, { type: "raw_number", value: -0.5 }]],
+        }),
+      ).toBe(true);
+    });
+
+    it("rejects raw_number cells with a non-numeric value, empty text or no value", () => {
+      expect(validate({ type: "table", rows: [[{ type: "raw_number", value: "12" }]] })).toBe(false);
+      expect(validate({ type: "table", rows: [[{ type: "raw_number", value: 12, text: "" }]] })).toBe(false);
+      expect(validate({ type: "table", rows: [[{ type: "raw_number", text: "12" }]] })).toBe(false);
+    });
+
     it("rejects >100 rows", () => {
       expect(validate({ type: "table", rows: Array(101).fill([cell]) })).toBe(false);
+    });
+
+    it("rejects action_cell, which only data_table supports", () => {
+      const actionCell = {
+        type: "action_cell",
+        element: { type: "button", text: { type: "plain_text", text: "Go" }, action_id: "go" },
+      };
+      expect(validate({ type: "table", rows: [[cell], [actionCell]] })).toBe(false);
     });
 
     it("rejects >20 cells per row", () => {

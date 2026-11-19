@@ -271,6 +271,7 @@ const dataTableLeaderboard = stringify([
         { type: "raw_text", text: "Contributor" },
         { type: "raw_text", text: "Merged PRs" },
         { type: "raw_text", text: "Status" },
+        { type: "raw_text", text: "Review" },
       ],
       [
         { type: "raw_text", text: "ana" },
@@ -279,11 +280,31 @@ const dataTableLeaderboard = stringify([
           type: "rich_text",
           elements: [{ type: "rich_text_section", elements: [{ type: "text", text: "on track", style: { bold: true } }] }],
         },
+        {
+          type: "action_cell",
+          element: {
+            type: "button",
+            text: { type: "plain_text", text: "View PRs" },
+            action_id: "view_prs",
+            value: "ana",
+          },
+          fallback: { type: "raw_text", text: "View PRs" },
+        },
       ],
       [
         { type: "raw_text", text: "zach" },
         { type: "raw_number", value: 9, text: "9" },
         { type: "raw_text", text: "on track" },
+        {
+          type: "action_cell",
+          element: {
+            type: "button",
+            text: { type: "plain_text", text: "View PRs" },
+            action_id: "view_prs",
+            value: "zach",
+          },
+          fallback: { type: "raw_text", text: "View PRs" },
+        },
       ],
     ],
   },
@@ -361,6 +382,45 @@ const bulkUpdateContainer = stringify([
         ],
       },
     ],
+  },
+]);
+
+const dealSummaryLayout = stringify([
+  {
+    type: "layout",
+    block_id: "deal_summary",
+    label: "Deal summary",
+    is_label_visible: true,
+    grid_lines: "rows",
+    rows: [
+      {
+        items: [
+          { block: { type: "section", text: { type: "mrkdwn", text: "*Stage*\nProposal" } } },
+          { block: { type: "section", text: { type: "mrkdwn", text: "*Amount*\n$48,000" } } },
+          { block: { type: "section", text: { type: "mrkdwn", text: "*Close*\nNov 14" } } },
+        ],
+      },
+      {
+        items: [
+          {
+            block: {
+              type: "actions",
+              elements: [
+                {
+                  type: "button",
+                  text: { type: "plain_text", text: "Mark won" },
+                  style: "primary",
+                  action_id: "deal_won",
+                },
+              ],
+            },
+            width: "narrow",
+            horizontal_alignment: "end",
+          },
+        ],
+      },
+    ],
+    fallback: [{ type: "section", text: { type: "mrkdwn", text: "*Deal summary*: Proposal, $48,000, closes Nov 14" } }],
   },
 ]);
 
@@ -1050,6 +1110,14 @@ export const presets: Preset[] = [
     json: bulkUpdateContainer,
   },
   {
+    id: "deal-summary-layout",
+    label: "Layout block",
+    surface: "message",
+    blurb: "A layout arranging sections and actions into a grid, with a fallback for older clients.",
+    tone: "valid",
+    json: dealSummaryLayout,
+  },
+  {
     id: "two-tables",
     label: "Two table blocks",
     surface: "message",
@@ -1077,7 +1145,7 @@ export const presets: Preset[] = [
     id: "data-table",
     label: "Data table block",
     surface: "message",
-    blurb: "Interactive `data_table` with raw_text, raw_number, and rich_text cells.",
+    blurb: "Interactive `data_table` with raw_text, raw_number, rich_text, and action_cell (button) cells.",
     tone: "valid",
     json: dataTableLeaderboard,
   },

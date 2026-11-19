@@ -1,3 +1,5 @@
+import { nestedBlocks } from "./check-layout-rules.js";
+
 /**
  * Surfaces where Block Kit payloads are rendered. Each has a different set of
  * blocks/elements it accepts.
@@ -10,7 +12,7 @@ export type Surface = "message" | "modal" | "home";
 // subset of ["Modals", "Messages", "Home tabs"]. Whatever's missing from
 // that array is what we forbid here.
 //
-// Four entries below intentionally deviate from blocks.json — Slack's canonical
+// Three entries below intentionally deviate from blocks.json — Slack's canonical
 // data lists a surface where the block doesn't actually render. Each is
 // empirically grounded:
 //   • card / modals   — blocks.json lists Modals; fails to render there.
@@ -19,9 +21,10 @@ export type Surface = "message" | "modal" | "home";
 //     "You can't add this block to app surfaces directly...").
 //   • table / home tabs — blocks.json lists Home tabs; Tightknit testing shows
 //     the table block renders on messages only (modals and home drop it).
-//   • data_table / home tabs — same: blocks.json lists Home tabs, but as a
-//     table-family block it inherits table's messages-only behavior (mirrored
-//     for consistency, pending independent confirmation).
+//
+// data_table does NOT inherit table's home-tab deviation: blocks.json and its
+// reference page (https://docs.slack.dev/reference/block-kit/blocks/data-table-block)
+// both list Messages and Home tabs, so it follows the canonical data.
 const BLOCKS_NOT_ALLOWED_IN_MESSAGE = new Set(["alert", "file"]);
 
 const BLOCKS_NOT_ALLOWED_IN_MODAL = new Set([
@@ -40,10 +43,7 @@ const BLOCKS_NOT_ALLOWED_IN_MODAL = new Set([
 
 const BLOCKS_NOT_ALLOWED_IN_HOME = new Set([
   "alert",
-  "container",
   "context_actions",
-  "data_table",
-  "data_visualization",
   "file",
   "markdown",
   "plan",
@@ -65,6 +65,9 @@ const FORBIDDEN_BY_SURFACE: Record<Surface, Set<string>> = {
  * unconditionally so that modal/home payloads validate; the stricter message
  * cap is applied here once the surface is known.
  */
+/** Guards against adversarial payloads; layout nesting stops at two levels. */
+const MAX_WALK_DEPTH = 50;
+
 const MAX_BLOCKS_BY_SURFACE: Record<Surface, number> = {
   message: 50,
   modal: 100,
@@ -81,10 +84,7 @@ const MAX_BLOCKS_BY_SURFACE: Record<Surface, number> = {
  * @param surface - target surface
  * @returns array of error messages (empty when all blocks are surface-compatible)
  */
-export function checkSurfaceCompatibility(
-  blocks: readonly { type?: string; element?: { type?: string } }[],
-  surface: Surface,
-): string[] {
+export function checkSurfaceCompatibility(blocks: readonly unknown[], surface: Surface): string[] {
   const forbidden = FORBIDDEN_BY_SURFACE[surface];
   const errors: string[] = [];
 
@@ -93,16 +93,34 @@ export function checkSurfaceCompatibility(
     errors.push(`surface '${surface}' allows at most ${maxBlocks} blocks (got ${blocks.length})`);
   }
 
-  blocks.forEach((block, i) => {
-    if (block?.type && forbidden.has(block.type)) {
-      errors.push(`blocks[${i}].type '${block.type}' is not allowed on surface '${surface}'`);
+  // Layout children follow the host surface's block rules, so a type the
+  // surface rejects is rejected inside a layout too, at any depth.
+  const visit = (value: unknown, path: string, insideLayout: boolean, depth: number): void => {
+    if (value === null || typeof value !== "object") {
+      return;
+    }
+    const block = value as { type?: unknown; element?: { type?: unknown } };
+    if (typeof block.type === "string" && forbidden.has(block.type)) {
+      errors.push(`${path}.type '${block.type}' is not allowed on surface '${surface}'`);
       // Block itself is already rejected — element-level errors would be
       // redundant noise for the same misuse.
       return;
     }
-    if (block?.type === "input" && block.element?.type === "file_input" && surface !== "modal") {
-      errors.push(`blocks[${i}].element.type 'file_input' is only allowed in modal surfaces (got '${surface}')`);
+    if (block.type === "input" && block.element?.type === "file_input" && surface !== "modal") {
+      errors.push(`${path}.element.type 'file_input' is only allowed in modal surfaces (got '${surface}')`);
     }
+    if (depth >= MAX_WALK_DEPTH) {
+      return;
+    }
+    if (block.type === "layout" || insideLayout) {
+      for (const [child, childPath] of nestedBlocks(block as Record<string, unknown>)) {
+        visit(child, `${path}${childPath}`, true, depth + 1);
+      }
+    }
+  };
+
+  blocks.forEach((block, i) => {
+    visit(block, `blocks[${i}]`, false, 0);
   });
 
   return errors;

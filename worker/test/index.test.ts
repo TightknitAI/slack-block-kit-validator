@@ -56,6 +56,14 @@ describe("GET /openapi.json", () => {
     expect(spec.info.contact.url).toBe(env.PROVIDER_URL);
     expect(spec.paths["/v1/validate"]).toBeDefined();
   });
+
+  it("carries the CORS and security headers every other response has", async () => {
+    const res = await SELF.fetch(url("/openapi.json"));
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("Content-Security-Policy")).toBe("default-src 'none'; frame-ancestors 'none'");
+    expect(res.headers.get("Content-Type")).toBe("application/json");
+  });
 });
 
 describe("OPTIONS / preflight", () => {

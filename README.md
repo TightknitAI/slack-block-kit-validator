@@ -132,7 +132,8 @@ The two stages run in order: when the payload fails the JSON Schema, `validateBl
 | `checkDataVisualizationMax` | `(blocks) => string[]` | More than two `data_visualization` blocks per message. |
 | `checkDataVisualizationConsistency` | `(blocks) => string[]` | Chart series with duplicate names, or data points that don't line up with `axis_config.categories`. |
 | `checkFocusOnLoadUniqueness` | `(blocks) => string[]` | More than one element with `focus_on_load: true` in a view (walks nested elements + accessories). |
-| `checkSurfaceCompatibility` | `(blocks, surface) => string[]` | Blocks not allowed on the target surface (e.g. `alert` on message, `markdown` on modal, `file_input` outside modals). |
+| `checkSurfaceCompatibility` | `(blocks, surface) => string[]` | Blocks not allowed on the target surface (e.g. `alert` on message, `markdown` on modal, `file_input` outside modals), including blocks nested in a `layout`. |
+| `checkLayoutRules` | `(blocks) => string[]` | `layout` / `container` nested more than two levels deep, two of carousel / data_table / data_visualization sharing a layout row, or a data_visualization item taking half its row or less. |
 | `checkCardActionsMax` | `(blocks) => string[]` | More than `CARD_ACTIONS_MAX` action buttons on a card block. |
 | `checkNumberInputBounds` | `(blocks) => string[]` | `number_input` element with `min_value > max_value`. |
 | `checkResponseUrlEnabledContext` | `(blocks, surface?) => string[]` | `response_url_enabled` set in contexts that don't support it. |
@@ -147,12 +148,12 @@ Each returns an array of human-readable error strings — empty when valid.
 
 ## Coverage
 
-- **21 blocks**: actions, alert, card, carousel, container, context, context_actions, data_table, data_visualization, divider, file, header, image, input, markdown, plan, rich_text, section, table, task_card, video.
+- **23 blocks**: actions, alert, auth_provider, card, carousel, container, context, context_actions, data_table, data_visualization, divider, file, header, image, input, layout, markdown, plan, rich_text, section, table, task_card, video.
 - **All block elements**: button, icon_button, workflow_button, feedback_buttons, plain_text / email / url / number inputs, datepicker, datetimepicker, timepicker, file_input, rich_text_input, checkboxes, radio_buttons, image, overflow, url source, and all 5 single + 5 multi-select menu variants.
 - **All 9 composition objects**: text (plain_text + mrkdwn), confirm, option (3 contextual variants), option_group, slack_file, dispatch_action_config, conversation_filter, trigger, workflow.
 - **Rich text**: 4 container kinds (section, list, preformatted, quote) + 10 leaf kinds (text, link, user, usergroup, team, channel, emoji, broadcast, color, date) with style flags.
 - **View envelopes**: `modal_view` + `home_view` under `$defs`.
-- **Cross-payload rules** (via helpers): dup `block_id`, dup `action_id` within a block, cumulative markdown, single-table, single-plan, two-data-visualization-per-message, chart series/category consistency, `focus_on_load` uniqueness, surface compatibility.
+- **Cross-payload rules** (via helpers): dup `block_id`, dup `action_id` within a block, cumulative markdown, single-table, single-plan, two-data-visualization-per-message, chart series/category consistency, `focus_on_load` uniqueness, layout nesting and row rules, surface compatibility.
 
 Every documented `maxLength`, regex (date / time / user ID / channel ID / team ID format), enum value, and array cardinality limit is enforced structurally.
 
@@ -168,23 +169,23 @@ Server-side rules that need app-config context or deep equality checks the schem
 
 ## Note on `undefined` properties
 
-`validateBlockKit` strips properties whose value is `undefined` before running Ajv. `JSON.stringify` drops these before the payload reaches Slack, so common builder patterns like `value: foo ?? undefined` are no-ops on the wire but would otherwise trip the schema's `additionalProperties: false`. Explicit `null` values are preserved — they survive `JSON.stringify` and may legitimately fail the schema.
+`validateBlockKit` strips properties whose value is `undefined` before validating. `JSON.stringify` drops these before the payload reaches Slack, so common builder patterns like `value: foo ?? undefined` are no-ops on the wire but would otherwise trip the schema's `additionalProperties: false`. Explicit `null` values are preserved — they survive `JSON.stringify` and may legitimately fail the schema.
 
 ## Entry points
 
 The package ships several entry points so you only pay for what you use:
 
-| Entry | Pulls Ajv? | Use when |
+| Entry | Ajv at runtime? | Use when |
 |---|---|---|
-| `@tightknitai/slack-block-kit-validator` | yes | The full wrapper. `validateBlockKit`, helpers, schema, types. |
+| `@tightknitai/slack-block-kit-validator` | no — precompiled | The full wrapper. `validateBlockKit`, helpers, schema, types. |
 | `@tightknitai/slack-block-kit-validator/helpers` | no | Just the pure helpers — compose with Zod, TypeBox, your own validator. |
 | `@tightknitai/slack-block-kit-validator/schema` | no | Just `slackBlockKitSchema` as a JS module. |
 | `@tightknitai/slack-block-kit-validator/schema.json` | no | The raw JSON Schema file (for non-JS consumers). |
-| `@tightknitai/slack-block-kit-validator/standalone` | no — precompiled | Self-contained validators for environments where Ajv is too heavy (Cloudflare Workers, Deno deploy). Exports `validateBlocks`, `validateModal`, `validateHome`. |
+| `@tightknitai/slack-block-kit-validator/standalone` | no — precompiled | Just the raw schema validators, without the caveat helpers or error formatting. Exports `validateBlocks`, `validateModal`, `validateHome`. |
 | `@tightknitai/slack-block-kit-validator/types` | no — types only | TypeScript types generated from the schema. `Block`, `SectionBlock`, `ModalView`, etc. |
 
 ```ts
-// Worker-friendly: no Ajv at runtime
+// Just the schema check, no caveat helpers
 import { validateBlocks } from "@tightknitai/slack-block-kit-validator/standalone";
 
 // Types straight from the schema (always in sync with what the validator accepts)
@@ -193,7 +194,7 @@ import type { Block, SectionBlock } from "@tightknitai/slack-block-kit-validator
 
 ## Runtime & bundle considerations
 
-The wrapper entry pulls in Ajv v8 + ajv-formats. The standalone entry has no runtime dependencies (its Ajv usage is fully inlined at build time) but is larger as a single bundle.
+No entry compiles code at runtime: the schema validators are precompiled with Ajv at build time, so nothing calls `eval` or `new Function`. That makes the package safe under a Content-Security-Policy without `'unsafe-eval'` and in runtimes that disallow code generation from strings. The precompiled validators are larger than the schema JSON they replace, so import `/helpers`, `/schema` or `/types` when you don't need validation.
 
 For most apps the recommended pattern is **validate in tests only** — use `validateBlockKit` in unit tests next to your block builders, and let CI catch regressions before they hit production.
 

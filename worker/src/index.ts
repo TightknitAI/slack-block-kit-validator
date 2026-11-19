@@ -170,7 +170,11 @@ export default {
       return indexRedirect(env);
     }
     if (request.method === "GET" && pathname === "/openapi.json") {
-      return renderOpenApi(env);
+      const spec = renderOpenApi(env);
+      for (const [name, value] of Object.entries({ ...CORS_HEADERS, ...SECURITY_HEADERS })) {
+        spec.headers.set(name, value);
+      }
+      return spec;
     }
     if (request.method === "GET" && pathname === "/healthz") {
       return new Response("ok", {

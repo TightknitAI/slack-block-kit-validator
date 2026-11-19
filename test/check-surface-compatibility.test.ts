@@ -60,10 +60,19 @@ describe("checkSurfaceCompatibility", () => {
       { type: "table" },
       { type: "task_card" },
       { type: "context_actions" },
-      { type: "data_visualization" },
-      { type: "container" },
     ];
-    expect(checkSurfaceCompatibility(blocks, "home")).toHaveLength(8);
+    expect(checkSurfaceCompatibility(blocks, "home")).toHaveLength(6);
+  });
+
+  it("allows container, data_table, and data_visualization on home", () => {
+    // blocks.json and each block's reference page list "Messages, Home tabs":
+    // https://docs.slack.dev/reference/block-kit/blocks/container-block
+    // https://docs.slack.dev/reference/block-kit/blocks/data-table-block
+    // https://docs.slack.dev/reference/block-kit/blocks/data-visualization-block
+    const blocks = [{ type: "container" }, { type: "data_table" }, { type: "data_visualization" }];
+    expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
+    expect(checkSurfaceCompatibility(blocks, "message")).toEqual([]);
+    expect(checkSurfaceCompatibility(blocks, "modal")).toHaveLength(3);
   });
 
   it("allows message-specific blocks (markdown, plan, table, task_card, context_actions, data_visualization, container) on messages", () => {
@@ -98,12 +107,11 @@ describe("checkSurfaceCompatibility", () => {
     expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
   });
 
-  it("allows data_table on messages but not modal or home", () => {
-    // blocks.json lists data_table as Messages + Home tabs, but as a
-    // table-family block it inherits table's messages-only render behavior.
+  it("allows data_table on messages and home but not modal", () => {
+    // Unlike table, data_table follows blocks.json (Messages + Home tabs).
     expect(checkSurfaceCompatibility([{ type: "data_table" }], "message")).toEqual([]);
     expect(checkSurfaceCompatibility([{ type: "data_table" }], "modal")).toHaveLength(1);
-    expect(checkSurfaceCompatibility([{ type: "data_table" }], "home")).toHaveLength(1);
+    expect(checkSurfaceCompatibility([{ type: "data_table" }], "home")).toEqual([]);
   });
 
   it("rejects file_input on non-modal surfaces", () => {
@@ -144,5 +152,32 @@ describe("checkSurfaceCompatibility", () => {
       expect(checkSurfaceCompatibility(blocks, "modal")).toEqual([]);
       expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
     });
+  });
+
+  it("allows layout blocks on every surface", () => {
+    const blocks = [{ type: "layout", rows: [{ items: [{ block: { type: "section" } }] }] }];
+    expect(checkSurfaceCompatibility(blocks, "message")).toEqual([]);
+    expect(checkSurfaceCompatibility(blocks, "modal")).toEqual([]);
+    expect(checkSurfaceCompatibility(blocks, "home")).toEqual([]);
+  });
+
+  it("applies the surface's block rules to layout children, including through a container", () => {
+    const blocks = [
+      {
+        type: "layout",
+        rows: [
+          { items: [{ block: { type: "alert" } }] },
+          { items: [{ block: { type: "container", child_blocks: [{ type: "file" }] } }] },
+        ],
+      },
+    ];
+    expect(checkSurfaceCompatibility(blocks, "message")).toEqual([
+      "blocks[0].rows[0].items[0].block.type 'alert' is not allowed on surface 'message'",
+      "blocks[0].rows[1].items[0].block.child_blocks[0].type 'file' is not allowed on surface 'message'",
+    ]);
+  });
+
+  it("does not descend into a container outside a layout", () => {
+    expect(checkSurfaceCompatibility([{ type: "container", child_blocks: [{ type: "file" }] }], "message")).toEqual([]);
   });
 });
